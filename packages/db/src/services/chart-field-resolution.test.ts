@@ -14,12 +14,21 @@
  *    were a top-level column.
  *
  * All five errors logged in HyperDX 2026-05-14 → 2026-05-17 are covered here.
+ *
+ * The helpers live in analytics/fields.ts now (chart.service re-exports them
+ * for the services still on ClickHouse); the Postgres filter and expression
+ * builders resolve names through them.
  */
 import { describe, expect, it } from 'vitest';
+import { isKnownEventField, normalizeEventField } from '../analytics/fields';
+import { eventFilterClauses, eventPropertyExpr } from '../analytics/filters';
+import { compile } from '../analytics/sql';
 import {
-  isKnownEventField,
-  normalizeEventField,
+  isKnownEventField as chartIsKnownEventField,
+  normalizeEventField as chartNormalizeEventField,
 } from './chart.service';
+
+const scope = { projectId: 'p', timezone: 'UTC', alias: 'e' };
 
 describe('normalizeEventField', () => {
   it('rewrites camelCase aliases to their snake_case columns', () => {
@@ -100,5 +109,48 @@ describe('isKnownEventField', () => {
     expect(isKnownEventField('temple_name')).toBe(false);
     expect(isKnownEventField('totally_made_up_column')).toBe(false);
     expect(isKnownEventField('')).toBe(false);
+  });
+
+  it('ignores names inherited from Object.prototype', () => {
+    expect(isKnownEventField('constructor')).toBe(false);
+    expect(normalizeEventField('toString')).toBe('toString');
+  });
+});
+
+describe('chart.service re-exports', () => {
+  it('are the analytics/fields helpers', () => {
+    expect(chartNormalizeEventField).toBe(normalizeEventField);
+    expect(chartIsKnownEventField).toBe(isKnownEventField);
+  });
+});
+
+describe('resolved names in the Postgres SQL', () => {
+  it('reads a camelCase alias from its snake_case column', () => {
+    expect(compile(eventPropertyExpr('referrerName', scope)).text).toBe(
+      'e.referrer_name',
+    );
+    const [clause] = eventFilterClauses(
+      [{ name: 'osVersion', operator: 'is', value: ['14'] }],
+      scope,
+    );
+    expect(compile(clause!).text).toBe('e.os_version = $1::text');
+  });
+
+  it('reads a bare utm_* name from the properties map, the key bound', () => {
+    const { text, values } = compile(eventPropertyExpr('utm_source', scope));
+    expect(text).toBe("COALESCE(e.properties ->> $1::text, '')");
+    expect(values).toEqual(['__query.utm_source']);
+  });
+
+  it('never emits an unknown name', () => {
+    expect(
+      eventFilterClauses(
+        [{ name: 'temple_name', operator: 'is', value: ['x'] }],
+        scope,
+      ),
+    ).toEqual([]);
+    expect(() => eventPropertyExpr('temple_name', scope)).toThrow(
+      'Unknown event field',
+    );
   });
 });

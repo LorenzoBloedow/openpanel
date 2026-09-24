@@ -1,15 +1,17 @@
 /**
  * Property keys reach the SQL builders as free text: a filter name, a
  * breakdown name or a math-metric property from a saved report or an API
- * call. They end up inside a ClickHouse Map access, so a key carrying a
- * quote must stay one string literal — otherwise it closes the literal and
- * the rest of the key is parsed as SQL, next to the `project_id` predicate
- * that scopes the query to one project.
+ * call. In the ClickHouse helpers they end up inside a Map access, so a key
+ * carrying a quote must stay one string literal — otherwise it closes the
+ * literal and the rest of the key is parsed as SQL, next to the `project_id`
+ * predicate that scopes the query to one project. The Postgres chart
+ * queries bind them as parameters.
  *
- * String assertions only; no ClickHouse needed.
+ * String assertions only; no database needed.
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
+import { type Sql, compile } from '../analytics/sql';
 import { createSqlBuilder } from '../sql-builder';
 import {
   collectProfilePropertyKeys,
@@ -20,22 +22,13 @@ import {
   rewriteProfilePropertyRefs,
 } from './chart.service';
 
-const getChartSql: (input: any) => Promise<string> = _getChartSql as any;
-const getAggregateChartSql: (input: any) => Promise<string> =
+const getChartSql: (input: any) => Promise<Sql> = _getChartSql as any;
+const getAggregateChartSql: (input: any) => Promise<Sql> =
   _getAggregateChartSql as any;
 
 const PROJECT_ID = 'test-sql-validation';
 const START = '2026-04-14 00:00:00';
 const END = '2026-05-15 00:00:00';
-
-beforeAll(() => {
-  // The chart service logs every query it builds; mute it.
-  vi.spyOn(console, 'log').mockImplementation(() => {});
-});
-
-afterAll(() => {
-  vi.restoreAllMocks();
-});
 
 // A key that closes the literal, appends its own predicate, and reopens a
 // literal so the tail of the original render still parses.
@@ -43,16 +36,19 @@ const BREAKOUT_KEY = "x'] = '' OR 1 = 1 OR properties['y";
 const BREAKOUT_PROPERTY = `properties.${BREAKOUT_KEY}`;
 
 /**
- * The query must keep exactly one project_id predicate, and the key must not
- * have contributed a boolean operator of its own outside a string literal.
+ * How a Postgres chart query carries the hostile key: it must keep one
+ * project predicate, and the key must only be among the parameters.
  */
-function expectNoInjectedPredicate(sql: string) {
-  expect(sql.match(/project_id =/g) ?? []).toHaveLength(1);
-  // The payload only ever appears with its quotes escaped, i.e. still inside
-  // the Map key literal.
-  expect(sql).not.toContain("'] = '' OR 1 = 1");
-  expect(sql).toContain("\\'] = \\'\\' OR 1 = 1 OR properties[\\'y'");
+function keyBinding(query: Sql) {
+  const { text, values } = compile(query);
+  return {
+    projectPredicates: text.match(/e\.project_id = \$\d+/g)?.length ?? 0,
+    injected: text.includes('OR 1 = 1'),
+    bound: values.includes(BREAKOUT_KEY),
+  };
 }
+
+const BOUND_KEY = { projectPredicates: 1, injected: false, bound: true };
 
 describe('getSelectPropertyKey / key escaping', () => {
   it('renders a key with a quote as a single escaped literal', () => {
@@ -102,6 +98,8 @@ describe('sql-builder / getWhere', () => {
   });
 });
 
+// The chart queries are Postgres queries: a key is a bind parameter, never
+// part of the SQL text.
 describe('chart SQL with a hostile property key', () => {
   const base = {
     interval: 'day',
@@ -119,7 +117,7 @@ describe('chart SQL with a hostile property key', () => {
   });
 
   it('keeps the project scope for a filter name', async () => {
-    const sql = await getChartSql({
+    const query = await getChartSql({
       event: event({
         filters: [
           {
@@ -133,20 +131,20 @@ describe('chart SQL with a hostile property key', () => {
       breakdowns: [],
       ...base,
     });
-    expectNoInjectedPredicate(sql);
+    expect(keyBinding(query)).toEqual(BOUND_KEY);
   });
 
   it('keeps the project scope for a breakdown name', async () => {
-    const sql = await getChartSql({
+    const query = await getChartSql({
       event: event(),
       breakdowns: [{ id: 'b', name: BREAKOUT_PROPERTY }],
       ...base,
     });
-    expectNoInjectedPredicate(sql);
+    expect(keyBinding(query)).toEqual(BOUND_KEY);
   });
 
   it('keeps the project scope for a math-metric property', async () => {
-    const sql = await getChartSql({
+    const query = await getChartSql({
       event: event({
         segment: 'property_average',
         property: BREAKOUT_PROPERTY,
@@ -154,11 +152,11 @@ describe('chart SQL with a hostile property key', () => {
       breakdowns: [],
       ...base,
     });
-    expectNoInjectedPredicate(sql);
+    expect(keyBinding(query)).toEqual(BOUND_KEY);
   });
 
   it('keeps the project scope in aggregate chart SQL', async () => {
-    const sql = await getAggregateChartSql({
+    const query = await getAggregateChartSql({
       event: event({
         segment: 'property_sum',
         property: BREAKOUT_PROPERTY,
@@ -166,7 +164,7 @@ describe('chart SQL with a hostile property key', () => {
       breakdowns: [{ id: 'b', name: BREAKOUT_PROPERTY }],
       ...base,
     });
-    expectNoInjectedPredicate(sql);
+    expect(keyBinding(query)).toEqual(BOUND_KEY);
   });
 });
 

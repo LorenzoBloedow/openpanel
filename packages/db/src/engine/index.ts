@@ -6,7 +6,7 @@ import type {
   IChartEventItem,
   IReportInput,
 } from '@openpanel/validation';
-import { chQuery } from '../clickhouse/client';
+import { anQuery } from '../analytics/client';
 import { getAggregateChartSql } from '../services/chart.service';
 import { getChartPrevStartEndDate } from '../services/date.service';
 import {
@@ -131,24 +131,18 @@ export async function executeAggregateChart(
       timezone,
     };
 
-    // Execute aggregate query
-    let queryResult = await chQuery<ISerieDataItem>(
-      await getAggregateChartSql(queryInput),
-      {
-        session_timezone: timezone,
-      }
+    // Execute aggregate query (the time zone is part of the SQL)
+    let queryResult = await anQuery<ISerieDataItem>(
+      await getAggregateChartSql(queryInput)
     );
 
     // Fallback: if no results with breakdowns, try without breakdowns
     if (queryResult.length === 0 && normalized.breakdowns.length > 0) {
-      queryResult = await chQuery<ISerieDataItem>(
+      queryResult = await anQuery<ISerieDataItem>(
         await getAggregateChartSql({
           ...queryInput,
           breakdowns: [],
-        }),
-        {
-          session_timezone: timezone,
-        }
+        })
       );
     }
 
@@ -257,22 +251,16 @@ export async function executeAggregateChart(
         timezone,
       };
 
-      let queryResult = await chQuery<ISerieDataItem>(
-        await getAggregateChartSql(queryInput),
-        {
-          session_timezone: timezone,
-        }
+      let queryResult = await anQuery<ISerieDataItem>(
+        await getAggregateChartSql(queryInput)
       );
 
       if (queryResult.length === 0 && normalized.breakdowns.length > 0) {
-        queryResult = await chQuery<ISerieDataItem>(
+        queryResult = await anQuery<ISerieDataItem>(
           await getAggregateChartSql({
             ...queryInput,
             breakdowns: [],
-          }),
-          {
-            session_timezone: timezone,
-          }
+          })
         );
       }
 
