@@ -1,42 +1,44 @@
 import { TRPCError, initTRPC } from '@trpc/server';
-import type { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
 import { has } from 'ramda';
 import superjson from 'superjson';
 import { ZodError, z } from 'zod';
 
-import { COOKIE_OPTIONS, type SessionValidationResult } from '@openpanel/auth';
+import type { SessionValidationResult } from '@openpanel/auth';
 import { runWithAlsSession } from '@openpanel/db';
-import { getRedisCache } from '@openpanel/redis';
+import type { ILogger } from '@openpanel/logger';
 import type { ISetCookie } from '@openpanel/validation';
 import { type RateLimitOptions, enforceRateLimit } from './rate-limit';
 import { getOrganizationAccess, requireProjectAccess } from './access';
 import { TRPCForbiddenError } from './errors';
 
-export async function createContext({ req, res }: CreateFastifyContextOptions) {
-  const cookies = (req as any).cookies as Record<string, string | undefined>;
-  const setCookie: ISetCookie = (key, value, options) => {
-    // @ts-ignore
-    res.setCookie(key, value, {
-      maxAge: options.maxAge,
-      signed: options.signed,
-      ...COOKIE_OPTIONS,
-    });
-  };
+/** What procedures may know about the HTTP request (framework-free). */
+export interface TrpcRequestInfo {
+  /** Request headers, lowercased names. */
+  headers: Record<string, string | undefined>;
+  /** The client address as the edge saw it (cf-connecting-ip). */
+  ip: string;
+  log: ILogger;
+}
 
-  if (process.env.NODE_ENV !== 'production') {
-    await new Promise((res) =>
-      setTimeout(() => res(1), Math.min(Math.random() * 500, 200)),
-    );
-  }
+export interface CreateContextOptions {
+  req: TrpcRequestInfo;
+  /** Parsed request cookies (signed ones already verified and unwrapped). */
+  cookies: Record<string, string | undefined>;
+  /** Appends a Set-Cookie header to the response (COOKIE_OPTIONS applied). */
+  setCookie: ISetCookie;
+  session: SessionValidationResult;
+}
 
+/**
+ * The tRPC context. The HTTP layer (apps/api, Hono + the fetch adapter)
+ * parses cookies, validates the session and supplies `setCookie`.
+ */
+export function createContext(options: CreateContextOptions) {
   return {
-    req,
-    res,
-    session: (req as any).session as SessionValidationResult,
-    // we do not get types for `setCookie` from fastify
-    // so define it here and be safe in routers
-    setCookie,
-    cookies,
+    req: options.req,
+    session: options.session,
+    setCookie: options.setCookie,
+    cookies: options.cookies,
   };
 }
 export type Context = Awaited<ReturnType<typeof createContext>>;
@@ -186,46 +188,11 @@ export const protectedProcedureWithoutAccess = t.procedure
   .use(loggerMiddleware)
   .use(sessionScopeMiddleware);
 
-const middlewareMarker = 'middlewareMarker' as 'middlewareMarker' & {
-  __brand: 'middlewareMarker';
-};
-
+/**
+ * Response caching for queries. The Redis-backed cache is gone (no shared
+ * cache on Cloudflare), so this passes through; call sites keep their TTLs
+ * for when a cache comes back.
+ */
 export const cacheMiddleware = (
-  cbOrTtl: number | ((input: any, opts: { path: string }) => number),
-) =>
-  t.middleware(async ({ ctx, next, path, type, getRawInput, input }) => {
-    const ttl =
-      typeof cbOrTtl === 'function' ? cbOrTtl(input, { path }) : cbOrTtl;
-    if (!ttl) {
-      return next();
-    }
-    const rawInput = await getRawInput();
-    if (type !== 'query') {
-      return next();
-    }
-    let key = `trpc:${path}:`;
-    if (rawInput) {
-      key += JSON.stringify(rawInput).replace(/\"/g, "'");
-    }
-    const cache = await getRedisCache().getJson(key);
-    if (cache && process.env.NODE_ENV === 'production') {
-      return {
-        ok: true,
-        data: cache,
-        ctx,
-        marker: middlewareMarker,
-      };
-    }
-    const result = await next();
-
-    // @ts-expect-error
-    if (result.data) {
-      getRedisCache().setJson(
-        key,
-        ttl,
-        // @ts-expect-error
-        result.data,
-      );
-    }
-    return result;
-  });
+  _cbOrTtl: number | ((input: any, opts: { path: string }) => number),
+) => t.middleware(({ next }) => next());

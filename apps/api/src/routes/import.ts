@@ -3,11 +3,18 @@ import { withDbRoute } from '@openpanel/db/src/db-routing';
 import { type ImportedEvent, importEvents } from '@openpanel/db/src/ingest/import';
 import { Hono } from 'hono';
 
+import { documentRoute } from '@/compat/fastify';
 import type { AppEnv } from '@/env';
 import { readJsonBody } from '@/ingest/body';
 import { validateImportRequest } from '@/utils/auth';
 
 export const importRoutes = new Hono<AppEnv>();
+
+documentRoute({
+  method: 'POST',
+  path: '/import/events',
+  schema: { tags: ['Import'], description: 'Bulk import historical events.' },
+});
 
 importRoutes.post('/events', async (c) => {
   let projectId: string | null;

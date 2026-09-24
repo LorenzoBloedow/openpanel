@@ -1,14 +1,12 @@
-import { strip, toObject } from '@openpanel/common';
+import { toObject } from '@openpanel/common';
 import { cacheable } from '@openpanel/redis';
 import type { IChartEventFilter } from '@openpanel/validation';
 import { uniq } from 'ramda';
 import sqlstring from 'sqlstring';
-import { profileBuffer } from '../buffers';
 import {
   ch,
   chQuery,
   convertClickhouseDateToJs,
-  formatClickhouseDate,
   TABLE_NAMES,
   toNullIfDefaultMinDate,
 } from '../clickhouse/client';
@@ -114,11 +112,6 @@ export function getProfileMetrics(profileId: string, projectId: string) {
 export async function getProfileById(id: string, projectId: string) {
   if (id === '' || projectId === '') {
     return null;
-  }
-
-  const cachedProfile = await profileBuffer.fetchFromCache(id, projectId);
-  if (cachedProfile) {
-    return transformProfile(cachedProfile);
   }
 
   const [profile] = await chQuery<IClickhouseProfile>(
@@ -329,42 +322,6 @@ export function transformProfile({
     avatar: profile.avatar,
     groups: profile.groups ?? [],
   };
-}
-
-export function upsertProfile(
-  {
-    id,
-    firstName,
-    lastName,
-    email,
-    avatar,
-    properties,
-    projectId,
-    isExternal,
-    groups,
-  }: IServiceUpsertProfile,
-  isFromEvent = false
-) {
-  const now = formatClickhouseDate(new Date());
-  const profile: IClickhouseProfile = {
-    id: String(id),
-    first_name: firstName || '',
-    last_name: lastName || '',
-    email: email || '',
-    avatar: avatar || '',
-    properties: strip((properties as Record<string, string | undefined>) || {}),
-    project_id: projectId,
-    // First-seen value for brand-new profiles. The buffer's mergeProfiles
-    // omits `created_at` from incoming, so for existing profiles the original
-    // value is carried forward.
-    created_at: now,
-    // RMT version column — must advance on every write so the latest row wins.
-    last_seen_at: now,
-    is_external: isExternal,
-    groups: groups ?? [],
-  };
-
-  return profileBuffer.add(profile, isFromEvent);
 }
 
 export const PROFILE_COLUMNS =

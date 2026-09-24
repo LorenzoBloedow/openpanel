@@ -1,6 +1,6 @@
 import { Prisma } from '@openpanel/db';
-import type { FastifyRequest } from 'fastify';
-import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi';
+import type { FastifyRequest } from '@/compat/fastify';
+import type { FastifyPluginAsyncZodOpenApi } from '@/compat/fastify';
 import { z } from 'zod';
 import * as c from '@/controllers/insights.controller';
 import {
@@ -45,7 +45,7 @@ const reportParam = z.object({ projectId: z.string(), reportId: z.string() });
 const TAGS = ['Insights'] as const;
 
 const insightsRouter: FastifyPluginAsyncZodOpenApi = async (fastify) => {
-  await activateRateLimiter({ fastify, max: 100, timeWindow: '10 seconds' });
+  activateRateLimiter({ fastify, max: 100, timeWindow: '10 seconds' });
 
   fastify.addHook('preHandler', async (req: FastifyRequest, reply) => {
     try {

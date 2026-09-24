@@ -204,14 +204,38 @@ const rawClickhouseUrls = (process.env.CLICKHOUSE_URL ?? '')
 
 const clickhouseUrls = rawClickhouseUrls.length > 0 ? rawClickhouseUrls : [''];
 
-const clients: ClickHouseClient[] = clickhouseUrls.map((url) =>
-  createClient({
-    url: url || process.env.CLICKHOUSE_URL,
-    ...CLICKHOUSE_OPTIONS,
-  })
-);
+// Created on first use, not at import: Workers forbid the random values
+// the client generates in its constructor at module scope (and the
+// Cloudflare build never queries ClickHouse). Removed with ClickHouse.
+let lazyState:
+  | { clients: ClickHouseClient[]; picker: RoundRobinPicker }
+  | undefined;
 
-const picker = new RoundRobinPicker(clients, clickhouseUrls, unhealthyMarkMs);
+function getState() {
+  if (!lazyState) {
+    const clients = clickhouseUrls.map((url) =>
+      createClient({
+        url: url || process.env.CLICKHOUSE_URL,
+        ...CLICKHOUSE_OPTIONS,
+      })
+    );
+    lazyState = {
+      clients,
+      picker: new RoundRobinPicker(clients, clickhouseUrls, unhealthyMarkMs),
+    };
+    logger.info(
+      {
+        nodeCount: clients.length,
+        urls: clickhouseUrls.map(maskUrlCredentials),
+        requestTimeoutMs,
+        unhealthyMarkMs,
+        options: { ...CLICKHOUSE_OPTIONS, log: undefined },
+      },
+      'ClickHouse clients initialized'
+    );
+  }
+  return lazyState;
+}
 
 function maskUrlCredentials(url: string): string {
   if (!url) {
@@ -233,21 +257,16 @@ function maskUrlCredentials(url: string): string {
   }
 }
 
-logger.info(
-  {
-    nodeCount: clients.length,
-    urls: clickhouseUrls.map(maskUrlCredentials),
-    requestTimeoutMs,
-    unhealthyMarkMs,
-    options: { ...CLICKHOUSE_OPTIONS, log: undefined },
-  },
-  'ClickHouse clients initialized'
-);
-
 // Backwards-compat export. Some callers (notably gsc.ts) use `originalCh`
 // directly to bypass the retry/round-robin layer for one-off DDL or for
 // places where retry semantics aren't wanted. Points at the first node.
-export const originalCh = clients[0]!;
+export const originalCh = new Proxy({} as ClickHouseClient, {
+  get(_target, property) {
+    const client = getState().clients[0]! as any;
+    const value = client[property];
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+}) as ClickHouseClient;
 
 const cleanQuery = (query?: string) =>
   typeof query === 'string'
@@ -268,7 +287,7 @@ export async function withRetry<T>(
     ctx: { url: string; index: number }
   ) => Promise<T>
 ): Promise<T> {
-  return withRoundRobinRetry(picker, operation, logger);
+  return withRoundRobinRetry(getState().picker, operation, logger);
 }
 
 /** Best-effort URL → hostname extraction for log labels. */

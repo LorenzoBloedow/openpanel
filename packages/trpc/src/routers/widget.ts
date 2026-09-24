@@ -2,7 +2,7 @@ import {
   ch,
   clix,
   db,
-  eventBuffer,
+  getActiveVisitorCount,
   getSettingsForProject,
   TABLE_NAMES,
 } from '@openpanel/db';
@@ -134,7 +134,7 @@ export const widgetRouter = createTRPCRouter({
 
       return {
         projectId: widget.projectId,
-        counter: await eventBuffer.getActiveVisitorCount(widget.projectId),
+        counter: await getActiveVisitorCount(widget.projectId),
       };
     }),
 

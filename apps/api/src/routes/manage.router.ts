@@ -1,6 +1,6 @@
 import { Prisma, resolveClientProjectId } from '@openpanel/db';
-import type { FastifyRequest } from 'fastify';
-import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi';
+import type { FastifyRequest } from '@/compat/fastify';
+import type { FastifyPluginAsyncZodOpenApi } from '@/compat/fastify';
 import { z } from 'zod';
 import * as controller from '@/controllers/manage.controller';
 import { listDashboards, listReports } from '@/controllers/insights.controller';
@@ -18,7 +18,7 @@ import { activateRateLimiter } from '@/utils/rate-limiter';
 const idParam = z.object({ id: z.string() });
 
 const manageRouter: FastifyPluginAsyncZodOpenApi = async (fastify) => {
-  await activateRateLimiter({
+  activateRateLimiter({
     fastify,
     max: 20,
     timeWindow: '10 seconds',

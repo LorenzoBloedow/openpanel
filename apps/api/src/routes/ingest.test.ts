@@ -18,9 +18,10 @@ import {
 import { runWithScope } from '@openpanel/runtime';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { app } from '@/app';
+import { type App, createApp } from '@/app';
 
 let testDb: TestDatabase;
+let app: App;
 let sent: EventsEnvelope[] = [];
 
 const ORG_ID = 'org-ingest';
@@ -84,6 +85,7 @@ function inDb<T>(fn: () => Promise<T>) {
 }
 
 beforeAll(async () => {
+  app = await createApp();
   testDb = await createTestDatabase();
   await inDb(async () => {
     await db.organization.create({ data: { id: ORG_ID, name: 'Ingest' } });

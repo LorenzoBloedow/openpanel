@@ -4,7 +4,7 @@ import {
   getSegmentDailySeriesCore,
   getTrafficBreakdownCore,
 } from '@openpanel/db';
-import { getRedisCache } from '@openpanel/redis';
+import { LRUCache } from '@openpanel/redis';
 import type { InsightPayload } from '@openpanel/validation';
 import { z } from 'zod';
 import { getProjectAccess, requireProjectAccess } from '../access';
@@ -16,6 +16,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // lastUpdatedAt so repeat clicks within the window are free, while any recompute
 // that changes the insight produces a new key and a fresh explanation.
 const EXPLAIN_CACHE_TTL_SEC = 24 * 60 * 60;
+/** Per-isolate: there's no shared cache on Cloudflare. */
+const explanationCache = new LRUCache<string, object>({
+  max: 500,
+  ttl: EXPLAIN_CACHE_TTL_SEC * 1000,
+});
 const EXPLAIN_COLUMNS = [
   'referrer_name',
   'country',
@@ -159,11 +164,9 @@ export const insightRouter = createTRPCRouter({
       // Serve a cached explanation if the insight hasn't changed since we
       // computed it. Skips both the ClickHouse queries and the LLM call.
       const cacheKey = `insight-explain:${insightId}:${insight.lastUpdatedAt.getTime()}`;
-      const cached = await getRedisCache().get(cacheKey);
+      const cached = explanationCache.get(cacheKey);
       if (cached) {
-        return JSON.parse(cached) as Awaited<
-          ReturnType<typeof generateInsightExplanation>
-        >;
+        return cached as Awaited<ReturnType<typeof generateInsightExplanation>>;
       }
 
       // Current window from the insight; baseline = same span immediately before.
@@ -279,11 +282,7 @@ export const insightRouter = createTRPCRouter({
       // Only cache a successful explanation — a null is a transient LLM failure
       // and should be retried on the next click.
       if (explanation) {
-        await getRedisCache().setex(
-          cacheKey,
-          EXPLAIN_CACHE_TTL_SEC,
-          JSON.stringify(explanation),
-        );
+        explanationCache.set(cacheKey, explanation);
       }
 
       return explanation;

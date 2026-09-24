@@ -2,6 +2,12 @@
   "name": "@openpanel/api",
   "version": "0.0.4",
   "type": "module",
+  "imports": {
+    "#resvg-wasm": {
+      "workerd": "./src/utils/resvg-wasm.workerd.ts",
+      "default": "./src/utils/resvg-wasm.ts"
+    }
+  },
   "scripts": {
     "dev": "wrangler dev",
     "testing": "wrangler dev --port 3333",

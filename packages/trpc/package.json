@@ -23,6 +23,7 @@
     "@openpanel/email": "workspace:*",
     "@openpanel/integrations": "workspace:^",
     "@openpanel/js-runtime": "workspace:*",
+    "@openpanel/logger": "workspace:*",
     "@openpanel/payments": "workspace:^",
     "@openpanel/queue": "workspace:*",
     "@openpanel/redis": "workspace:*",

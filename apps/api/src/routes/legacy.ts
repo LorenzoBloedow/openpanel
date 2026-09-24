@@ -9,6 +9,7 @@ import { type Context, Hono } from 'hono';
 import { pathOr } from 'ramda';
 
 import { applyBotSuspicion } from '@/bots/suspicion';
+import { documentRoute } from '@/compat/fastify';
 import type { AppEnv } from '@/env';
 import {
   geoSource,
@@ -35,6 +36,15 @@ function cfOf(c: Context<AppEnv>) {
 }
 
 export const eventRoutes = new Hono<AppEnv>();
+
+documentRoute({
+  method: 'POST',
+  path: '/event',
+  schema: {
+    tags: ['Event'],
+    description: 'Deprecated direct event ingestion endpoint. Use /track instead.',
+  },
+});
 
 eventRoutes.use(sdkClient, botFilter);
 
@@ -120,6 +130,14 @@ eventRoutes.post('/', async (c) => {
 });
 
 export const profileRoutes = new Hono<AppEnv>();
+
+for (const [path, description] of [
+  ['/profile', 'Identify or update a user profile.'],
+  ['/profile/increment', 'Increment a numeric property on a user profile.'],
+  ['/profile/decrement', 'Decrement a numeric property on a user profile.'],
+] as const) {
+  documentRoute({ method: 'POST', path, schema: { tags: ['Profile'], description } });
+}
 
 profileRoutes.use(sdkClient, botFilter);
 

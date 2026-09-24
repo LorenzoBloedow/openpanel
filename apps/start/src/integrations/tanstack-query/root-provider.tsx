@@ -38,17 +38,32 @@ function handleUnauthorized(error: unknown) {
   window.location.assign('/login');
 }
 
-// Resolve the tRPC base URL per environment. During SSR the server can reach
-// the API over an internal address (e.g. a Docker/K8s service name) that the
-// browser can't resolve, so `API_URL_SSR` overrides the public `apiUrl`
-// server-side only. The client always uses the public `apiUrl` it was given.
-const getSsrApiUrlOverride = createIsomorphicFn()
-  .server(() => {
-    console.log('ENVS', process.env);
-    console.log('API_URL_SSR', process.env.API_URL_SSR);
-    return process.env.API_URL_SSR || undefined;
+interface ServiceBinding {
+  fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
+}
+
+// During SSR on Cloudflare the dashboard reaches the API through its `API`
+// service binding (same account, no public hop). Elsewhere, and in the
+// browser, requests go to the public `apiUrl`.
+const getSsrFetch = createIsomorphicFn()
+  .server(async (): Promise<typeof fetch | undefined> => {
+    try {
+      const { env } = await import('cloudflare:workers');
+      const api = (env as { API?: ServiceBinding }).API;
+      if (!api) {
+        return undefined;
+      }
+      return ((input: RequestInfo | URL, init?: RequestInit) =>
+        api.fetch(input, {
+          method: init?.method,
+          headers: init?.headers,
+          body: init?.body,
+        })) as typeof fetch;
+    } catch {
+      return undefined;
+    }
   })
-  .client(() => undefined);
+  .client(async () => undefined);
 
 export const getIsomorphicHeaders = createIsomorphicFn()
   .server(() => {
@@ -70,21 +85,25 @@ export const getIsomorphicHeaders = createIsomorphicFn()
 
 // Create a function that returns a tRPC client with optional cookies
 export function createTRPCClientWithHeaders(apiUrl: string) {
-  const baseUrl = getSsrApiUrlOverride() || apiUrl;
-  console.log('baseUrl', baseUrl);
   return createTRPCClient<AppRouter>({
     links: [
       httpLink({
         transformer: superjson,
-        url: `${baseUrl}/trpc`,
+        url: `${apiUrl}/trpc`,
+        // Queries go out as POST: their inputs routinely exceed the URL
+        // length Cloudflare accepts.
+        methodOverride: 'POST',
         headers: () => getIsomorphicHeaders(),
         fetch: async (url, options) => {
           try {
-            const response = await fetch(url, {
-              ...options,
-              mode: 'cors',
-              credentials: 'include',
-            });
+            const ssrFetch = await getSsrFetch();
+            const response = ssrFetch
+              ? await ssrFetch(url, options)
+              : await fetch(url, {
+                  ...options,
+                  mode: 'cors',
+                  credentials: 'include',
+                });
 
             // Log HTTP errors on server
             if (!response.ok && typeof window === 'undefined') {

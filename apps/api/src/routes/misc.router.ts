@@ -1,5 +1,5 @@
 import * as controller from '@/controllers/misc.controller';
-import type { FastifyPluginCallback } from 'fastify';
+import type { FastifyPluginCallback } from '@/compat/fastify';
 
 const miscRouter: FastifyPluginCallback = async (fastify) => {
   fastify.route({

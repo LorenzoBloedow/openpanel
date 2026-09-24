@@ -9,7 +9,7 @@ import {
   getSettingsForProject,
 } from '@openpanel/db';
 import { zChartEvent, zChartEventFilter, zReport } from '@openpanel/validation';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from '@/compat/fastify';
 import { z } from 'zod';
 import { HttpError } from '@/utils/errors';
 

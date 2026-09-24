@@ -24,6 +24,7 @@ import { pathOr } from 'ramda';
 import { z } from 'zod';
 
 import { applyBotSuspicion } from '@/bots/suspicion';
+import { documentRoute } from '@/compat/fastify';
 import type { AppEnv } from '@/env';
 import { validate } from '@/ingest/body';
 import {
@@ -176,6 +177,36 @@ async function insertReplay(
 }
 
 export const trackRoutes = new Hono<AppEnv>();
+
+documentRoute({
+  method: 'POST',
+  path: '/track',
+  schema: {
+    tags: ['Track'],
+    description:
+      'Ingest a tracking event (track, identify, group, increment, decrement, replay).',
+    body: zTrackBody,
+    response: {
+      200: z.object({ deviceId: z.string(), sessionId: z.string() }),
+    },
+  },
+});
+documentRoute({
+  method: 'GET',
+  path: '/track/device-id',
+  schema: {
+    tags: ['Track'],
+    description:
+      'Get or generate a stable device ID and session ID for the current visitor.',
+    response: {
+      200: z.object({
+        deviceId: z.string(),
+        sessionId: z.string(),
+        message: z.string().optional(),
+      }),
+    },
+  },
+});
 
 trackRoutes.use(sdkClient, botFilter);
 

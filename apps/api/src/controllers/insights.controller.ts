@@ -1,7 +1,6 @@
 import { getDefaultIntervalByDates } from '@openpanel/constants';
-import type { IServiceClientWithProject } from '@openpanel/db';
 import {
-  eventBuffer,
+  getActiveVisitorCount,
   findGroupsCore,
   findProfilesCore,
   getAnalyticsOverviewCore,
@@ -63,7 +62,7 @@ const zFiltersParam = z
     return value;
   }, z.array(zChartEventFilter))
   .optional();
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from '@/compat/fastify';
 import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
@@ -194,7 +193,7 @@ export async function getLiveVisitors(
   reply: FastifyReply
 ) {
   const projectId = await getProjectId(req as RequestWithProjectParam);
-  reply.send({ visitors: await eventBuffer.getActiveVisitorCount(projectId) });
+  reply.send({ visitors: await getActiveVisitorCount(projectId) });
 }
 
 // ---------------------------------------------------------------------------

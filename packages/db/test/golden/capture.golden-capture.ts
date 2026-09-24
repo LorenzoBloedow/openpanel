@@ -8,22 +8,6 @@
 import pg from 'pg';
 import { afterAll, beforeAll, it, vi } from 'vitest';
 
-// The buffers construct Redis-backed singletons at import; the read paths
-// only touch these methods.
-vi.mock('../../src/buffers', () => {
-  const noop = async () => undefined;
-  const buffer = { add: noop, tryFlush: noop, getBufferSize: async () => 0 };
-  return {
-    eventBuffer: { ...buffer, getActiveVisitorCount: async () => 0 },
-    profileBuffer: { ...buffer, fetchFromCache: async () => null },
-    botBuffer: buffer,
-    sessionBuffer: { ...buffer, getExistingSession: async () => null },
-    groupBuffer: buffer,
-    replayBuffer: buffer,
-    profileBackfillBuffer: buffer,
-  };
-});
-
 // The tRPC cacheMiddleware (router cases) still calls getRedisCache, which
 // the Redis-free @openpanel/redis no longer exports: a cache that never hits.
 vi.mock('@openpanel/redis', async (importOriginal) => ({

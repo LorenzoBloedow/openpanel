@@ -1,10 +1,10 @@
 import { getTrustedIpFromHeaders } from '@openpanel/common/server/get-client-ip';
-import { LRUCache, getRedisCache } from '@openpanel/redis';
+import { db } from '@openpanel/db';
+import { LRUCache } from '@openpanel/redis';
+import { getEnv } from '@openpanel/runtime';
 import { TRPCError } from '@trpc/server';
-import type { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
 
-/** `fastify` is not a direct dependency here, so borrow the type tRPC exposes. */
-type FastifyRequest = CreateFastifyContextOptions['req'];
+import type { TrpcRequestInfo } from './trpc';
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -41,17 +41,38 @@ export interface RateLimitOptions {
   windowMs: number;
 }
 
+/** The Workers rate limiting binding (`ratelimits` in wrangler.jsonc). */
+interface RateLimitBinding {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
 /**
- * Per-process fallback used only while Redis is unreachable. Without it a Redis
- * blip would leave the sign-in endpoint completely unthrottled.
+ * The window counting runs on Workers rate limiting bindings, whose period
+ * is 10 or 60 seconds: every auth limit uses a 60 s window (the 30 s ones
+ * became 60 s). One binding per limit, so procedures with different limits
+ * never share a counter.
+ */
+const BINDINGS: Record<number, string> = {
+  3: 'RL_AUTH_3',
+  5: 'RL_AUTH_5',
+};
+
+function getBinding(max: number): RateLimitBinding | undefined {
+  const name = BINDINGS[max];
+  if (!name) {
+    return undefined;
+  }
+  return getEnv<Record<string, RateLimitBinding | undefined>>()[name];
+}
+
+/**
+ * Per-isolate counter, used when no binding is configured (Node tests and
+ * scripts) or the binding fails, so the endpoint is never unthrottled.
  */
 const fallbackCounters = new LRUCache<string, number>({
   max: 10_000,
   ttl: 5 * MINUTE,
 });
-
-const key = (kind: string, path: string, fingerprint: string) =>
-  `rl:${kind}:${path}:${fingerprint}`;
 
 function getBlockDurationMs(strikes: number): number {
   return Math.min(BLOCK_BASE_MS * 2 ** (strikes - 1), BLOCK_MAX_MS);
@@ -74,11 +95,8 @@ function formatDuration(ms: number): string {
  * headers that `getClientIpFromHeaders` prefers - those are attacker-controlled
  * and would make every request its own bucket.
  */
-export function getRateLimitIdentity(req: FastifyRequest) {
-  const { ip, header } = getTrustedIpFromHeaders(
-    req.headers,
-    req.socket?.remoteAddress,
-  );
+export function getRateLimitIdentity(req: Pick<TrpcRequestInfo, 'headers'>) {
+  const { ip, header } = getTrustedIpFromHeaders(req.headers);
 
   return {
     // Everything we cannot identify shares one bucket. Fail closed: an edge
@@ -95,44 +113,104 @@ function tooManyRequests(blockMs: number): TRPCError {
   });
 }
 
+interface Escalation {
+  strikes: number;
+  blockMs: number;
+}
+
 /**
- * Record a strike and (re)arm the block. Returns the new strike count and how
- * long the client is locked out for.
+ * `strikes` → the SQL for its block duration (same curve as
+ * getBlockDurationMs). The raw queries below only interpolate these numeric
+ * constants; path and fingerprint are bind parameters.
  */
-async function escalate(strikeKey: string, blockKey: string, cooldownKey: string) {
-  const redis = getRedisCache();
+const blockUntilSql = (strikesSql: string) =>
+  `now() + make_interval(secs => LEAST(${BLOCK_BASE_MS / SECOND} * power(2, (${strikesSql}) - 1), ${BLOCK_MAX_MS / SECOND}))`;
 
-  // Counter and its expiry go out together: a strike key that lost its TTL
-  // would keep an IP at the maximum lockout forever.
-  const results = await redis
-    .pipeline()
-    .incr(strikeKey)
-    .pexpire(strikeKey, STRIKE_TTL_MS)
-    .exec();
+/**
+ * Record a strike and (re)arm the block, atomically. A strike older than a
+ * quiet day starts over at one.
+ */
+async function escalate(path: string, fingerprint: string): Promise<Escalation> {
+  const nextStrikes = `CASE WHEN b."strikeExpiresAt" > now() THEN LEAST(b.strikes + 1, ${MAX_STRIKES}) ELSE 1 END`;
+  const rows = await db.$queryRawUnsafe<{ strikes: number }[]>(
+    `INSERT INTO rate_limit_blocks AS b
+       (path, fingerprint, strikes, "blockedUntil", "strikeExpiresAt", "cooldownUntil", "createdAt", "updatedAt")
+     VALUES ($1, $2, 1, ${blockUntilSql('1')},
+       now() + make_interval(secs => ${STRIKE_TTL_MS / SECOND}),
+       now() + make_interval(secs => ${ESCALATION_COOLDOWN_MS / SECOND}), now(), now())
+     ON CONFLICT (path, fingerprint) DO UPDATE SET
+       strikes = ${nextStrikes},
+       "blockedUntil" = ${blockUntilSql(nextStrikes)},
+       "strikeExpiresAt" = now() + make_interval(secs => ${STRIKE_TTL_MS / SECOND}),
+       "cooldownUntil" = now() + make_interval(secs => ${ESCALATION_COOLDOWN_MS / SECOND}),
+       "updatedAt" = now()
+     RETURNING strikes`,
+    path,
+    fingerprint,
+  );
+  const strikes = Number(rows[0]?.strikes ?? 1);
+  return { strikes, blockMs: getBlockDurationMs(strikes) };
+}
 
-  const strikes = Math.min(Number(results?.[0]?.[1] ?? 1), MAX_STRIKES);
-  const blockMs = getBlockDurationMs(strikes);
+/**
+ * Knocking during a block extends it, at most once per cooldown. Returns
+ * null when the cooldown hasn't passed (no new strike).
+ */
+async function escalateWhileBlocked(
+  path: string,
+  fingerprint: string,
+): Promise<Escalation | null> {
+  const nextStrikes = `LEAST(b.strikes + 1, ${MAX_STRIKES})`;
+  const rows = await db.$queryRawUnsafe<{ strikes: number }[]>(
+    `UPDATE rate_limit_blocks AS b SET
+       strikes = ${nextStrikes},
+       "blockedUntil" = ${blockUntilSql(nextStrikes)},
+       "strikeExpiresAt" = now() + make_interval(secs => ${STRIKE_TTL_MS / SECOND}),
+       "cooldownUntil" = now() + make_interval(secs => ${ESCALATION_COOLDOWN_MS / SECOND}),
+       "updatedAt" = now()
+     WHERE b.path = $1 AND b.fingerprint = $2 AND b."cooldownUntil" <= now()
+     RETURNING strikes`,
+    path,
+    fingerprint,
+  );
+  if (rows.length === 0) {
+    return null;
+  }
+  const strikes = Number(rows[0]!.strikes);
+  return { strikes, blockMs: getBlockDurationMs(strikes) };
+}
 
-  await redis
-    .pipeline()
-    .set(blockKey, String(strikes), 'PX', blockMs)
-    .set(cooldownKey, '1', 'PX', ESCALATION_COOLDOWN_MS)
-    .exec();
-
-  return { strikes, blockMs };
+/** Is this request within the window's allowance? */
+async function withinWindow(
+  { path, fingerprint, max, windowMs }: RateLimitOptions & { path: string; fingerprint: string },
+  req: Pick<TrpcRequestInfo, 'log'>,
+): Promise<boolean> {
+  const binding = getBinding(max);
+  if (binding) {
+    try {
+      const { success } = await binding.limit({ key: `${path}:${fingerprint}` });
+      return success;
+    } catch (error) {
+      req.log?.error({ err: error, path }, 'rate limit binding unavailable');
+    }
+  }
+  const counterKey = `${path}:${fingerprint}`;
+  const hits = (fallbackCounters.get(counterKey) ?? 0) + 1;
+  fallbackCounters.set(counterKey, hits, { ttl: windowMs });
+  return hits <= max;
 }
 
 /**
  * IP rate limiting with exponential lockout.
  *
+ * Counting per window runs on the Workers rate limiting bindings; the
+ * lockout (strikes, block, cooldown) lives in Postgres (`rate_limit_blocks`),
+ * read on every guarded call and written only on violations.
+ *
  * Blocks are keyed per procedure, so an office NAT that trips the sign-in limit
- * does not lose the rest of the dashboard.
- *
- * Every block is logged as `rate limit blocked` with the resolved IP so
- * repeat offenders can be pulled out of the logs and blackholed at the edge:
- *
- *   SELECT LogAttributes['ip'], count() FROM otel_logs
- *   WHERE Body = 'rate limit blocked' GROUP BY 1 ORDER BY 2 DESC
+ * does not lose the rest of the dashboard. Every block is logged as
+ * `rate limit blocked` with the resolved IP so repeat offenders can be
+ * pulled out of the logs and blocked at the edge.
  */
 export async function enforceRateLimit({
   req,
@@ -140,21 +218,13 @@ export async function enforceRateLimit({
   max,
   windowMs,
 }: RateLimitOptions & {
-  req: FastifyRequest;
+  req: Pick<TrpcRequestInfo, 'headers' | 'log'>;
   /** tRPC procedure path - blocks are scoped to it. */
   path: string;
 }): Promise<void> {
   const { fingerprint, ipHeader } = getRateLimitIdentity(req);
 
-  const counterKey = key('count', path, fingerprint);
-  const strikeKey = key('strike', path, fingerprint);
-  const blockKey = key('block', path, fingerprint);
-  const cooldownKey = key('cooldown', path, fingerprint);
-
-  const log = (
-    message: string,
-    payload: { strikes: number; blockMs: number; hits?: number },
-  ) =>
+  const log = (message: string, payload: Escalation & { hits?: number }) =>
     req.log?.warn(
       {
         ip: fingerprint,
@@ -164,92 +234,59 @@ export async function enforceRateLimit({
         strikes: payload.strikes,
         blockedForSeconds: Math.ceil(payload.blockMs / SECOND),
         blockedUntil: new Date(Date.now() + payload.blockMs).toISOString(),
-        hits: payload.hits,
         max,
         windowMs,
       },
       message,
     );
 
-  let blockTtlMs: number;
-  let hits: number;
-
+  let blockedUntil: Date | null = null;
   try {
-    const redis = getRedisCache();
-    const results = await redis
-      .pipeline()
-      .pttl(blockKey)
-      .pttl(counterKey)
-      .incr(counterKey)
-      .exec();
-
-    // `pttl` returns -2 when the key is gone and -1 when it has no expiry.
-    blockTtlMs = Number(results?.[0]?.[1] ?? -2);
-    const counterTtlMs = Number(results?.[1]?.[1] ?? -2);
-    hits = Number(results?.[2]?.[1] ?? 1);
-
-    // The window opens on the first hit. Re-arming a counter that somehow lost
-    // its expiry matters too: without a TTL it would count up forever and lock
-    // the IP out permanently after `max` requests.
-    if (hits === 1 || counterTtlMs === -1) {
-      await redis.pexpire(counterKey, windowMs);
-    }
+    const block = await db.rateLimitBlock.findUnique({
+      where: { path_fingerprint: { path, fingerprint } },
+      select: { blockedUntil: true },
+    });
+    blockedUntil = block?.blockedUntil ?? null;
   } catch (error) {
     req.log?.error({ err: error, path }, 'rate limit store unavailable');
-    const fallbackHits = (fallbackCounters.get(counterKey) ?? 0) + 1;
-    fallbackCounters.set(counterKey, fallbackHits, { ttl: windowMs });
-    if (fallbackHits > max) {
-      throw tooManyRequests(windowMs);
-    }
-    return;
   }
 
-  if (blockTtlMs > 0) {
-    // Still locked out. Knocking during a block is itself abusive, so it
-    // extends the lockout instead of letting it run down - but at most once per
-    // cooldown, so a frustrated human cannot punish themselves the way a bot
-    // hammering at full speed does.
-    let escalated: { strikes: number; blockMs: number } | null = null;
-
+  const blockMs = blockedUntil ? blockedUntil.getTime() - Date.now() : 0;
+  if (blockMs > 0) {
+    let escalated: Escalation | null = null;
     try {
-      const acquired = await getRedisCache().set(
-        cooldownKey,
-        '1',
-        'PX',
-        ESCALATION_COOLDOWN_MS,
-        'NX',
-      );
-
-      if (acquired) {
-        escalated = await escalate(strikeKey, blockKey, cooldownKey);
-      }
+      escalated = await escalateWhileBlocked(path, fingerprint);
     } catch (error) {
       req.log?.error({ err: error, path }, 'rate limit store unavailable');
     }
-
     if (!escalated) {
-      throw tooManyRequests(blockTtlMs);
+      throw tooManyRequests(blockMs);
     }
-
     log('rate limit blocked', escalated);
     throw tooManyRequests(escalated.blockMs);
   }
 
-  if (hits > max) {
-    let escalated: { strikes: number; blockMs: number };
-
-    try {
-      escalated = await escalate(strikeKey, blockKey, cooldownKey);
-      // Start the next window clean so the block, not a stale counter, decides.
-      await getRedisCache().del(counterKey);
-    } catch (error) {
-      req.log?.error({ err: error, path }, 'rate limit store unavailable');
-      throw tooManyRequests(windowMs);
-    }
-
-    log('rate limit blocked', { ...escalated, hits });
-    throw tooManyRequests(escalated.blockMs);
+  if (await withinWindow({ path, fingerprint, max, windowMs }, req)) {
+    return;
   }
+
+  let escalated: Escalation;
+  try {
+    escalated = await escalate(path, fingerprint);
+  } catch (error) {
+    req.log?.error({ err: error, path }, 'rate limit store unavailable');
+    throw tooManyRequests(windowMs);
+  }
+  log('rate limit blocked', escalated);
+  throw tooManyRequests(escalated.blockMs);
+}
+
+/** Drop lockouts whose strikes have decayed (maintenance cron). */
+export async function deleteExpiredRateLimitBlocks(): Promise<number> {
+  const { count } = await db.rateLimitBlock.deleteMany({
+    where: { strikeExpiresAt: { lt: new Date() } },
+  });
+  return count;
 }
 
 export const __testing = {
@@ -259,4 +296,6 @@ export const __testing = {
   ESCALATION_COOLDOWN_MS,
   getBlockDurationMs,
   formatDuration,
+  escalate,
+  escalateWhileBlocked,
 };

@@ -7,7 +7,7 @@ import {
   getId,
   getProjectByIdCached,
 } from '@openpanel/db';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from '@/compat/fastify';
 import { z } from 'zod';
 import { HttpError } from '@/utils/errors';
 

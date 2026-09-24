@@ -4,10 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm with-env vite dev --port 3000",
-    "start_deprecated": "pnpm with-env node .output/server/index.mjs",
     "preview": "vite preview",
     "deploy": "pnpm build && npx wrangler deploy",
-    "cf-typegen": "wrangler types",
+    "cf-typegen": "wrangler types --strict-vars false",
     "build": "pnpm with-env vite build",
     "serve": "vite preview",
     "format": "biome format",
@@ -69,7 +68,6 @@
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/match-sorter-utils": "^8.19.4",
-    "@tanstack/nitro-v2-vite-plugin": "^1.133.19",
     "@tanstack/react-devtools": "^0.7.6",
     "@tanstack/react-query": "^5.90.2",
     "@tanstack/react-query-devtools": "^5.90.2",
@@ -166,7 +164,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@cloudflare/vite-plugin": "1.33.2",
+    "@cloudflare/vite-plugin": "^1.58.0",
     "@openpanel/db": "workspace:*",
     "@openpanel/trpc": "workspace:*",
     "@tanstack/devtools-event-client": "^0.3.3",
@@ -188,6 +186,6 @@
     "vite": "^7.3.0",
     "vitest": "^3.0.5",
     "web-vitals": "^4.2.4",
-    "wrangler": "4.85.0"
+    "wrangler": "^4.137.0"
   }
 }

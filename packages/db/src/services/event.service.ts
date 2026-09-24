@@ -1,10 +1,7 @@
-import { DateTime, toDots } from '@openpanel/common';
 import { cacheable } from '@openpanel/redis';
 import type { IChartEventFilter } from '@openpanel/validation';
 import { assocPath, last, mergeDeepRight, path } from 'ramda';
 import sqlstring from 'sqlstring';
-import { v4 as uuid } from 'uuid';
-import { botBuffer, eventBuffer } from '../buffers';
 import {
   ch,
   chQuery,
@@ -19,12 +16,8 @@ import { createSqlBuilder, type SqlBuilderObject } from '../sql-builder';
 import { resolveMaxLookbackDays } from './lookback';
 import { getEventFiltersWhereClause } from './chart.service';
 import { buildFilterWhere, profileJoinColumns } from './filter-where.service';
-import type { IServiceProfile, IServiceUpsertProfile } from './profile.service';
-import {
-  getProfileById,
-  getProfilesCached,
-  upsertProfile,
-} from './profile.service';
+import type { IServiceProfile } from './profile.service';
+import { getProfileById, getProfilesCached } from './profile.service';
 import type { IClickhouseSession } from './session.service';
 
 export type IImportedEvent = Omit<
@@ -361,118 +354,6 @@ export async function getEvents(
   return events.map(transformEvent);
 }
 
-/**
- * Persist an event to ClickHouse (via the buffer) and upsert the profile
- * on session boundaries.
- *
- * Does NOT touch the session-row buffer. Callers producing non-session_start
- * / session_end events are responsible for calling `sessionBuffer.ingest()`
- * before this. `incoming-event.ts` is the only such caller today; everywhere
- * else (session_start, session_end) the session-row update is correctly a
- * no-op anyway.
- */
-export async function createEvent(payload: IServiceCreateEventPayload) {
-  if (!payload.profileId && payload.deviceId) {
-    payload.profileId = payload.deviceId;
-  }
-
-  const event: IClickhouseEvent = {
-    id: uuid(),
-    name: payload.name,
-    device_id: payload.deviceId,
-    profile_id: payload.profileId ? String(payload.profileId) : '',
-    project_id: payload.projectId,
-    session_id: payload.sessionId,
-    properties: toDots(payload.properties),
-    path: payload.path ?? '',
-    origin: payload.origin ?? '',
-    created_at: DateTime.fromJSDate(payload.createdAt)
-      .setZone('UTC')
-      .toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-    country: payload.country ?? '',
-    city: payload.city ?? '',
-    region: payload.region ?? '',
-    longitude: payload.longitude ?? null,
-    latitude: payload.latitude ?? null,
-    os: payload.os ?? '',
-    os_version: payload.osVersion ?? '',
-    browser: payload.browser ?? '',
-    browser_version: payload.browserVersion ?? '',
-    device: payload.device ?? '',
-    brand: payload.brand ?? '',
-    model: payload.model ?? '',
-    duration: payload.duration ?? 0,
-    referrer: payload.referrer ?? '',
-    referrer_name: payload.referrerName ?? '',
-    referrer_type: payload.referrerType ?? '',
-    imported_at: null,
-    // Ingestion time, used as the export cursor. Stamped here rather than via the
-    // column DEFAULT so backdated events (server-side, offline, past timestamps)
-    // still get a real, monotonic-ish insert time instead of their event time.
-    inserted_at: DateTime.utc().toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-    sdk_name: payload.sdkName ?? '',
-    sdk_version: payload.sdkVersion ?? '',
-    revenue: payload.revenue,
-    groups: payload.groups ?? [],
-  };
-
-  eventBuffer.add(event);
-
-  const promises: Promise<unknown>[] = [];
-
-  if (payload.profileId) {
-    const profile: IServiceUpsertProfile = {
-      id: String(payload.profileId),
-      isExternal: payload.profileId !== payload.deviceId,
-      projectId: payload.projectId,
-      properties: {
-        path: payload.path,
-        country: payload.country,
-        city: payload.city,
-        region: payload.region,
-        longitude: payload.longitude,
-        latitude: payload.latitude,
-        os: payload.os,
-        os_version: payload.osVersion,
-        browser: payload.browser,
-        browser_version: payload.browserVersion,
-        device: payload.device,
-        brand: payload.brand,
-        model: payload.model,
-        referrer: payload.referrer,
-        referrer_name: payload.referrerName,
-        referrer_type: payload.referrerType,
-      },
-    };
-
-    // Only upsert the profile on session boundaries.
-    // - session_start covers fresh activity.
-    // - session_end is synthesized server-side by the worker.
-    // Identified users' explicit profile writes (op.identify(), op.setProfile())
-    // go through the controller path and are not affected by this branch.
-    //
-    // `isFromEvent=true` activates profile-buffer's cache shortcut: if the
-    // profile is in the 1h Redis cache (i.e. recently flushed), the add is
-    // skipped. Trade-off: profile.last_seen_at granularity is capped at the
-    // cache TTL (~1h) rather than per-session. We accept this because
-    // (a) profile-buffer was the leading indicator in the 2026-05-20 buildup
-    //     and was processing ~2 writes per session per anonymous user;
-    // (b) the bulk of those writes carried no new information (anonymous
-    //     profile data is event-derived and stable across a session);
-    // (c) recency queries should derive from event timestamps, not from
-    //     profile.last_seen_at.
-    if (payload.name === 'session_start' || payload.name === 'session_end') {
-      promises.push(upsertProfile(profile, true));
-    }
-  }
-
-  await Promise.all(promises);
-
-  return {
-    document: event,
-  };
-}
-
 export interface GetEventListOptions {
   projectId: string;
   profileId?: string;
@@ -803,23 +684,6 @@ export async function getEventsCount({
   );
 
   return res[0]?.count ?? 0;
-}
-
-export function createBotEvent({
-  name,
-  type,
-  projectId,
-  createdAt,
-  path,
-}: IServiceCreateBotEventPayload) {
-  return botBuffer.add({
-    id: uuid(),
-    name,
-    type,
-    project_id: projectId,
-    path,
-    created_at: formatClickhouseDate(createdAt),
-  });
 }
 
 export function getConversionEventNames(projectId: string) {

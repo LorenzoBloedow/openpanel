@@ -1,3 +1,4 @@
+import type { SessionValidationResult } from '@openpanel/auth';
 import type { IServiceClientWithProject } from '@openpanel/db/src/services/clients.service';
 import type { ILogger } from '@openpanel/logger';
 
@@ -21,6 +22,7 @@ interface OpenPanelSecrets {
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   GOOGLE_REDIRECT_URI?: string;
+  GSC_GOOGLE_REDIRECT_URI?: string;
   ALLOW_REGISTRATION?: string;
   ALLOW_INVITATION?: string;
 }
@@ -48,6 +50,9 @@ export interface AppVariables {
   clientSecretAuth?: boolean;
   /** Parsed JSON body, read once by the first middleware that needs it. */
   body?: unknown;
+  /** Dashboard routes: parsed cookies and the validated session. */
+  cookies: Record<string, string | undefined>;
+  session: SessionValidationResult;
 }
 
 export interface AppEnv {

@@ -1,83 +1,89 @@
-import urlMetadata from 'url-metadata';
+import { safeFetch } from '@openpanel/common/server/safe-fetch';
+
+/**
+ * The favicon and OG image of a page, read with HTMLRewriter (a Workers
+ * built-in) from the first megabyte of its HTML.
+ */
+
+const PAGE_TIMEOUT_MS = 500;
+const PAGE_MAX_BYTES = 1_000_000;
+const ICON_RELS = ['shortcut icon', 'icon', 'apple-touch-icon'];
+const OG_IMAGE_KEYS = [
+  'og:image:secure_url',
+  'og:image:url',
+  'og:image',
+  'twitter:image:src',
+  'twitter:image',
+];
 
 function fallbackFavicon(url: string) {
   try {
     const hostname = new URL(url).hostname;
     return `https://icons.duckduckgo.com/ip3/${hostname}.ico`;
   } catch {
-    // If URL parsing fails, use the original string
     return `https://icons.duckduckgo.com/ip3/${url}.ico`;
   }
 }
 
-function findBestFavicon(favicons: UrlMetaData['favicons']) {
-  const match = favicons
-    .sort((a, b) => {
-      return a.rel.length - b.rel.length;
-    })
-    .find(
-      (favicon) =>
-        favicon.rel === 'shortcut icon' ||
-        favicon.rel === 'icon' ||
-        favicon.rel === 'apple-touch-icon',
-    );
-
-  if (match) {
-    return match.href;
+function resolve(href: string, base: string): string | null {
+  try {
+    return new URL(href, base).toString();
+  } catch {
+    return null;
   }
-  return null;
-}
-
-function findBestOgImage(data: UrlMetaData): string | null {
-  // Priority order for OG images
-  const candidates = [
-    data['og:image:secure_url'],
-    data['og:image:url'],
-    data['og:image'],
-    data['twitter:image:src'],
-    data['twitter:image'],
-  ];
-
-  for (const candidate of candidates) {
-    if (candidate?.trim()) {
-      return candidate.trim();
-    }
-  }
-
-  return null;
-}
-
-function transform(data: UrlMetaData, url: string) {
-  const favicon = findBestFavicon(data.favicons);
-  const ogImage = findBestOgImage(data);
-
-  return {
-    favicon: favicon ? new URL(favicon, url).toString() : fallbackFavicon(url),
-    ogImage: ogImage ? new URL(ogImage, url).toString() : null,
-  };
-}
-
-interface UrlMetaData {
-  favicons: {
-    rel: string;
-    href: string;
-    sizes: string;
-  }[];
-  'og:image'?: string;
-  'og:image:url'?: string;
-  'og:image:secure_url'?: string;
-  'twitter:image'?: string;
-  'twitter:image:src'?: string;
 }
 
 export async function parseUrlMeta(url: string) {
   try {
-    const metadata = (await urlMetadata(url, {
-      timeout: 500,
-    })) as UrlMetaData;
-    const data = transform(metadata, url);
-    return data;
-  } catch (err) {
+    const page = await safeFetch(url, {
+      timeoutMs: PAGE_TIMEOUT_MS,
+      maxBytes: PAGE_MAX_BYTES,
+      headers: { accept: 'text/html,application/xhtml+xml' },
+    });
+    const icons: { rel: string; href: string }[] = [];
+    const meta: Record<string, string> = {};
+
+    // biome-ignore lint/correctness/noUndeclaredVariables: a workerd global
+    await new HTMLRewriter()
+      .on('link[rel][href]', {
+        element(element) {
+          const rel = (element.getAttribute('rel') ?? '').trim().toLowerCase();
+          const href = element.getAttribute('href');
+          if (href && ICON_RELS.includes(rel)) {
+            icons.push({ rel, href });
+          }
+        },
+      })
+      .on('meta[content]', {
+        element(element) {
+          const key = (
+            element.getAttribute('property') ??
+            element.getAttribute('name') ??
+            ''
+          ).toLowerCase();
+          const content = element.getAttribute('content')?.trim();
+          if (content && OG_IMAGE_KEYS.includes(key) && !(key in meta)) {
+            meta[key] = content;
+          }
+        },
+      })
+      .transform(
+        new Response(new Uint8Array(page.body), {
+          headers: { 'content-type': 'text/html' },
+        }),
+      )
+      .arrayBuffer();
+
+    // The shortest matching rel wins ("icon" over "apple-touch-icon").
+    const icon = [...icons].sort((a, b) => a.rel.length - b.rel.length)[0];
+    const ogImage = OG_IMAGE_KEYS.map((key) => meta[key]).find(Boolean);
+    const base = page.finalUrl || url;
+
+    return {
+      favicon: (icon && resolve(icon.href, base)) || fallbackFavicon(url),
+      ogImage: ogImage ? resolve(ogImage, base) : null,
+    };
+  } catch {
     return {
       favicon: fallbackFavicon(url),
       ogImage: null,

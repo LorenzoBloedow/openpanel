@@ -134,12 +134,8 @@ export const importRouter = createTRPCRouter({
         level: 'write',
       });
 
-      if (importRecord.jobId) {
-        const job = await importQueue.getJob(importRecord.jobId);
-        if (job) {
-          await job.remove();
-        }
-      }
+      // Queued import jobs can't be withdrawn from Cloudflare Queues; the
+      // import job checks that its record still exists before running.
 
       return db.import.delete({
         where: {

@@ -1,7 +1,7 @@
 import {
   ch,
   clix,
-  eventBuffer,
+  getActiveVisitorCount,
   getChartPrevStartEndDate,
   getChartStartEndDate,
   getConversionEventNames,
@@ -150,7 +150,7 @@ export const overviewRouter = createTRPCRouter({
   liveVisitors: overviewProcedure
     .input(z.object({ projectId: z.string(), shareId: z.string().optional() }))
     .query(async ({ input }) => {
-      return eventBuffer.getActiveVisitorCount(input.projectId);
+      return getActiveVisitorCount(input.projectId);
     }),
 
   liveData: overviewProcedure

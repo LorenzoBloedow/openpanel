@@ -1,6 +1,6 @@
 import { Prisma } from '@openpanel/db';
-import type { FastifyRequest } from 'fastify';
-import type { FastifyPluginAsyncZodOpenApi } from 'fastify-zod-openapi';
+import type { FastifyRequest } from '@/compat/fastify';
+import type { FastifyPluginAsyncZodOpenApi } from '@/compat/fastify';
 import {
   chartSchemeFull,
   eventsScheme,
@@ -13,7 +13,7 @@ import { activateRateLimiter } from '@/utils/rate-limiter';
 const TAGS = ['Export'] as const;
 
 const exportRouter: FastifyPluginAsyncZodOpenApi = async (fastify) => {
-  await activateRateLimiter({ fastify, max: 100, timeWindow: '10 seconds' });
+  activateRateLimiter({ fastify, max: 100, timeWindow: '10 seconds' });
 
   fastify.addHook('preHandler', async (req: FastifyRequest, reply) => {
     try {

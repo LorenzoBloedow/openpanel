@@ -1,4 +1,3 @@
-import crypto from 'node:crypto';
 import { logger } from '@/utils/logger';
 import { parseUrlMeta } from '@/utils/parseUrlMeta';
 import {
@@ -8,33 +7,30 @@ import {
   processOgImage,
 } from '@/utils/image-proxy';
 import { BlockedUrlError, assertPublicUrl, safeFetch } from '@/utils/safe-fetch';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import { getCachedImage, setCachedImage } from '@/utils/image-cache';
+import type { FastifyReply, FastifyRequest } from '@/compat/fastify';
 
 import {
   DEFAULT_IP_HEADER_ORDER,
   getClientIpFromHeaders,
 } from '@openpanel/common/server/get-client-ip';
-import { TABLE_NAMES, ch, chQuery, formatClickhouseDate } from '@openpanel/db';
-import { type GeoLocation, getGeoLocation } from '@openpanel/geo';
-import { getCache, getRedisCache } from '@openpanel/redis';
+import { anQuery, anQueryOne } from '@openpanel/db/src/analytics/client';
+import { sql } from '@openpanel/db/src/analytics/sql';
+import {
+  type CfGeoProperties,
+  type GeoLocation,
+  getGeoLocation,
+} from '@openpanel/geo';
+import { getCache } from '@openpanel/redis';
+import { unavailable } from '@openpanel/runtime';
 
 interface GetFaviconParams {
   url: string;
 }
 
 // Configuration
-const TTL_SECONDS = 60 * 60 * 24; // 24h
 const MAX_BYTES = 1_000_000; // 1MB cap
 const USER_AGENT = 'OpenPanel-FaviconProxy/1.0 (+https://openpanel.dev)';
-
-// Helper functions
-function createCacheKey(url: string, prefix = 'favicon'): string {
-  const hash = crypto.createHash('sha256').update(url).digest('hex');
-  // v3: entries written before the SVG/raw-passthrough fix could hold
-  // attacker-controlled bytes with an attacker-chosen content type, so the
-  // old namespace is abandoned rather than served from.
-  return `${prefix}:v3:${hash}`;
-}
 
 /**
  * Shape check only. The destination is validated by `assertPublicUrl` /
@@ -49,41 +45,15 @@ function validateUrl(raw?: string): URL | null {
       throw new Error('Only http/https URLs are allowed');
     }
     return url;
-  } catch (error) {
+  } catch {
     return null;
   }
-}
-
-// Binary cache functions (more efficient than base64)
-async function getFromCacheBinary(
-  key: string,
-): Promise<{ buffer: Buffer; contentType: string } | null> {
-  const redis = getRedisCache();
-  const [bufferBase64, contentType] = await Promise.all([
-    redis.get(key),
-    redis.get(`${key}:ctype`),
-  ]);
-
-  if (!bufferBase64 || !contentType) return null;
-  return { buffer: Buffer.from(bufferBase64, 'base64'), contentType };
-}
-
-async function setToCacheBinary(
-  key: string,
-  buffer: Buffer,
-  contentType: string,
-): Promise<void> {
-  const redis = getRedisCache();
-  await Promise.all([
-    redis.set(key, buffer.toString('base64'), 'EX', TTL_SECONDS),
-    redis.set(`${key}:ctype`, contentType, 'EX', TTL_SECONDS),
-  ]);
 }
 
 // Fetch image with SSRF protection, timeout and size limits
 async function fetchImage(
   url: URL,
-): Promise<{ buffer: Buffer; contentType: string; status: number }> {
+): Promise<{ buffer: Uint8Array; contentType: string; status: number }> {
   try {
     // `safeFetch` validates and pins every hop, so a redirect cannot be used
     // to reach an internal address after the initial URL checks out.
@@ -168,10 +138,8 @@ export async function getFavicon(
     // leaked to the DuckDuckGo fallback below either.
     await assertPublicUrl(url);
 
-    const cacheKey = createCacheKey(url.toString());
-
     // Check cache first
-    const cached = await getFromCacheBinary(cacheKey);
+    const cached = await getCachedImage(url.toString(), 'favicon');
     if (cached) {
       setImageSecurityHeaders(reply, cached.contentType);
       reply.header('Cache-Control', 'public, max-age=604800, immutable');
@@ -261,8 +229,9 @@ export async function getFavicon(
         .send('Not found');
     }
 
-    // Process the image (resize to 30x30 PNG, or serve ICO as-is)
-    const processedBuffer = await processImage(
+    // Resize to a 30px PNG, or serve a verified icon/raster as-is. The
+    // response type comes from what we produced, never from the upstream.
+    const processed = await processImage(
       buffer,
       imageUrl.toString(),
       contentType,
@@ -272,23 +241,21 @@ export async function getFavicon(
       {
         originalUrl: url.toString(),
         originalBufferLength: buffer.length,
-        processedBufferLength: processedBuffer.length,
+        processedBufferLength: processed.buffer.length,
       },
       'Favicon processing result',
     );
 
-    // `processImage` either passed an ICO through untouched or rasterized to
-    // PNG, so the response type is derived from what we produced rather than
-    // from whatever the upstream server claimed.
-    const responseContentType =
-      processedBuffer === buffer ? 'image/x-icon' : 'image/png';
+    await setCachedImage(
+      url.toString(),
+      'favicon',
+      processed.buffer,
+      processed.contentType,
+    );
 
-    // Cache the result with correct content type
-    await setToCacheBinary(cacheKey, processedBuffer, responseContentType);
-
-    setImageSecurityHeaders(reply, responseContentType);
+    setImageSecurityHeaders(reply, processed.contentType);
     reply.header('Cache-Control', 'public, max-age=3600, immutable');
-    return reply.send(processedBuffer);
+    return reply.send(processed.buffer);
   } catch (error: any) {
     if (error instanceof BlockedUrlError) {
       logger.warn(
@@ -316,81 +283,43 @@ export async function getFavicon(
   }
 }
 
+/**
+ * The Cache API can't enumerate keys, so the proxy caches can't be cleared
+ * wholesale; entries expire after a day. Kept for API compatibility.
+ */
 export async function clearFavicons(
-  request: FastifyRequest,
+  _request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const redis = getRedisCache();
-  const keys = await redis.keys('favicon:*');
-
-  // Delete both the binary data and content-type keys
-  for (const key of keys) {
-    await redis.del(key);
-    await redis.del(`${key}:ctype`);
-  }
-
   return reply.status(200).send('OK');
 }
 
 export async function clearOgImages(
-  request: FastifyRequest,
+  _request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const redis = getRedisCache();
-  const keys = await redis.keys('og:*');
-
-  // Delete both the binary data and content-type keys
-  for (const key of keys) {
-    await redis.del(key);
-    await redis.del(`${key}:ctype`);
-  }
-
   return reply.status(200).send('OK');
 }
 
-export async function ping(
-  request: FastifyRequest<{
-    Body: {
-      domain: string;
-      count: number;
-    };
-  }>,
-  reply: FastifyReply,
-) {
-  try {
-    await ch.insert({
-      table: TABLE_NAMES.self_hosting,
-      values: [
-        {
-          domain: request.body.domain,
-          count: request.body.count,
-          created_at: formatClickhouseDate(new Date(), true),
-        },
-      ],
-      format: 'JSONEachRow',
-    });
-    reply.status(200).send({
-      message: 'Success',
-      count: request.body.count,
-      domain: request.body.domain,
-    });
-  } catch (error) {
-    request.log.error({ err: error }, 'Failed to insert ping');
-    reply.status(500).send({
-      error: 'Failed to insert ping',
-    });
-  }
-}
+/** Self-hosting telemetry is collected by openpanel.dev, not on Cloudflare. */
+export const ping = unavailable<
+  (request: FastifyRequest, reply: FastifyReply) => Promise<never>
+>('telemetry');
 
-export async function stats(request: FastifyRequest, reply: FastifyReply) {
+export async function stats(_request: FastifyRequest, reply: FastifyReply) {
   const res = await getCache('api:stats', 60 * 60, async () => {
-    const projects = await chQuery<{ project_id: string; count: number }>(
-      `SELECT project_id, count(*) as count from ${TABLE_NAMES.events} GROUP by project_id order by count()`,
-    );
-    const last24h = await chQuery<{ count: number }>(
-      `SELECT count(*) as count from ${TABLE_NAMES.events} WHERE created_at > now() - interval '24 hours'`,
-    );
-    return { projects, last24hCount: last24h[0]?.count || 0 };
+    const [projects, last24h] = await Promise.all([
+      anQuery<{ project_id: string; count: number }>(sql`
+        SELECT project_id, sum(event_count)::bigint AS count
+        FROM analytics.event_names
+        GROUP BY project_id
+      `),
+      anQueryOne<{ count: number }>(sql`
+        SELECT count(*)::bigint AS count FROM analytics.events
+        WHERE created_at > now() - interval '24 hours'
+      `),
+    ]);
+    return { projects, last24hCount: last24h?.count ?? 0 };
   });
 
   reply.status(200).send({
@@ -398,6 +327,13 @@ export async function stats(request: FastifyRequest, reply: FastifyReply) {
     eventsCount: res.projects.reduce((acc, { count }) => acc + count, 0),
     eventsLast24hCount: res.last24hCount,
   });
+}
+
+function geoSource(request: FastifyRequest) {
+  return {
+    cf: request.raw.req.raw.cf as CfGeoProperties | undefined,
+    connectingIp: request.headers['cf-connecting-ip'],
+  };
 }
 
 export async function getGeo(request: FastifyRequest, reply: FastifyReply) {
@@ -408,7 +344,7 @@ export async function getGeo(request: FastifyRequest, reply: FastifyReply) {
       return {
         header,
         ip,
-        geo: await getGeoLocation(ip),
+        geo: await getGeoLocation(ip, geoSource(request)),
       };
     }),
   );
@@ -416,7 +352,7 @@ export async function getGeo(request: FastifyRequest, reply: FastifyReply) {
   if (!ip) {
     return reply.status(400).send('Bad Request');
   }
-  const geo = await getGeoLocation(ip);
+  const geo = await getGeoLocation(ip, geoSource(request));
   return reply.status(200).send({
     selected: {
       geo,
@@ -448,10 +384,8 @@ export async function getOgImage(
     }
     await assertPublicUrl(url);
 
-    const cacheKey = createCacheKey(url.toString(), 'og');
-
     // Check cache first
-    const cached = await getFromCacheBinary(cacheKey);
+    const cached = await getCachedImage(url.toString(), 'og');
     if (cached) {
       setImageSecurityHeaders(reply, cached.contentType);
       reply.header('Cache-Control', 'public, max-age=604800, immutable');
@@ -481,15 +415,14 @@ export async function getOgImage(
       return getFavicon(request, reply);
     }
 
-    // Rasterize to a 300px-wide PNG
-    const processedBuffer = await processOgImage(buffer, imageUrl.toString());
+    // At most 300px wide (PNG), or a verified raster as-is
+    const processed = await processOgImage(buffer, imageUrl.toString());
 
-    // Cache the result
-    await setToCacheBinary(cacheKey, processedBuffer, 'image/png');
+    await setCachedImage(url.toString(), 'og', processed.buffer, processed.contentType);
 
-    setImageSecurityHeaders(reply, 'image/png');
+    setImageSecurityHeaders(reply, processed.contentType);
     reply.header('Cache-Control', 'public, max-age=3600, immutable');
-    return reply.send(processedBuffer);
+    return reply.send(processed.buffer);
   } catch (error: any) {
     if (error instanceof BlockedUrlError) {
       logger.warn(

@@ -13,7 +13,9 @@ export type PlatformFeature =
   | 'exports'
   | 'importers'
   | 'integrations'
-  | 'mcp';
+  | 'mcp'
+  | 'telemetry'
+  | 'tools';
 
 const FEATURE_MESSAGES: Record<PlatformFeature, string> = {
   ai: 'AI features are not available on Cloudflare yet',
@@ -23,6 +25,8 @@ const FEATURE_MESSAGES: Record<PlatformFeature, string> = {
   integrations:
     'Slack, Discord and webhook integrations are not available on Cloudflare yet',
   mcp: 'The MCP server is not available on Cloudflare yet',
+  telemetry: 'Self-hosting telemetry is not collected on Cloudflare',
+  tools: 'The site checker and IP lookup tools are not available on Cloudflare yet',
 };
 
 export class FeatureUnavailableError extends Error {
