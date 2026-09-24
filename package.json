@@ -7,7 +7,7 @@
   "author": "Carl-Gerhard Lindesvärd",
   "packageManager": "pnpm@11.23.0",
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run && pnpm --filter @openpanel/workerd-compat test",
     "gen:bots": "pnpm -r --filter api gen:bots",
     "gen:referrers": "pnpm -r --filter common gen:referrers",
     "dock:up": "docker compose up -d",
