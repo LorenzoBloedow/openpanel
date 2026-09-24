@@ -10,3 +10,6 @@ count.txt
 .output
 .vinxi
 todos.json
+# Playwright smoke test output
+e2e/results
+e2e/report

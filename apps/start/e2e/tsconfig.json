@@ -1,0 +1,15 @@
+{
+  // The smoke test runs in Node, outside the app: its own program keeps the
+  // Node types (which @playwright/test pulls in) out of the dashboard's.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["./**/*.ts", "../playwright.config.ts"]
+}

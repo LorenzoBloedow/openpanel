@@ -139,3 +139,13 @@ minimumReleaseAgeExclude:
   - '@cloudflare/vitest-plugin@1.2.4'
   - wrangler@4.137.0
   - '@cloudflare/vite-plugin@1.58.0'
+
+# @prisma/adapter-pg's published types import `pg` but it doesn't depend on
+# @types/pg, so they took whichever version pnpm hoisted. Adding an unrelated
+# package once hoisted @opentelemetry/instrumentation-pg's 8.6.1 and broke
+# every typecheck that reaches the adapter. With its own copy (the version
+# packages/db uses), the resolution no longer depends on hoisting.
+packageExtensions:
+  '@prisma/adapter-pg':
+    dependencies:
+      '@types/pg': ^8.23.1

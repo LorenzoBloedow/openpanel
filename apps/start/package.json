@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "pnpm with-env vite dev --port 3000",
     "testing": "pnpm dev",
+    "test:e2e": "playwright test",
     "preview": "vite preview",
     "deploy": "pnpm build && npx wrangler deploy",
     "cf-typegen": "wrangler types --strict-vars false",
@@ -13,7 +14,7 @@
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p e2e",
     "with-env": "dotenv -e ../../.env -c --"
   },
   "dependencies": {
@@ -167,6 +168,7 @@
     "@cloudflare/vite-plugin": "^1.58.0",
     "@openpanel/db": "workspace:*",
     "@openpanel/trpc": "workspace:*",
+    "@playwright/test": "1.56.1",
     "@tanstack/devtools-event-client": "^0.3.3",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
@@ -174,6 +176,7 @@
     "@types/lodash.debounce": "^4.0.9",
     "@types/lodash.isequal": "^4.5.8",
     "@types/lodash.throttle": "^4.1.9",
+    "@types/node": "catalog:",
     "@types/ramda": "^0.31.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

@@ -1,4 +1,6 @@
 .secrets
+# `wrangler check startup`
+*.cpuprofile
 packages/db/src/generated/prisma*
 **/.open-next
 
