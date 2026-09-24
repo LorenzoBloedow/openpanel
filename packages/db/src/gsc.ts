@@ -1,5 +1,7 @@
 import { cacheable } from '@openpanel/redis';
-import { originalCh } from './clickhouse/client';
+import { anQuery } from './analytics/client';
+import { type Sql, sql } from './analytics/sql';
+import { type GscWriteRow, upsertGscRows } from './analytics/writers';
 import { decrypt, encrypt } from './encryption';
 import { createLogger } from '@openpanel/logger';
 import { db } from './prisma-client';
@@ -192,8 +194,28 @@ function formatDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-function nowString(): string {
-  return new Date().toISOString().replace('T', ' ').replace('Z', '');
+type GscTable = 'gsc_daily' | 'gsc_pages_daily' | 'gsc_queries_daily';
+type GscRow = GscWriteRow & { page?: string; query?: string };
+
+/** Rows per upsert statement: the batch travels as one JSON parameter. */
+const GSC_WRITE_BATCH = 5000;
+
+/**
+ * Store synced rows; a re-synced day replaces what was there (the
+ * ReplacingMergeTree(synced_at) tables before). A key the API returned
+ * twice keeps its last row: one upsert can't update a row twice. Rows go in
+ * key order, so syncs of overlapping days (nightly and backfill) lock rows
+ * in the same order instead of deadlocking.
+ */
+async function writeGscRows(table: GscTable, rows: GscRow[]): Promise<void> {
+  const byKey = new Map<string, GscRow>();
+  for (const row of rows) {
+    byKey.set(`${row.date}\u0000${row.page ?? row.query ?? ''}`, row);
+  }
+  const unique = [...byKey.keys()].sort().map((key) => byKey.get(key)!);
+  for (let i = 0; i < unique.length; i += GSC_WRITE_BATCH) {
+    await upsertGscRows(table, unique.slice(i, i + GSC_WRITE_BATCH));
+  }
 }
 
 export async function syncGscData(
@@ -212,7 +234,7 @@ export async function syncGscData(
   const accessToken = await getGscAccessToken(projectId);
   const start = formatDate(startDate);
   const end = formatDate(endDate);
-  const syncedAt = nowString();
+  const syncedAt = new Date().toISOString();
 
   // 1. Daily totals — authoritative numbers for overview chart
   const dailyRows = await queryGscSearchAnalytics(
@@ -223,21 +245,18 @@ export async function syncGscData(
     ['date']
   );
 
-  if (dailyRows.length > 0) {
-    await originalCh.insert({
-      table: 'gsc_daily',
-      values: dailyRows.map((row) => ({
-        project_id: projectId,
-        date: row.keys[0] ?? '',
-        clicks: row.clicks,
-        impressions: row.impressions,
-        ctr: row.ctr,
-        position: row.position,
-        synced_at: syncedAt,
-      })),
-      format: 'JSONEachRow',
-    });
-  }
+  await writeGscRows(
+    'gsc_daily',
+    dailyRows.map((row) => ({
+      project_id: projectId,
+      date: row.keys[0] ?? '',
+      clicks: row.clicks,
+      impressions: row.impressions,
+      ctr: row.ctr,
+      position: row.position,
+      synced_at: syncedAt,
+    })),
+  );
 
   // 2. Per-page breakdown
   const pageRows = await queryGscSearchAnalytics(
@@ -248,22 +267,19 @@ export async function syncGscData(
     ['date', 'page']
   );
 
-  if (pageRows.length > 0) {
-    await originalCh.insert({
-      table: 'gsc_pages_daily',
-      values: pageRows.map((row) => ({
-        project_id: projectId,
-        date: row.keys[0] ?? '',
-        page: row.keys[1] ?? '',
-        clicks: row.clicks,
-        impressions: row.impressions,
-        ctr: row.ctr,
-        position: row.position,
-        synced_at: syncedAt,
-      })),
-      format: 'JSONEachRow',
-    });
-  }
+  await writeGscRows(
+    'gsc_pages_daily',
+    pageRows.map((row) => ({
+      project_id: projectId,
+      date: row.keys[0] ?? '',
+      page: row.keys[1] ?? '',
+      clicks: row.clicks,
+      impressions: row.impressions,
+      ctr: row.ctr,
+      position: row.position,
+      synced_at: syncedAt,
+    })),
+  );
 
   // 3. Per-query breakdown
   const queryRows = await queryGscSearchAnalytics(
@@ -274,21 +290,69 @@ export async function syncGscData(
     ['date', 'query']
   );
 
-  if (queryRows.length > 0) {
-    await originalCh.insert({
-      table: 'gsc_queries_daily',
-      values: queryRows.map((row) => ({
-        project_id: projectId,
-        date: row.keys[0] ?? '',
-        query: row.keys[1] ?? '',
-        clicks: row.clicks,
-        impressions: row.impressions,
-        ctr: row.ctr,
-        position: row.position,
-        synced_at: syncedAt,
-      })),
-      format: 'JSONEachRow',
-    });
+  await writeGscRows(
+    'gsc_queries_daily',
+    queryRows.map((row) => ({
+      project_id: projectId,
+      date: row.keys[0] ?? '',
+      query: row.keys[1] ?? '',
+      clicks: row.clicks,
+      impressions: row.impressions,
+      ctr: row.ctr,
+      position: row.position,
+      synced_at: syncedAt,
+    })),
+  );
+}
+
+/** 'YYYY-MM-DD' (month and day may be one digit, as ClickHouse allowed). */
+const GSC_DAY = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+
+/**
+ * A range bound as a calendar day, or null when it isn't one: ClickHouse
+ * rejected such bounds (datetimes included) with an error; now they match
+ * nothing.
+ */
+function toGscDay(value: string): string | null {
+  const match = GSC_DAY.exec(value);
+  if (!match) {
+    return null;
+  }
+  const [year, month, day] = match.slice(1).map(Number) as [number, number, number];
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const isRealDay =
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day;
+  return isRealDay ? date.toISOString().slice(0, 10) : null;
+}
+
+/** Both range bounds as calendar days, or null when the range matches nothing. */
+function gscDateRange(startDate: string, endDate: string) {
+  const start = toGscDay(startDate);
+  const end = toGscDay(endDate);
+  return start && end ? { start, end } : null;
+}
+
+/** LIMIT as ClickHouse's UInt32 parameter took it: a whole, non-negative count. */
+function gscLimit(limit: number): number {
+  return Number.isFinite(limit) ? Math.max(0, Math.trunc(limit)) : 0;
+}
+
+/**
+ * The bucket of a GSC `date` as ClickHouse computed it on its Date column:
+ * toStartOfWeek (mode 0, weeks start on Sunday) and toStartOfMonth. GSC
+ * dates are calendar days already, so this is date arithmetic — no time
+ * zone, and nothing depends on the connection's TimeZone.
+ */
+function gscBucket(interval: 'day' | 'week' | 'month'): Sql {
+  switch (interval) {
+    case 'week':
+      return sql`(date - extract(dow FROM date)::int)`;
+    case 'month':
+      return sql`date_trunc('month', date::timestamp)::date`;
+    default:
+      return sql`date`;
   }
 }
 
@@ -306,33 +370,30 @@ export async function getGscOverview(
     position: number;
   }>
 > {
-  const dateExpr =
-    interval === 'month'
-      ? 'toStartOfMonth(date)'
-      : interval === 'week'
-        ? 'toStartOfWeek(date)'
-        : 'date';
+  const range = gscDateRange(startDate, endDate);
+  if (!range) {
+    return [];
+  }
 
-  const result = await originalCh.query({
-    query: `
-      SELECT
-        ${dateExpr} as date,
-        sum(clicks) as clicks,
-        sum(impressions) as impressions,
-        avg(ctr) as ctr,
-        avg(position) as position
-      FROM gsc_daily
-      FINAL
-      WHERE project_id = {projectId: String}
-        AND date >= {startDate: String}
-        AND date <= {endDate: String}
-      GROUP BY date
-      ORDER BY date ASC
-    `,
-    query_params: { projectId, startDate, endDate },
-    format: 'JSONEachRow',
-  });
-  return result.json();
+  // ClickHouse's WHERE compared the `date` alias, i.e. the bucket: a week or
+  // month counts when its first day is inside the range, with all its days.
+  // (`date >= start` follows from that and keeps the scan on the key.)
+  return anQuery(sql`
+    SELECT
+      to_char(b.bucket, 'YYYY-MM-DD') AS date,
+      sum(b.clicks) AS clicks,
+      sum(b.impressions) AS impressions,
+      avg(b.ctr) AS ctr,
+      avg(b.position) AS position
+    FROM (
+      SELECT ${gscBucket(interval)} AS bucket, clicks, impressions, ctr, position
+      FROM analytics.gsc_daily
+      WHERE project_id = ${projectId} AND date >= ${range.start}::date
+    ) b
+    WHERE b.bucket >= ${range.start}::date AND b.bucket <= ${range.end}::date
+    GROUP BY b.bucket
+    ORDER BY b.bucket ASC
+  `);
 }
 
 export async function getGscPages(
@@ -349,27 +410,26 @@ export async function getGscPages(
     position: number;
   }>
 > {
-  const result = await originalCh.query({
-    query: `
-      SELECT
-        page,
-        sum(clicks) as clicks,
-        sum(impressions) as impressions,
-        avg(ctr) as ctr,
-        avg(position) as position
-      FROM gsc_pages_daily
-      FINAL
-      WHERE project_id = {projectId: String}
-        AND date >= {startDate: String}
-        AND date <= {endDate: String}
-      GROUP BY page
-      ORDER BY clicks DESC
-      LIMIT {limit: UInt32}
-    `,
-    query_params: { projectId, startDate, endDate, limit },
-    format: 'JSONEachRow',
-  });
-  return result.json();
+  const range = gscDateRange(startDate, endDate);
+  if (!range) {
+    return [];
+  }
+
+  return anQuery(sql`
+    SELECT
+      page,
+      sum(clicks) AS clicks,
+      sum(impressions) AS impressions,
+      avg(ctr) AS ctr,
+      avg(position) AS position
+    FROM analytics.gsc_pages_daily
+    WHERE project_id = ${projectId}
+      AND date >= ${range.start}::date
+      AND date <= ${range.end}::date
+    GROUP BY page
+    ORDER BY sum(clicks) DESC, page ASC
+    LIMIT ${gscLimit(limit)}
+  `);
 }
 
 export interface GscCannibalizedQuery {
@@ -561,25 +621,24 @@ export async function getGscQueries(
     position: number;
   }>
 > {
-  const result = await originalCh.query({
-    query: `
-      SELECT
-        query,
-        sum(clicks) as clicks,
-        sum(impressions) as impressions,
-        avg(ctr) as ctr,
-        avg(position) as position
-      FROM gsc_queries_daily
-      FINAL
-      WHERE project_id = {projectId: String}
-        AND date >= {startDate: String}
-        AND date <= {endDate: String}
-      GROUP BY query
-      ORDER BY clicks DESC
-      LIMIT {limit: UInt32}
-    `,
-    query_params: { projectId, startDate, endDate, limit },
-    format: 'JSONEachRow',
-  });
-  return result.json();
+  const range = gscDateRange(startDate, endDate);
+  if (!range) {
+    return [];
+  }
+
+  return anQuery(sql`
+    SELECT
+      query,
+      sum(clicks) AS clicks,
+      sum(impressions) AS impressions,
+      avg(ctr) AS ctr,
+      avg(position) AS position
+    FROM analytics.gsc_queries_daily
+    WHERE project_id = ${projectId}
+      AND date >= ${range.start}::date
+      AND date <= ${range.end}::date
+    GROUP BY query
+    ORDER BY sum(clicks) DESC, query ASC
+    LIMIT ${gscLimit(limit)}
+  `);
 }
