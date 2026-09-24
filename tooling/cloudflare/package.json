@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "backup": "dotenv -e ../../.env -c -- tsx src/backup.ts",
+    "deploy": "dotenv -e ../../.env -c -- tsx src/deploy.ts",
     "restore": "dotenv -e ../../.env -c -- tsx src/restore.ts",
+    "setup": "dotenv -e ../../.env -c -- tsx src/setup.ts",
     "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
@@ -14,6 +16,7 @@
     "@openpanel/runtime": "workspace:*",
     "arg": "^5.0.2",
     "aws4fetch": "^1.0.20",
+    "jsonc-parser": "^3.3.1",
     "pg": "^8.23.0",
     "tsx": "^4.21.0",
     "wrangler": "^4.137.0"

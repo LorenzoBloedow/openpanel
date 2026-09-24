@@ -51,7 +51,11 @@
     "SELF_HOSTED": "true",
     "API_URL": "http://localhost:3333",
     "DASHBOARD_URL": "http://localhost:3000",
-    "EMAIL_SENDER": "hello@openpanel.dev"
+    "EMAIL_SENDER": "hello@openpanel.dev",
+    // Self-hosted sign-up: the first user registers, everyone after that
+    // needs an invite. Set ALLOW_REGISTRATION to "true" for open sign-up.
+    "ALLOW_REGISTRATION": "false",
+    "ALLOW_INVITATION": "true"
   },
 
   // @react-email/render imports prettier for `pretty: true`, which we never

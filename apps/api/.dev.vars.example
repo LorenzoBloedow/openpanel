@@ -10,6 +10,9 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
 COOKIE_SECRET=change-me-to-a-long-random-string
 ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000
 
+# Local sign-up stays open (wrangler.jsonc allows only the first user).
+ALLOW_REGISTRATION=true
+
 # Optional
 # SESSION_TIMEOUT_MS=1800000
 # API_CORS_ORIGINS=http://localhost:3001
