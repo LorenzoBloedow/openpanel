@@ -1,3 +1,5 @@
+import { clix } from '../../../src/analytics/query-builder';
+import { createEngine } from '../../../src/services/insights/engine';
 import {
   devicesModule,
   entryPagesModule,
@@ -24,7 +26,7 @@ const MODULES: Record<string, InsightModule> = {
   devices: devicesModule,
 };
 
-/** apps/worker/src/jobs/insights.ts */
+/** DEFAULT_ENGINE_CONFIG of apps/worker/src/jobs/analytics.ts */
 const WORKER_ENGINE_CONFIG = {
   keepTopNPerModuleWindow: 20,
   closeStaleAfterDays: 7,
@@ -54,13 +56,6 @@ async function runInsightModule(
   moduleKey: string,
   dimensions?: string[],
 ) {
-  // The engine takes the ClickHouse client and builds each window's context
-  // (cached query builder) itself; imported here so the ClickHouse client
-  // stays out of this file's static imports.
-  const [{ createEngine }, { ch }] = await Promise.all([
-    import('../../../src/services/insights/engine'),
-    import('../../../src/clickhouse/client'),
-  ]);
   const module = MODULES[moduleKey]!;
   const windows = new Map<WindowKind, WindowCapture>();
   const capture = (kind: WindowKind) => {
@@ -120,11 +115,13 @@ async function runInsightModule(
   };
 
   // The engine logs and skips a failing module; surface that as an error.
+  // It builds each window's context (cached query builder) from the query
+  // factory it takes as `db`, as the worker job passes it.
   const errors: unknown[] = [];
   const engine = createEngine({
     store,
     modules: [recording],
-    db: ch,
+    db: clix,
     logger: { info: () => undefined, warn: () => undefined, error: (...args) => errors.push(args) },
     config: WORKER_ENGINE_CONFIG,
   });

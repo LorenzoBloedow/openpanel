@@ -4,8 +4,16 @@ import type {
   InsightMetricKey,
   InsightPayload,
 } from '@openpanel/validation';
+import type { Query } from '../../analytics/query-builder';
 
 export type Cadence = 'daily';
+
+/**
+ * What the insights engine takes as `db`: a factory of Postgres analytics
+ * queries — `clix` from analytics/query-builder, or a stand-in with the same
+ * shape. Queries run on the current scope's pool when executed.
+ */
+export type InsightQueryFactory = (timezone?: string) => Query;
 
 export type WindowKind = 'yesterday' | 'rolling_7d' | 'rolling_30d';
 
@@ -21,7 +29,8 @@ export interface WindowRange {
 export interface ComputeContext {
   projectId: string;
   window: WindowRange;
-  db: any; // your DB client
+  /** The engine's query factory (uncached); prefer `clix`. */
+  db: InsightQueryFactory;
   now: Date;
   logger: Pick<Console, 'info' | 'warn' | 'error'>;
   /**

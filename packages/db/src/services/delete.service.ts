@@ -1,8 +1,8 @@
-import { TABLE_NAMES, ch, getReplicatedTableName } from '../clickhouse/client';
-import { logger } from '../logger';
 import { db } from '../prisma-client';
 
-import sqlstring from 'sqlstring';
+// Analytics rows are deleted by the ProjectDelete workflow, in chunks, with
+// deleteProjectAnalyticsChunk (analytics/maintenance.ts); schedule a
+// deletion by setting `deleteAt` on the project or organization.
 
 export async function deleteOrganization(organizationId: string) {
   return await db.organization.delete({
@@ -34,37 +34,4 @@ export async function deleteProjects(projectIds: string[]) {
   }
 
   return projects;
-}
-
-export async function deleteFromClickhouse(projectIds: string[]) {
-  const where = `project_id IN (${projectIds.map((projectId) => sqlstring.escape(projectId)).join(',')})`;
-  const tables = [
-    TABLE_NAMES.events,
-    TABLE_NAMES.profiles,
-    TABLE_NAMES.events_bots,
-    TABLE_NAMES.sessions,
-    TABLE_NAMES.cohort_events_mv,
-    TABLE_NAMES.dau_mv,
-    TABLE_NAMES.event_names_mv,
-    TABLE_NAMES.event_property_values_mv,
-    TABLE_NAMES.cohort_members,
-    TABLE_NAMES.cohort_metadata,
-    TABLE_NAMES.event_profile_summary_mv,
-    TABLE_NAMES.event_property_profile_summary_mv,
-  ];
-
-  for (const table of tables) {
-    // If materialized view, use ALTER TABLE since DELETE is not supported
-    const query = table.endsWith('_mv')
-      ? `ALTER TABLE ${getReplicatedTableName(table)} DELETE WHERE ${where};`
-      : `DELETE FROM ${getReplicatedTableName(table)} WHERE ${where};`;
-
-    logger.info({ query }, 'Deleting from ClickHouse table:');
-    await ch.command({
-      query,
-      clickhouse_settings: {
-        lightweight_deletes_sync: '0',
-      },
-    });
-  }
 }

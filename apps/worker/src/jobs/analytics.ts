@@ -1,5 +1,5 @@
 import { db, updateCohortMembership } from '@openpanel/db';
-import { ch } from '@openpanel/db/src/clickhouse/client';
+import { clix } from '@openpanel/db/src/analytics/query-builder';
 import {
   createEngine,
   devicesModule,
@@ -44,7 +44,7 @@ export async function insightsProjectJob({
       geoModule,
       devicesModule,
     ],
-    db: ch,
+    db: clix,
     config: DEFAULT_ENGINE_CONFIG,
   });
   const projectCreatedAt = await insightStore.getProjectCreatedAt(projectId);
