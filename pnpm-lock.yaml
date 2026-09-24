@@ -1350,6 +1350,9 @@ importers:
       '@openpanel/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.10.1
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main, cloudflare]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Typecheck and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      # The tests clone a migrated template database per file (see
+      # packages/db/src/testing/database.ts).
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      DATABASE_URL_DIRECT: postgresql://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm codegen
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  bundle:
+    name: Bundle the Workers
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm codegen
+      # Builds and bundles api, worker, dashboard and public exactly as a
+      # deploy would, without uploading; prints the bundle sizes.
+      - run: pnpm cf:deploy --dry-run
+      # Startup CPU of the two Workers that take traffic and queue batches.
+      - run: npx wrangler check startup
+        working-directory: apps/api
+      - run: npx wrangler check startup
+        working-directory: apps/worker
