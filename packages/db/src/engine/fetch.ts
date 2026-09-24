@@ -2,7 +2,7 @@ import type { ISerieDataItem } from '@openpanel/common';
 import { groupByLabels } from '@openpanel/common';
 import { alphabetIds } from '@openpanel/constants';
 import type { IGetChartDataInput } from '@openpanel/validation';
-import { chQuery } from '../clickhouse/client';
+import { anQuery } from '../analytics/client';
 import { getChartSql } from '../services/chart.service';
 import type { ConcreteSeries, Plan } from './types';
 
@@ -55,25 +55,19 @@ export async function fetch(plan: Plan): Promise<ConcreteSeries[]> {
       offset: plan.input.offset,
     };
 
-    // Execute query
-    let queryResult = await chQuery<ISerieDataItem>(
+    // Execute query (the time zone is part of the SQL)
+    let queryResult = await anQuery<ISerieDataItem>(
       await getChartSql({ ...queryInput, timezone: plan.timezone }),
-      {
-        session_timezone: plan.timezone,
-      },
     );
 
     // Fallback: if no results with breakdowns, try without breakdowns
     if (queryResult.length === 0 && plan.input.breakdowns.length > 0) {
-      queryResult = await chQuery<ISerieDataItem>(
+      queryResult = await anQuery<ISerieDataItem>(
         await getChartSql({
           ...queryInput,
           breakdowns: [],
           timezone: plan.timezone,
         }),
-        {
-          session_timezone: plan.timezone,
-        },
       );
     }
 
