@@ -1,22 +1,44 @@
 import { average, sum } from '@openpanel/common';
 import { chartColors } from '@openpanel/constants';
-import { type IChartEventFilter, zTimeInterval } from '@openpanel/validation';
-import sqlstring from 'sqlstring';
-import { z } from 'zod';
 import {
-  ch,
+  type IChartEventFilter,
+  type IInterval,
+  zTimeInterval,
+} from '@openpanel/validation';
+import { z } from 'zod';
+import { anQuery } from '../analytics/client';
+import {
   convertClickhouseDateToJs,
   isClickhouseDefaultMinDate,
-  TABLE_NAMES,
-} from '../clickhouse/client';
-import { clix } from '../clickhouse/query-builder';
+} from '../analytics/dates';
+import { eventFilterClauses, eventPropertyExpr } from '../analytics/filters';
+import { type Sql, and, empty, raw, sql } from '../analytics/sql';
+import type { TimeCtx } from '../analytics/time';
 import {
-  getEventFiltersWhereClause,
-  getSelectPropertyKey,
-} from './chart.service';
+  MS_TO_NEXT_VIEW,
+  bucketKey,
+  bucketLabel,
+  bucketOf,
+  chRound,
+  createdBetween,
+  fillBuckets,
+  rollupSentinelMatches,
+  withFill,
+} from './overview-buckets';
 
-// Constants
-const ROLLUP_DATE_PREFIX = '1970-01-01';
+/**
+ * The overview queries on Postgres. They ran in the project's zone
+ * (`clix(ch, timezone)`): the date range is project wall-clock time and the
+ * buckets are the project's minutes/hours/days, Sunday weeks and months
+ * (see overview-buckets.ts). Sessions are plain rows, so ClickHouse's
+ * `sum(sign)` / `uniqIf(…, sign > 0)` are plain counts. Kept as ClickHouse
+ * returned them: Float64 arithmetic and ties-to-even `round`, the NaN of an
+ * empty average as null, the ROLLUP totals row (the epoch sentinel) and the
+ * WITH FILL rows with their default values.
+ */
+
+/** The date the ROLLUP totals row carried (the zero DateTime). */
+const ROLLUP_SENTINEL = '1970-01-01 00:00:00';
 
 // Toggle revenue tracking in overview queries
 const INCLUDE_REVENUE = true; // TODO: Make this configurable later
@@ -204,55 +226,116 @@ export type IGetMapDataInput = z.infer<typeof zGetMapDataInput> & {
   timezone: string;
 };
 
-export class OverviewService {
-  constructor(private client: typeof ch) {}
+/** Session columns the generic breakdowns group by. */
+const GENERIC_COLUMNS: ReadonlySet<string> = new Set(
+  zGetTopGenericInput.shape.column.options,
+);
 
-  private getFillConfig(interval: string, startDate: string, endDate: string) {
-    const useDateOnly = ['month', 'week'].includes(interval);
-    return {
-      from: clix.toStartOf(
-        clix.datetime(startDate, useDateOnly ? 'toDate' : 'toDateTime'),
-        interval as any
-      ),
-      to: clix.datetime(endDate, useDateOnly ? 'toDate' : 'toDateTime'),
-      step: clix.toInterval('1', interval as any),
-    };
+interface RangeInput {
+  projectId: string;
+  filters: IChartEventFilter[];
+  startDate: string;
+  endDate: string;
+  timezone: string;
+}
+
+interface RevenueRow {
+  date: string;
+  total_revenue: number;
+}
+
+/** A ROLLUP / GROUPING SETS row: `is_total` marks the totals row. */
+interface BucketRow {
+  is_total: boolean;
+  bucket_key: string | null;
+}
+
+interface SessionMetricsRow extends BucketRow {
+  date: string | null;
+  bounce_rate: number;
+  unique_visitors: number;
+  total_sessions: number;
+  /** NULL when no session has a duration (ClickHouse's NaN, sent as null). */
+  _avg_session_duration: number | null;
+  total_screen_views: number;
+  views_per_session: number;
+}
+
+interface PageViewsRow extends BucketRow {
+  date: string | null;
+  unique_visitors: number;
+  total_sessions: number;
+  /** null when no view has a duration (ClickHouse's NaN, sent as null). */
+  avg_session_duration: number;
+  total_screen_views: number;
+  views_per_session: number;
+}
+
+interface GenericRow {
+  prefix?: string;
+  name: string;
+  sessions: number;
+  pageviews: number;
+  revenue?: number;
+}
+
+interface GenericSeriesRow extends Omit<GenericRow, 'name'> {
+  bucket_key: string;
+  date: string;
+  /** null for the empty value, and on the rows WITH FILL added. */
+  name: string | null;
+}
+
+const ENTRY_EXIT_COLUMNS = {
+  entry: { origin: raw('s.entry_origin'), path: raw('s.entry_path') },
+  exit: { origin: raw('s.exit_origin'), path: raw('s.exit_path') },
+} as const;
+
+/** A LIMIT from a caller's number. */
+const limitOf = (value: number) => Math.max(0, Math.trunc(value));
+
+/** A bucket label (or the totals sentinel) as the ISO string of the series. */
+const toIsoDate = (label: string | null) =>
+  convertClickhouseDateToJs(label ?? ROLLUP_SENTINEL).toISOString();
+
+export class OverviewService {
+  /** Takes (and ignores) the ClickHouse client it used to be built with. */
+  // biome-ignore lint/complexity/noUselessConstructor: callers still pass the client
+  constructor(_client?: unknown) {
+    // Nothing to keep: the queries use the analytics pool.
   }
 
-  private createRevenueQuery({
+  private async getRevenue({
     projectId,
     startDate,
     endDate,
     interval,
     timezone,
     filters,
-  }: {
-    projectId: string;
-    startDate: string;
-    endDate: string;
-    interval: string;
-    timezone: string;
-    filters: IChartEventFilter[];
-  }) {
-    return clix(this.client, timezone)
-      .select<{ date: string; total_revenue: number }>([
-        `${clix.toStartOf('created_at', interval as any, timezone)} AS date`,
-        'sum(revenue) AS total_revenue',
-      ])
-      .from(TABLE_NAMES.events)
-      .where('project_id', '=', projectId)
-      .where('name', '=', 'revenue')
-      .where('revenue', '>', 0)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(this.getRawWhereClause('events', filters))
-      .groupBy(['date'])
-      .rollup()
-      .transform({
-        date: (item) => convertClickhouseDateToJs(item.date).toISOString(),
-      });
+  }: RangeInput & { interval: IInterval }): Promise<RevenueRow[]> {
+    const ctx: TimeCtx = { timezone };
+    const rows = await anQuery<{ date: string; total_revenue: number }>(sql`
+      SELECT
+        CASE WHEN GROUPING(r.bucket) = 1 THEN ${ROLLUP_SENTINEL}::text
+          ELSE ${bucketLabel(raw('r.bucket'), interval, ctx)} END AS date,
+        COALESCE(sum(r.revenue), 0) AS total_revenue
+      FROM (
+        SELECT ${bucketOf(raw('e.created_at'), interval, ctx)} AS bucket, e.revenue
+        FROM analytics.events e
+        WHERE ${and([
+          sql`e.project_id = ${projectId}`,
+          sql`e.name = 'revenue'`,
+          sql`e.revenue > 0`,
+          createdBetween(raw('e.created_at'), { startDate, endDate }, ctx),
+          this.getRawWhereClause('events', filters, { alias: 'e', timezone }),
+        ])}
+      ) r
+      GROUP BY ROLLUP (r.bucket)
+    `);
+    return rows.map((row) => ({
+      date: toIsoDate(row.date),
+      total_revenue: row.total_revenue,
+    }));
   }
 
   private mergeRevenueIntoSeries<T extends { date: string }>(
@@ -279,29 +362,35 @@ export class OverviewService {
     );
   }
 
-  private withDistinctSessionsIfNeeded<T>(
-    query: ReturnType<typeof clix>,
-    params: {
-      filters: IChartEventFilter[];
-      projectId: string;
-      startDate: string;
-      endDate: string;
-      timezone: string;
-    }
-  ): ReturnType<typeof clix> {
-    if (!this.isPageFilter(params.filters)) {
-      query.rawWhere(this.getRawWhereClause('sessions', params.filters));
-      return query;
-    }
+  /**
+   * Sessions (alias `s`) that have an event matching the events filters in
+   * the range — the `distinct_sessions` restriction of a page filter.
+   */
+  private inDistinctSessions(params: RangeInput): Sql {
+    const ctx: TimeCtx = { timezone: params.timezone };
+    return sql`s.id IN (SELECT e.session_id FROM analytics.events e WHERE ${and([
+      sql`e.project_id = ${params.projectId}`,
+      createdBetween(raw('e.created_at'), params, ctx),
+      this.getRawWhereClause('events', params.filters, {
+        alias: 'e',
+        timezone: params.timezone,
+      }),
+    ])})`;
+  }
 
-    return clix(this.client, params.timezone)
-      .with('distinct_sessions', this.getDistinctSessions(params))
-      .merge(query)
-      .where(
-        'id',
-        'IN',
-        clix.exp('(SELECT session_id FROM distinct_sessions)')
-      );
+  /**
+   * The filter of a sessions query (alias `s`): the sessions filters, or,
+   * with a page filter, the sessions of the matching events instead
+   * (`withDistinctSessionsIfNeeded`).
+   */
+  private sessionsScope(params: RangeInput): Sql {
+    if (!this.isPageFilter(params.filters)) {
+      return this.getRawWhereClause('sessions', params.filters, {
+        alias: 's',
+        timezone: params.timezone,
+      });
+    }
+    return this.inDistinctSessions(params);
   }
 
   isPageFilter(filters: IChartEventFilter[]) {
@@ -366,47 +455,41 @@ export class OverviewService {
     metrics: MetricsRow & { total_revenue: number };
     series: MetricsSeriesRow[];
   }> {
-    const where = this.getRawWhereClause('sessions', filters);
-    const fillConfig = this.getFillConfig(interval, startDate, endDate);
+    const ctx: TimeCtx = { timezone };
 
-    // Session metrics query
-    const sessionQuery = clix(this.client, timezone)
-      .select<{
-        date: string;
-        bounce_rate: number;
-        unique_visitors: number;
-        total_sessions: number;
-        avg_session_duration: number;
-        total_screen_views: number;
-        views_per_session: number;
-      }>([
-        `${clix.toStartOf('created_at', interval as any, timezone)} AS date`,
-        'round(sum(sign * is_bounce) * 100.0 / sum(sign), 2) as bounce_rate',
-        'uniqIf(profile_id, sign > 0) AS unique_visitors',
-        'sum(sign) AS total_sessions',
-        'round(avgIf(duration, duration > 0 AND sign > 0), 2) / 1000 AS _avg_session_duration',
-        'if(isNaN(_avg_session_duration), 0, _avg_session_duration) AS avg_session_duration',
-        'sum(sign * screen_view_count) AS total_screen_views',
-        'round(sum(sign * screen_view_count) * 1.0 / sum(sign), 2) AS views_per_session',
-      ])
-      .from('sessions')
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .where('project_id', '=', projectId)
-      .rawWhere(where)
-      .groupBy(['date'])
-      .having('sum(sign)', '>', 0)
-      .rollup()
-      .orderBy('date', 'ASC')
-      .fill(fillConfig.from, fillConfig.to, fillConfig.step)
-      .transform({
-        date: (item) => new Date(item.date).toISOString(),
-      });
+    // Per bucket plus the ROLLUP totals row.
+    const sessionQuery = anQuery<SessionMetricsRow>(sql`
+      SELECT
+        GROUPING(b.bucket) = 1 AS is_total,
+        ${bucketKey(raw('b.bucket'), interval)} AS bucket_key,
+        ${bucketLabel(raw('b.bucket'), interval, ctx)} AS date,
+        ${chRound(sql`(count(*) FILTER (WHERE b.is_bounce))::double precision * 100 / NULLIF(count(*), 0)`, 2)} AS bounce_rate,
+        count(DISTINCT b.profile_id) AS unique_visitors,
+        count(*) AS total_sessions,
+        ${chRound(sql`avg(b.duration::double precision) FILTER (WHERE b.duration > 0)`, 2)} / 1000 AS _avg_session_duration,
+        sum(b.screen_view_count) AS total_screen_views,
+        ${chRound(sql`sum(b.screen_view_count)::double precision / NULLIF(count(*), 0)`, 2)} AS views_per_session
+      FROM (
+        SELECT
+          ${bucketOf(raw('s.created_at'), interval, ctx)} AS bucket,
+          s.is_bounce,
+          s.profile_id,
+          s.duration,
+          s.screen_view_count
+        FROM analytics.sessions s
+        WHERE ${and([
+          sql`s.project_id = ${projectId}`,
+          createdBetween(raw('s.created_at'), { startDate, endDate }, ctx),
+          this.getRawWhereClause('sessions', filters, { alias: 's', timezone }),
+        ])}
+      ) b
+      GROUP BY ROLLUP (b.bucket)
+      HAVING count(*) > 0
+      ORDER BY bucket_key NULLS FIRST
+    `);
 
     // Revenue query
-    const revenueQuery = this.createRevenueQuery({
+    const revenueQuery = this.getRevenue({
       projectId,
       startDate,
       endDate,
@@ -416,10 +499,43 @@ export class OverviewService {
     });
 
     // Execute both queries in parallel and merge results
-    const [sessionRes, revenueRes] = await Promise.all([
-      sessionQuery.execute(),
-      revenueQuery.execute(),
+    const [sessionRows, revenueRes] = await Promise.all([
+      sessionQuery,
+      revenueQuery,
     ]);
+
+    // The totals row sorted first (the epoch), then the filled buckets.
+    // Without sessions there is no totals row and the first filled bucket
+    // stands in for it, as it did.
+    const buckets = withFill(
+      sessionRows.filter((row) => !row.is_total),
+      (row) => row.bucket_key ?? '',
+      fillBuckets(interval, startDate, endDate, timezone),
+      (bucket): SessionMetricsRow => ({
+        is_total: false,
+        bucket_key: bucket.key,
+        date: bucket.label,
+        bounce_rate: 0,
+        unique_visitors: 0,
+        total_sessions: 0,
+        _avg_session_duration: 0,
+        total_screen_views: 0,
+        views_per_session: 0,
+      }),
+    );
+    const sessionRes = [
+      ...sessionRows.filter((row) => row.is_total),
+      ...buckets,
+    ].map((row) => ({
+      date: toIsoDate(row.date),
+      bounce_rate: row.bounce_rate,
+      unique_visitors: row.unique_visitors,
+      total_sessions: row.total_sessions,
+      _avg_session_duration: row._avg_session_duration,
+      avg_session_duration: row._avg_session_duration ?? 0,
+      total_screen_views: row.total_screen_views,
+      views_per_session: row.views_per_session,
+    }));
 
     const overallRevenue = this.getOverallRevenue(revenueRes);
     const series = this.mergeRevenueIntoSeries(sessionRes.slice(1), revenueRes);
@@ -449,140 +565,60 @@ export class OverviewService {
     metrics: MetricsRow & { total_revenue: number };
     series: MetricsSeriesRow[];
   }> {
-    const where = this.getRawWhereClause('sessions', filters);
-    const fillConfig = this.getFillConfig(interval, startDate, endDate);
+    const ctx: TimeCtx = { timezone };
+    const range = { startDate, endDate };
 
-    // CTE: per-event screen_view durations via window function
-    const rawScreenViewDurationsQuery = clix(this.client, timezone)
-      .select([
-        `${clix.toStartOf('created_at', interval as any, timezone)} AS date`,
-        `dateDiff('millisecond', created_at, lead(created_at, 1, created_at) OVER (PARTITION BY session_id ORDER BY created_at)) AS duration`,
-      ])
-      .from(TABLE_NAMES.events)
-      .where('project_id', '=', projectId)
-      .where('name', '=', 'screen_view')
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(this.getRawWhereClause('events', filters));
+    // Matching screen views per bucket plus the totals row. A view lasts
+    // until the session's next matching view.
+    const viewsQuery = anQuery<PageViewsRow>(sql`
+      SELECT
+        GROUPING(v.bucket) = 1 AS is_total,
+        ${bucketKey(raw('v.bucket'), interval)} AS bucket_key,
+        ${bucketLabel(raw('v.bucket'), interval, ctx)} AS date,
+        count(DISTINCT v.profile_id) AS unique_visitors,
+        count(DISTINCT v.session_id) AS total_sessions,
+        ${chRound(sql`avg(v.duration::double precision) FILTER (WHERE v.duration > 0)`, 2)} / 1000 AS avg_session_duration,
+        count(*) AS total_screen_views,
+        ${chRound(sql`count(*)::double precision / NULLIF(count(DISTINCT v.session_id), 0)`, 2)} AS views_per_session
+      FROM (
+        SELECT
+          ${bucketOf(raw('e.created_at'), interval, ctx)} AS bucket,
+          e.profile_id,
+          e.session_id,
+          ${MS_TO_NEXT_VIEW} AS duration
+        FROM analytics.events e
+        WHERE ${and([
+          sql`e.project_id = ${projectId}`,
+          sql`e.name = 'screen_view'`,
+          createdBetween(raw('e.created_at'), range, ctx),
+          this.getRawWhereClause('events', filters, { alias: 'e', timezone }),
+        ])}
+      ) v
+      GROUP BY GROUPING SETS ((v.bucket), ())
+      ORDER BY bucket_key NULLS FIRST
+    `);
 
-    // CTE: avg duration per date bucket
-    const avgDurationByDateQuery = clix(this.client, timezone)
-      .select([
-        'date',
-        'round(avgIf(duration, duration > 0), 2) / 1000 AS avg_session_duration',
-      ])
-      .from('raw_screen_view_durations')
-      .groupBy(['date']);
-
-    // Session aggregation with bounce rates
-    const sessionAggQuery = clix(this.client, timezone)
-      .select([
-        `${clix.toStartOf('created_at', interval as any, timezone)} AS date`,
-        'round((countIf(is_bounce = 1 AND sign = 1) * 100.) / countIf(sign = 1), 2) AS bounce_rate',
-      ])
-      .from(TABLE_NAMES.sessions, true)
-      .where('sign', '=', 1)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(where)
-      .groupBy(['date'])
-      .rollup()
-      .orderBy('date', 'ASC');
-
-    // Overall unique visitors
-    const overallUniqueVisitorsQuery = clix(this.client, timezone)
-      .select([
-        'uniq(profile_id) AS unique_visitors',
-        'uniq(session_id) AS total_sessions',
-      ])
-      .from(TABLE_NAMES.events)
-      .where('project_id', '=', projectId)
-      .where('name', '=', 'screen_view')
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(this.getRawWhereClause('events', filters));
-
-    // Use toDate for month/week intervals, toDateTime for others
-    const rollupDate =
-      interval === 'month' || interval === 'week'
-        ? clix.date(ROLLUP_DATE_PREFIX)
-        : clix.datetime(`${ROLLUP_DATE_PREFIX} 00:00:00`);
-
-    // Main metrics query (without revenue)
-    const mainQuery = clix(this.client, timezone)
-      .with('session_agg', sessionAggQuery)
-      .with(
-        'overall_bounce_rate',
-        clix(this.client, timezone)
-          .select(['bounce_rate'])
-          .from('session_agg')
-          .where('date', '=', rollupDate)
-      )
-      .with(
-        'daily_session_stats',
-        clix(this.client, timezone)
-          .select(['date', 'bounce_rate'])
-          .from('session_agg')
-          .where('date', '!=', rollupDate)
-      )
-      .with('overall_unique_visitors', overallUniqueVisitorsQuery)
-      .with('raw_screen_view_durations', rawScreenViewDurationsQuery)
-      .with('avg_duration_by_date', avgDurationByDateQuery)
-      .select<{
-        date: string;
-        bounce_rate: number;
-        unique_visitors: number;
-        total_sessions: number;
-        avg_session_duration: number;
-        total_screen_views: number;
-        views_per_session: number;
-        overall_unique_visitors: number;
-        overall_total_sessions: number;
-        overall_bounce_rate: number;
-      }>([
-        `${clix.toStartOf('e.created_at', interval as any)} AS date`,
-        'dss.bounce_rate as bounce_rate',
-        'uniq(e.profile_id) AS unique_visitors',
-        'uniq(e.session_id) AS total_sessions',
-        'coalesce(dur.avg_session_duration, 0) AS avg_session_duration',
-        'count(*) AS total_screen_views',
-        'round((count(*) * 1.) / uniq(e.session_id), 2) AS views_per_session',
-        '(SELECT unique_visitors FROM overall_unique_visitors) AS overall_unique_visitors',
-        '(SELECT total_sessions FROM overall_unique_visitors) AS overall_total_sessions',
-        '(SELECT bounce_rate FROM overall_bounce_rate) AS overall_bounce_rate',
-      ])
-      .from(`${TABLE_NAMES.events} AS e`)
-      .leftJoin(
-        'daily_session_stats AS dss',
-        `${clix.toStartOf('e.created_at', interval as any)} = dss.date`
-      )
-      .leftJoin(
-        'avg_duration_by_date AS dur',
-        `${clix.toStartOf('e.created_at', interval as any)} = dur.date`
-      )
-      .where('e.project_id', '=', projectId)
-      .where('e.name', '=', 'screen_view')
-      .where('e.created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(this.getRawWhereClause('events', filters))
-      .groupBy(['date', 'dss.bounce_rate', 'dur.avg_session_duration'])
-      .orderBy('date', 'ASC')
-      .fill(fillConfig.from, fillConfig.to, fillConfig.step)
-      .transform({
-        date: (item) => new Date(item.date).toISOString(),
-      });
+    // Bounce rate of the sessions per bucket, with the ROLLUP totals row.
+    const sessionAggQuery = anQuery<BucketRow & { bounce_rate: number }>(sql`
+      SELECT
+        GROUPING(b.bucket) = 1 AS is_total,
+        ${bucketKey(raw('b.bucket'), interval)} AS bucket_key,
+        ${chRound(sql`(count(*) FILTER (WHERE b.is_bounce))::double precision * 100 / NULLIF(count(*), 0)`, 2)} AS bounce_rate
+      FROM (
+        SELECT ${bucketOf(raw('s.created_at'), interval, ctx)} AS bucket, s.is_bounce
+        FROM analytics.sessions s
+        WHERE ${and([
+          sql`s.project_id = ${projectId}`,
+          createdBetween(raw('s.created_at'), range, ctx),
+          this.getRawWhereClause('sessions', filters, { alias: 's', timezone }),
+        ])}
+      ) b
+      GROUP BY ROLLUP (b.bucket)
+      HAVING count(*) > 0
+    `);
 
     // Revenue query
-    const revenueQuery = this.createRevenueQuery({
+    const revenueQuery = this.getRevenue({
       projectId,
       startDate,
       endDate,
@@ -591,11 +627,74 @@ export class OverviewService {
       filters,
     });
 
-    // Execute both queries in parallel and merge results
-    const [mainRes, revenueRes] = await Promise.all([
-      mainQuery.execute(),
-      revenueQuery.execute(),
+    // Execute the queries in parallel and merge results
+    const [viewRows, sessionAggRows, revenueRes] = await Promise.all([
+      viewsQuery,
+      sessionAggQuery,
+      revenueQuery,
     ]);
+
+    const overall = viewRows.find((row) => row.is_total);
+    const bounceRateByBucket = new Map(
+      sessionAggRows
+        .filter((row) => !row.is_total)
+        .map((row) => [row.bucket_key, row.bounce_rate]),
+    );
+    // `WHERE date = '1970-01-01 00:00:00'` on the ROLLUP output: the totals
+    // row, or nothing (NULL) in zones west of UTC.
+    const overallBounceRate = rollupSentinelMatches(interval, timezone)
+      ? (sessionAggRows.find((row) => row.is_total)?.bounce_rate ?? null)
+      : null;
+
+    interface MainRow {
+      key: string;
+      date: string;
+      bounce_rate: number;
+      unique_visitors: number;
+      total_sessions: number;
+      avg_session_duration: number;
+      total_screen_views: number;
+      views_per_session: number;
+      overall_unique_visitors: number | null;
+      overall_total_sessions: number | null;
+      overall_bounce_rate: number | null;
+    }
+
+    const mainRes = withFill(
+      viewRows
+        .filter((row) => !row.is_total)
+        .map(
+          (row): MainRow => ({
+            key: row.bucket_key ?? '',
+            date: row.date ?? ROLLUP_SENTINEL,
+            // A bucket without sessions joined no row: the default 0.
+            bounce_rate: bounceRateByBucket.get(row.bucket_key) ?? 0,
+            unique_visitors: row.unique_visitors,
+            total_sessions: row.total_sessions,
+            avg_session_duration: row.avg_session_duration,
+            total_screen_views: row.total_screen_views,
+            views_per_session: row.views_per_session,
+            overall_unique_visitors: overall?.unique_visitors ?? null,
+            overall_total_sessions: overall?.total_sessions ?? null,
+            overall_bounce_rate: overallBounceRate,
+          }),
+        ),
+      (row) => row.key,
+      fillBuckets(interval, startDate, endDate, timezone),
+      (bucket): MainRow => ({
+        key: bucket.key,
+        date: bucket.label,
+        bounce_rate: 0,
+        unique_visitors: 0,
+        total_sessions: 0,
+        avg_session_duration: 0,
+        total_screen_views: 0,
+        views_per_session: 0,
+        overall_unique_visitors: null,
+        overall_total_sessions: null,
+        overall_bounce_rate: null,
+      }),
+    ).map(({ key: _key, date, ...row }) => ({ ...row, date: toIsoDate(date) }));
 
     const overallRevenue = this.getOverallRevenue(revenueRes);
     const series = this.mergeRevenueIntoSeries(mainRes, revenueRes);
@@ -625,11 +724,27 @@ export class OverviewService {
     };
   }
 
-  getRawWhereClause(type: 'events' | 'sessions', filters: IChartEventFilter[]) {
-    const where = getEventFiltersWhereClause(
+  /**
+   * The filters of an overview query as a WHERE fragment on the events or
+   * the sessions table (empty when none applies): only the whitelisted
+   * columns, `path` / `origin` as the session's entry page, the UTM columns
+   * as the events' `__query.utm_*` properties. `alias` qualifies the
+   * columns; `timezone` is the zone typed date filters read dates in.
+   */
+  getRawWhereClause(
+    type: 'events' | 'sessions',
+    filters: IChartEventFilter[],
+    options: { alias?: string; timezone?: string } = {},
+  ): Sql {
+    const clauses = eventFilterClauses(
       filters.flatMap((item) => {
         if (!WHITELISTED_FILTERS.includes(item.name)) {
           return []
+        }
+        // Built without a project id, the ClickHouse clause never applied
+        // cohort operators.
+        if (item.operator === 'inCohort' || item.operator === 'notInCohort') {
+          return [];
         }
         if (type === 'sessions') {
           if (item.name === 'path') {
@@ -638,36 +753,26 @@ export class OverviewService {
           if (item.name === 'origin') {
             return [{ ...item, name: 'entry_origin' }];
           }
-          if (item.name.startsWith('properties.__query.utm_')) {
-            return [
-              {
-                ...item,
-                name: item.name.replace('properties.__query.utm_', 'utm_'),
-              },
-            ];
-          }
-          // sessions table has no `properties` map for arbitrary keys —
-          // drop them instead of generating an invalid WHERE clause.
-          if (item.name.startsWith('properties.')) {
-            return [];
-          }
           return [item];
         }
         // events table has no top-level utm_* columns — those live in the
-        // properties map under the __query.utm_* keys. Route them through
-        // getEventFiltersWhereClause's properties.* path so we emit
-        // `properties['__query.utm_source']` instead of the bare column.
+        // properties map under the __query.utm_* keys.
         if (UTM_COLUMNS.includes(item.name)) {
           return [{ ...item, name: `properties.__query.${item.name}` }];
         }
         return [item];
       }),
-      undefined,
-      undefined,
-      type,
+      {
+        // Whitelisted columns never read the project (no cohort, group or
+        // profile names).
+        projectId: '',
+        timezone: options.timezone ?? 'UTC',
+        alias: options.alias,
+        table: type,
+      },
     );
 
-    return Object.values(where).join(' AND ');
+    return clauses.length > 0 ? and(clauses) : empty;
   }
 
   async getTopPages({
@@ -678,39 +783,32 @@ export class OverviewService {
     timezone,
     limit,
   }: IGetTopPagesInput) {
-    const selectColumns: (string | null | undefined | false)[] = [
-      'origin',
-      'path',
-      'uniq(session_id) as sessions',
-      'count() as pageviews',
-    ];
-
-    if (INCLUDE_REVENUE) {
-      selectColumns.push('sum(revenue) as revenue');
-    }
-
-    const query = clix(this.client, timezone)
-      .select<{
-        origin: string;
-        path: string;
-        sessions: number;
-        pageviews: number;
-        revenue?: number;
-      }>(selectColumns)
-      .from(TABLE_NAMES.events, false)
-      .where('project_id', '=', projectId)
-      .where('name', '=', 'screen_view')
-      .where('path', '!=', '')
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(this.getRawWhereClause('events', filters))
-      .groupBy(['origin', 'path'])
-      .orderBy('sessions', 'DESC')
-      .limit(Math.min(limit ?? MAX_RECORDS_LIMIT, MAX_RECORDS_LIMIT));
-
-    return query.execute();
+    const ctx: TimeCtx = { timezone };
+    return anQuery<{
+      origin: string;
+      path: string;
+      sessions: number;
+      pageviews: number;
+      revenue?: number;
+    }>(sql`
+      SELECT
+        e.origin,
+        e.path,
+        count(DISTINCT e.session_id) AS sessions,
+        count(*) AS pageviews
+        ${INCLUDE_REVENUE ? sql`, sum(e.revenue) AS revenue` : empty}
+      FROM analytics.events e
+      WHERE ${and([
+        sql`e.project_id = ${projectId}`,
+        sql`e.name = 'screen_view'`,
+        sql`e.path <> ''`,
+        createdBetween(raw('e.created_at'), { startDate, endDate }, ctx),
+        this.getRawWhereClause('events', filters, { alias: 'e', timezone }),
+      ])}
+      GROUP BY e.origin, e.path
+      ORDER BY sessions DESC, e.origin, e.path
+      LIMIT ${limitOf(Math.min(limit ?? MAX_RECORDS_LIMIT, MAX_RECORDS_LIMIT))}
+    `);
   }
 
   async getTopEntryExit({
@@ -722,69 +820,64 @@ export class OverviewService {
     timezone,
     limit,
   }: IGetTopEntryExitInput) {
-    const selectColumns: (string | null | undefined | false)[] = [
-      `${mode}_origin AS origin`,
-      `${mode}_path AS path`,
-      'sum(sign) as sessions',
-      'sum(sign * screen_view_count) as pageviews',
-    ];
-
-    if (INCLUDE_REVENUE) {
-      selectColumns.push('sum(revenue * sign) as revenue');
+    if (!Object.hasOwn(ENTRY_EXIT_COLUMNS, mode)) {
+      return [];
     }
+    const ctx: TimeCtx = { timezone };
+    const columns = ENTRY_EXIT_COLUMNS[mode];
+    const params = { projectId, filters, startDate, endDate, timezone };
 
-    const query = clix(this.client, timezone)
-      .select<{
-        origin: string;
-        path: string;
-        sessions: number;
-        pageviews: number;
-        revenue?: number;
-      }>(selectColumns)
-      .from(TABLE_NAMES.sessions, true)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .groupBy([`${mode}_origin`, `${mode}_path`])
-      .having('sum(sign)', '>', 0)
-      .orderBy('sessions', 'DESC')
-      .limit(Math.min(limit ?? MAX_RECORDS_LIMIT, MAX_RECORDS_LIMIT));
-
-    const mainQuery = this.withDistinctSessionsIfNeeded(query, {
-      projectId,
-      filters,
-      startDate,
-      endDate,
-      timezone,
-    });
-
-    return mainQuery.execute();
+    return anQuery<{
+      origin: string;
+      path: string;
+      sessions: number;
+      pageviews: number;
+      revenue?: number;
+    }>(sql`
+      SELECT
+        ${columns.origin} AS origin,
+        ${columns.path} AS path,
+        count(*) AS sessions,
+        sum(s.screen_view_count) AS pageviews
+        ${INCLUDE_REVENUE ? sql`, sum(s.revenue) AS revenue` : empty}
+      FROM analytics.sessions s
+      WHERE ${and([
+        sql`s.project_id = ${projectId}`,
+        createdBetween(raw('s.created_at'), params, ctx),
+        this.sessionsScope(params),
+      ])}
+      GROUP BY ${columns.origin}, ${columns.path}
+      ORDER BY sessions DESC, origin, path
+      LIMIT ${limitOf(Math.min(limit ?? MAX_RECORDS_LIMIT, MAX_RECORDS_LIMIT))}
+    `);
   }
 
-  private getDistinctSessions({
-    projectId,
-    filters,
-    startDate,
-    endDate,
-    timezone,
-  }: {
-    projectId: string;
-    filters: IChartEventFilter[];
-    startDate: string;
-    endDate: string;
-    timezone: string;
-  }) {
-    return clix(this.client, timezone)
-      .select(['DISTINCT session_id'])
-      .from(TABLE_NAMES.events)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(this.getRawWhereClause('events', filters));
+  /** Sessions per value of a sessions column (and its prefix column). */
+  private getGenericItems(
+    params: RangeInput & { column: string; limit: number },
+  ): Promise<GenericRow[]> {
+    const ctx: TimeCtx = { timezone: params.timezone };
+    const prefixColumn = COLUMN_PREFIX_MAP[params.column] ?? null;
+    const column = raw(`s.${params.column}`);
+    const prefix = prefixColumn ? raw(`s.${prefixColumn}`) : null;
+
+    return anQuery<GenericRow>(sql`
+      SELECT
+        ${prefix ? sql`${prefix} AS prefix,` : empty}
+        NULLIF(${column}, '') AS name,
+        count(*) AS sessions,
+        sum(s.screen_view_count) AS pageviews
+        ${INCLUDE_REVENUE ? sql`, sum(s.revenue) AS revenue` : empty}
+      FROM analytics.sessions s
+      WHERE ${and([
+        sql`s.project_id = ${params.projectId}`,
+        createdBetween(raw('s.created_at'), params, ctx),
+        this.sessionsScope(params),
+      ])}
+      GROUP BY ${prefix ? sql`${prefix}, ` : empty}${column}
+      ORDER BY sessions DESC, ${prefix ? sql`${prefix}, ` : empty}${column}
+      LIMIT ${limitOf(params.limit)}
+    `);
   }
 
   async getTopGeneric({
@@ -795,51 +888,19 @@ export class OverviewService {
     column,
     timezone,
   }: IGetTopGenericInput) {
-    if (!WHITELISTED_FILTERS.includes(column)) {
+    if (!(WHITELISTED_FILTERS.includes(column) && GENERIC_COLUMNS.has(column))) {
       return [];
     }
-    
-    const prefixColumn = COLUMN_PREFIX_MAP[column] ?? null;
 
-    const selectColumns: (string | null | undefined | false)[] = [
-      prefixColumn && `${prefixColumn} as prefix`,
-      `nullIf(${column}, '') as name`,
-      'sum(sign) as sessions',
-      'sum(sign * screen_view_count) as pageviews',
-    ];
-
-    if (INCLUDE_REVENUE) {
-      selectColumns.push('sum(revenue * sign) as revenue');
-    }
-
-    const query = clix(this.client, timezone)
-      .select<{
-        prefix?: string;
-        name: string;
-        sessions: number;
-        pageviews: number;
-        revenue?: number;
-      }>(selectColumns)
-      .from(TABLE_NAMES.sessions, true)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .groupBy([prefixColumn, column].filter(Boolean))
-      .having('sum(sign)', '>', 0)
-      .orderBy('sessions', 'DESC')
-      .limit(MAX_RECORDS_LIMIT);
-
-    const mainQuery = this.withDistinctSessionsIfNeeded(query, {
+    return this.getGenericItems({
       projectId,
       filters,
       startDate,
       endDate,
       timezone,
+      column,
+      limit: MAX_RECORDS_LIMIT,
     });
-
-    return mainQuery.execute();
   }
 
   async getTopGenericSeries({
@@ -863,105 +924,75 @@ export class OverviewService {
       total: { sessions: number; pageviews: number; revenue?: number };
     }>;
   }> {
+    if (!GENERIC_COLUMNS.has(column)) {
+      return { items: [] };
+    }
     const prefixColumn = COLUMN_PREFIX_MAP[column] ?? null;
     const TOP_LIMIT = 500;
-    const fillConfig = this.getFillConfig(interval, startDate, endDate);
+    const ctx: TimeCtx = { timezone };
+    const params = { projectId, filters, startDate, endDate, timezone };
 
-    // Step 1: Get top 15 items
-    const selectColumns: (string | null | undefined | false)[] = [
-      prefixColumn && `${prefixColumn} as prefix`,
-      `nullIf(${column}, '') as name`,
-      'sum(sign) as sessions',
-      'sum(sign * screen_view_count) as pageviews',
-    ];
-
-    if (INCLUDE_REVENUE) {
-      selectColumns.push('sum(revenue * sign) as revenue');
-    }
-
-    const topItemsQuery = clix(this.client, timezone)
-      .select<{
-        prefix?: string;
-        name: string;
-        sessions: number;
-        pageviews: number;
-        revenue?: number;
-      }>(selectColumns)
-      .from(TABLE_NAMES.sessions, true)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .groupBy([prefixColumn, column].filter(Boolean))
-      .having('sum(sign)', '>', 0)
-      .orderBy('sessions', 'DESC')
-      .limit(TOP_LIMIT);
-
-    const mainTopItemsQuery = this.withDistinctSessionsIfNeeded(topItemsQuery, {
-      projectId,
-      filters,
-      startDate,
-      endDate,
-      timezone,
+    // Step 1: Get top items
+    const topItems = await this.getGenericItems({
+      ...params,
+      column,
+      limit: TOP_LIMIT,
     });
-
-    const topItems = await mainTopItemsQuery.execute();
 
     if (topItems.length === 0) {
       return { items: [] };
     }
 
-    // Step 2: Build time-series query for each top item
-    const where = this.getRawWhereClause('sessions', filters);
-    const timeSeriesSelectColumns: (string | null | undefined | false)[] = [
-      `${clix.toStartOf('created_at', interval as any, timezone)} AS date`,
-      prefixColumn && `${prefixColumn} as prefix`,
-      `nullIf(${column}, '') as name`,
-      'sum(sign) as sessions',
-      'sum(sign * screen_view_count) as pageviews',
-    ];
+    // Step 2: Build time-series query for each top item. It always applied
+    // the sessions filters, and with a page filter also the matching
+    // sessions.
+    const prefix = prefixColumn ? raw(`s.${prefixColumn}`) : null;
+    const rows = await anQuery<GenericSeriesRow>(sql`
+      SELECT
+        ${bucketKey(raw('b.bucket'), interval)} AS bucket_key,
+        ${bucketLabel(raw('b.bucket'), interval, ctx)} AS date,
+        ${prefix ? sql`b.prefix,` : empty}
+        NULLIF(b.value, '') AS name,
+        count(*) AS sessions,
+        sum(b.screen_view_count) AS pageviews
+        ${INCLUDE_REVENUE ? sql`, sum(b.revenue) AS revenue` : empty}
+      FROM (
+        SELECT
+          ${bucketOf(raw('s.created_at'), interval, ctx)} AS bucket,
+          ${prefix ? sql`${prefix} AS prefix,` : empty}
+          ${raw(`s.${column}`)} AS value,
+          s.screen_view_count,
+          s.revenue
+        FROM analytics.sessions s
+        WHERE ${and([
+          sql`s.project_id = ${projectId}`,
+          createdBetween(raw('s.created_at'), params, ctx),
+          this.getRawWhereClause('sessions', filters, { alias: 's', timezone }),
+          this.isPageFilter(filters) ? this.inDistinctSessions(params) : empty,
+        ])}
+      ) b
+      GROUP BY b.bucket, ${prefix ? sql`b.prefix, ` : empty}b.value
+      ORDER BY bucket_key
+    `);
 
-    if (INCLUDE_REVENUE) {
-      timeSeriesSelectColumns.push('sum(revenue * sign) as revenue');
-    }
-
-    const timeSeriesQuery = clix(this.client, timezone)
-      .select<{
-        date: string;
-        prefix?: string;
-        name: string;
-        sessions: number;
-        pageviews: number;
-        revenue?: number;
-      }>(timeSeriesSelectColumns)
-      .from(TABLE_NAMES.sessions, true)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(where)
-      .groupBy(['date', prefixColumn, column].filter(Boolean))
-      .having('sum(sign)', '>', 0)
-      .orderBy('date', 'ASC')
-      .fill(fillConfig.from, fillConfig.to, fillConfig.step)
-      .transform({
-        date: (item) => new Date(item.date).toISOString(),
-      });
-
-    const mainTimeSeriesQuery = this.withDistinctSessionsIfNeeded(
-      timeSeriesQuery,
-      {
-        projectId,
-        filters,
-        startDate,
-        endDate,
-        timezone,
-      }
-    );
-
-    const timeSeriesData = await mainTimeSeriesQuery.execute();
+    // WITH FILL rows carry the column defaults: no name, prefix ''.
+    const timeSeriesData = withFill(
+      rows,
+      (row) => row.bucket_key,
+      fillBuckets(interval, startDate, endDate, timezone),
+      (bucket): GenericSeriesRow => ({
+        bucket_key: bucket.key,
+        date: bucket.label,
+        ...(prefixColumn ? { prefix: '' } : {}),
+        name: null,
+        sessions: 0,
+        pageviews: 0,
+        ...(INCLUDE_REVENUE ? { revenue: 0 } : {}),
+      }),
+    ).map(({ bucket_key: _key, ...row }) => ({
+      ...row,
+      date: toIsoDate(row.date),
+    }));
 
     // Step 3: Group time-series data by item and calculate totals
     const itemsMap = new Map<
@@ -1038,136 +1069,117 @@ export class OverviewService {
     // Color palette - each entry page gets a consistent color
     const COLORS = chartColors.map((color) => color.main);
 
-    // Step 1: Get session paths (deduped consecutive pages)
-    const orderedEventsQuery = clix(this.client, timezone)
-      .select<{
-        session_id: string;
-        path: string;
-        created_at: string;
-      }>(['session_id', 'concat(origin, path) as path', 'created_at'])
-      .from(TABLE_NAMES.events)
-      .where('project_id', '=', projectId)
-      .where('name', '=', 'screen_view')
-      .where('path', '!=', '')
-      .where('path', 'IS NOT NULL')
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(this.getRawWhereClause('events', filters))
-      .orderBy('session_id', 'ASC')
-      .orderBy('created_at', 'ASC');
+    const ctx: TimeCtx = { timezone };
 
-    // Intermediate CTE to compute deduped paths
-    const pathsDedupedCTE = clix(this.client, timezone)
-      .with('ordered_events', orderedEventsQuery)
-      .select<{
-        session_id: string;
-        paths_deduped: string[];
-      }>([
-        'session_id',
-        `arraySlice(
-          arrayFilter(
-            (x, i) -> i = 1 OR x != paths_raw[i - 1],
-            groupArray(path) as paths_raw,
-            arrayEnumerate(paths_raw)
-          ),
-          1, ${steps}
-        ) as paths_deduped`,
-      ])
-      .from('ordered_events')
-      .groupBy(['session_id']);
+    // Steps 1–3 in one query: each session's path (consecutive repeats
+    // collapsed, the first `steps` pages, cut before the first page seen
+    // twice, at least two pages), the top entry pages, and the transitions
+    // of the sessions that start on one of them.
+    const rows = await anQuery<{
+      kind: 'entry' | 'link';
+      source: string;
+      target: string | null;
+      step: number | null;
+      value: number;
+    }>(sql`
+      WITH views AS (
+        SELECT
+          e.session_id,
+          e.origin || e.path AS page,
+          lag(e.origin || e.path) OVER (PARTITION BY e.session_id ORDER BY e.created_at, e.id) AS previous_page,
+          row_number() OVER (PARTITION BY e.session_id ORDER BY e.created_at, e.id) AS seq
+        FROM analytics.events e
+        WHERE ${and([
+          sql`e.project_id = ${projectId}`,
+          sql`e.name = 'screen_view'`,
+          sql`e.path <> ''`,
+          createdBetween(raw('e.created_at'), { startDate, endDate }, ctx),
+          this.getRawWhereClause('events', filters, { alias: 'e', timezone }),
+        ])}
+      ),
+      deduped AS (
+        SELECT
+          session_id,
+          page,
+          row_number() OVER (PARTITION BY session_id ORDER BY seq) AS pos
+        FROM views
+        WHERE previous_page IS NULL OR previous_page <> page
+      ),
+      firsts AS (
+        SELECT
+          session_id,
+          page,
+          pos,
+          min(pos) OVER (PARTITION BY session_id, page) AS first_pos
+        FROM deduped
+        WHERE pos <= ${steps}
+      ),
+      repeats AS (
+        SELECT
+          session_id,
+          page,
+          pos,
+          min(pos) FILTER (WHERE pos > first_pos) OVER (PARTITION BY session_id) AS repeat_pos
+        FROM firsts
+      ),
+      paths AS (
+        SELECT
+          session_id,
+          page,
+          pos,
+          count(*) OVER (PARTITION BY session_id) AS length
+        FROM repeats
+        WHERE repeat_pos IS NULL OR pos < repeat_pos
+      ),
+      entries AS (
+        SELECT session_id, page AS entry_page
+        FROM paths
+        WHERE pos = 1 AND length >= 2
+      ),
+      top_entries AS (
+        SELECT entry_page, count(*) AS count
+        FROM entries
+        GROUP BY entry_page
+        ORDER BY count DESC, entry_page
+        LIMIT ${TOP_ENTRIES}
+      ),
+      links AS (
+        SELECT
+          p.page AS source,
+          lead(p.page) OVER (PARTITION BY p.session_id ORDER BY p.pos) AS target,
+          p.pos AS step
+        FROM paths p
+        JOIN entries en ON en.session_id = p.session_id
+        JOIN top_entries t ON t.entry_page = en.entry_page
+      )
+      SELECT 'entry' AS kind, entry_page AS source, NULL::text AS target, NULL::bigint AS step, count AS value
+      FROM top_entries
+      UNION ALL
+      SELECT 'link' AS kind, source, target, step, count(*) AS value
+      FROM links
+      WHERE target IS NOT NULL
+      GROUP BY source, target, step
+      ORDER BY kind, step NULLS FIRST, value DESC, source, target
+    `);
 
-    const sessionPathsQuery = clix(this.client, timezone)
-      .with('paths_deduped_cte', pathsDedupedCTE)
-      .select<{
-        session_id: string;
-        entry_page: string;
-        paths: string[];
-      }>([
-        'session_id',
-        // Truncate at first repeat
-        `if(
-          arrayFirstIndex(x -> x > 1, arrayEnumerateUniq(paths_deduped)) = 0,
-          paths_deduped,
-          arraySlice(
-            paths_deduped,
-            1,
-            arrayFirstIndex(x -> x > 1, arrayEnumerateUniq(paths_deduped)) - 1
-          )
-        ) as paths`,
-        // Entry page is first element
-        'paths[1] as entry_page',
-      ])
-      .from('paths_deduped_cte')
-      .having('length(paths)', '>=', 2);
-
-    // Step 2: Find top 3 entry pages
-    const topEntriesQuery = clix(this.client, timezone)
-      .with('session_paths', sessionPathsQuery)
-      .select<{ entry_page: string; count: number }>([
-        'entry_page',
-        'count() as count',
-      ])
-      .from('session_paths')
-      .groupBy(['entry_page'])
-      .orderBy('count', 'DESC')
-      .limit(TOP_ENTRIES);
-
-    const topEntries = await topEntriesQuery.execute();
+    const topEntries = rows
+      .filter((row) => row.kind === 'entry')
+      .map((row) => ({ entry_page: row.source, count: row.value }));
 
     if (topEntries.length === 0) {
       return { nodes: [], links: [] };
     }
 
-    const topEntryPages = topEntries.map((e) => e.entry_page);
     const totalSessions = topEntries.reduce((sum, e) => sum + e.count, 0);
 
-    // Step 3: Get all transitions, but ONLY for sessions starting with top entries
-    const transitionsQuery = clix(this.client, timezone)
-      .with('paths_deduped_cte', pathsDedupedCTE)
-      .with(
-        'session_paths',
-        clix(this.client, timezone)
-          .select([
-            'session_id',
-            // Truncate at first repeat
-            `if(
-              arrayFirstIndex(x -> x > 1, arrayEnumerateUniq(paths_deduped)) = 0,
-              paths_deduped,
-              arraySlice(
-                paths_deduped,
-                1,
-                arrayFirstIndex(x -> x > 1, arrayEnumerateUniq(paths_deduped)) - 1
-              )
-            ) as paths`,
-          ])
-          .from('paths_deduped_cte')
-          .having('length(paths)', '>=', 2)
-          // ONLY sessions starting with top entry pages
-          .having('paths[1]', 'IN', topEntryPages)
-      )
-      .select<{
-        source: string;
-        target: string;
-        step: number;
-        value: number;
-      }>([
-        'pair.1 as source',
-        'pair.2 as target',
-        'pair.3 as step',
-        'count() as value',
-      ])
-      .from(
-        clix.exp(
-          '(SELECT arrayJoin(arrayMap(i -> (paths[i], paths[i + 1], i), range(1, length(paths)))) as pair FROM session_paths WHERE length(paths) >= 2)'
-        )
-      )
-      .groupBy(['source', 'target', 'step'])
-      .orderBy('step', 'ASC')
-      .orderBy('value', 'DESC');
-
-    const transitions = await transitionsQuery.execute();
+    const transitions = rows
+      .filter((row) => row.kind === 'link')
+      .map((row) => ({
+        source: row.source,
+        target: row.target ?? '',
+        step: row.step ?? 0,
+        value: row.value,
+      }));
 
     if (transitions.length === 0) {
       return { nodes: [], links: [] };
@@ -1375,27 +1387,25 @@ export class OverviewService {
     timezone: string;
     excludeEvents?: string[];
   }): Promise<Array<{ name: string; count: number }>> {
-    const where = this.getRawWhereClause('events', filters);
+    const ctx: TimeCtx = { timezone };
     const excludeWhere =
       excludeEvents.length > 0
-        ? `name NOT IN (${excludeEvents.map((e) => sqlstring.escape(e)).join(',')})`
-        : '';
+        ? sql`e.name <> ALL(${excludeEvents}::text[])`
+        : empty;
 
-    const query = clix(this.client, timezone)
-      .select<{ name: string; count: number }>(['name', 'count() as count'])
-      .from(TABLE_NAMES.events, false)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(where)
-      .rawWhere(excludeWhere)
-      .groupBy(['name'])
-      .orderBy('count', 'DESC')
-      .limit(MAX_RECORDS_LIMIT);
-
-    return query.execute();
+    return anQuery<{ name: string; count: number }>(sql`
+      SELECT e.name, count(*) AS count
+      FROM analytics.events e
+      WHERE ${and([
+        sql`e.project_id = ${projectId}`,
+        createdBetween(raw('e.created_at'), { startDate, endDate }, ctx),
+        this.getRawWhereClause('events', filters, { alias: 'e', timezone }),
+        excludeWhere,
+      ])}
+      GROUP BY e.name
+      ORDER BY count DESC, e.name
+      LIMIT ${MAX_RECORDS_LIMIT}
+    `);
   }
 
   async getTopLinkOut({
@@ -1411,28 +1421,30 @@ export class OverviewService {
     endDate: string;
     timezone: string;
   }): Promise<Array<{ href: string; count: number }>> {
-    const where = this.getRawWhereClause('events', filters);
-    const hrefKey = getSelectPropertyKey('properties.href');
+    const ctx: TimeCtx = { timezone };
+    const href = eventPropertyExpr('properties.href', {
+      projectId,
+      timezone,
+      alias: 'e',
+    });
 
-    const query = clix(this.client, timezone)
-      .select<{ href: string; count: number }>([
-        `${hrefKey} as href`,
-        'count() as count',
-      ])
-      .from(TABLE_NAMES.events, false)
-      .where('project_id', '=', projectId)
-      .where('name', '=', 'link_out')
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(where)
-      .rawWhere(`${hrefKey} IS NOT NULL AND ${hrefKey} != ''`)
-      .groupBy(['href'])
-      .orderBy('count', 'DESC')
-      .limit(MAX_RECORDS_LIMIT);
-
-    return query.execute();
+    return anQuery<{ href: string; count: number }>(sql`
+      SELECT l.href, count(*) AS count
+      FROM (
+        SELECT ${href} AS href
+        FROM analytics.events e
+        WHERE ${and([
+          sql`e.project_id = ${projectId}`,
+          sql`e.name = 'link_out'`,
+          createdBetween(raw('e.created_at'), { startDate, endDate }, ctx),
+          this.getRawWhereClause('events', filters, { alias: 'e', timezone }),
+        ])}
+      ) l
+      WHERE l.href <> ''
+      GROUP BY l.href
+      ORDER BY count DESC, l.href
+      LIMIT ${MAX_RECORDS_LIMIT}
+    `);
   }
 
   async getMapData({
@@ -1457,37 +1469,34 @@ export class OverviewService {
       count: number;
     }>
   > {
-    const where = this.getRawWhereClause('events', filters);
+    const ctx: TimeCtx = { timezone };
 
-    // Note: ClickHouse doesn't have built-in lat/lng for countries/regions
+    // Note: there are no built-in lat/lng for countries/regions.
     // This would typically require a lookup table or external service
     // For now, we'll return the data structure but lat/lng would need to be
     // resolved on the frontend or via a separate lookup
-    const query = clix(this.client, timezone)
-      .select<{
-        country: string;
-        region: string | null;
-        city: string | null;
-        count: number;
-      }>([
-        "nullIf(country, '') as country",
-        "nullIf(region, '') as region",
-        "nullIf(city, '') as city",
-        'uniq(session_id) as count',
-      ])
-      .from(TABLE_NAMES.events, false)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(where)
-      .rawWhere("country IS NOT NULL AND country != ''")
-      .groupBy(['country', 'region', 'city'])
-      .orderBy('count', 'DESC')
-      .limit(MAX_RECORDS_LIMIT);
-
-    const results = await query.execute();
+    const results = await anQuery<{
+      country: string;
+      region: string | null;
+      city: string | null;
+      count: number;
+    }>(sql`
+      SELECT
+        NULLIF(e.country, '') AS country,
+        NULLIF(e.region, '') AS region,
+        NULLIF(e.city, '') AS city,
+        count(DISTINCT e.session_id) AS count
+      FROM analytics.events e
+      WHERE ${and([
+        sql`e.project_id = ${projectId}`,
+        createdBetween(raw('e.created_at'), { startDate, endDate }, ctx),
+        this.getRawWhereClause('events', filters, { alias: 'e', timezone }),
+        sql`e.country <> ''`,
+      ])}
+      GROUP BY e.country, e.region, e.city
+      ORDER BY count DESC, e.country, e.region, e.city
+      LIMIT ${MAX_RECORDS_LIMIT}
+    `);
 
     // Return with placeholder lat/lng - these should be resolved via geocoding
     // or a lookup table on the frontend/backend
@@ -1502,7 +1511,7 @@ export class OverviewService {
   }
 }
 
-export const overviewService = new OverviewService(ch);
+export const overviewService = new OverviewService();
 
 import { getSettingsForProject } from './organization.service';
 
