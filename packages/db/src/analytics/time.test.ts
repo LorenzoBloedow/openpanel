@@ -9,8 +9,10 @@ import {
   formatDateTime,
   fromLocal,
   interval,
+  parseTimestamp,
   startOf,
   toLocal,
+  toLocalDate,
 } from './time';
 
 let testDb: TestDatabase;
@@ -95,5 +97,34 @@ describe('time helpers', () => {
       '2024-02-29',
     );
     expect(() => interval(1.5, 'day')).toThrow();
+  });
+
+  it('parses date text like parseDateTimeBestEffortOrNull under a session zone', async () => {
+    const ctx: TimeCtx = { timezone: 'Europe/Stockholm' };
+    const parse = async (text: string | null) => {
+      const [row] = await query<{ value: string | null }>(
+        sql`SELECT ${parseTimestamp(sql`${text}::text`, ctx)} AS value`,
+      );
+      return row!.value;
+    };
+    // An explicit zone is that instant; without one it's Stockholm time.
+    expect(await parse('2026-07-28T13:22:00.000Z')).toBe('2026-07-28 13:22:00.000');
+    expect(await parse('2026-07-28T13:22:00+02:00')).toBe('2026-07-28 11:22:00.000');
+    expect(await parse('2026-07-28 13:22')).toBe('2026-07-28 11:22:00.000');
+    expect(await parse('2026-07-28')).toBe('2026-07-27 22:00:00.000');
+    expect(await parse(' 2026-07-28 ')).toBe('2026-07-27 22:00:00.000');
+    // Day first, and unix seconds.
+    expect(await parse('28/07/2026')).toBe('2026-07-27 22:00:00.000');
+    expect(await parse('1700000000')).toBe('2023-11-14 22:13:20.000');
+    // Anything else is NULL, never an error.
+    for (const text of ['abc', '', '34', '31/02/2026', null]) {
+      expect(await parse(text), String(text)).toBeNull();
+    }
+  });
+
+  it('reads the calendar date of an instant in a zone', async () => {
+    const at = instant('2024-03-10T23:30:00Z');
+    expect(await evaluate(sql`${toLocalDate(at, { timezone: 'UTC' })}::text`)).toBe('2024-03-10');
+    expect(await evaluate(sql`${toLocalDate(at, { timezone: 'Europe/Stockholm' })}::text`)).toBe('2024-03-11');
   });
 });
