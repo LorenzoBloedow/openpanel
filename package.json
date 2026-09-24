@@ -20,6 +20,8 @@
     "migrate": "pnpm -r --filter db run migrate",
     "migrate:analytics": "pnpm -r --filter db run migrate:analytics",
     "migrate:deploy": "pnpm -r --filter db run migrate:deploy",
+    "cf:backup": "pnpm --filter @openpanel/cloudflare exec dotenv -e ../../.env -c -- tsx src/backup.ts",
+    "cf:restore": "pnpm --filter @openpanel/cloudflare exec dotenv -e ../../.env -c -- tsx src/restore.ts",
     "dev": "pnpm -r --parallel testing",
     "dev:public": "pnpm -r --filter public dev",
     "typecheck": "pnpm -r --no-bail typecheck",
