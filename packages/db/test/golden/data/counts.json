@@ -1,0 +1,294 @@
+{
+  "group": "counts",
+  "anchor": "2026-09-24T03:17:00.000Z",
+  "capturedWith": "ClickHouse 26.1.3.52",
+  "cases": {
+    "getProjectEventsCount sthlm": {
+      "output": 2505
+    },
+    "getProjectEventsCount ny": {
+      "output": 2391
+    },
+    "getProjectEventsCount utc": {
+      "output": 2355
+    },
+    "getProjectEventsCount unknown project": {
+      "output": 0
+    },
+    "getLastEventPerProject golden projects": {
+      "output": {
+        "golden-ny": "2026-09-24T03:14:21.000Z",
+        "golden-sthlm": "2026-09-24T03:15:41.000Z",
+        "golden-utc": "2026-09-24T03:15:58.000Z"
+      }
+    },
+    "listProjectsCore root golden-org-sthlm": {
+      "output": {
+        "clientType": "root",
+        "projects": [
+          {
+            "domain": null,
+            "eventsCount": 0,
+            "id": "golden-sthlm",
+            "name": "Golden sthlm",
+            "organizationId": "golden-org-sthlm",
+            "types": []
+          }
+        ]
+      }
+    },
+    "listProjectsCore read golden-ny": {
+      "output": {
+        "clientType": "read",
+        "projects": [
+          {
+            "domain": null,
+            "eventsCount": 0,
+            "id": "golden-ny",
+            "name": "Golden ny",
+            "organizationId": "golden-org-ny",
+            "types": []
+          }
+        ]
+      }
+    },
+    "getOrganizationEventsCount all golden projects": {
+      "output": 7251
+    },
+    "getOrganizationEventsCount ny and an unknown project": {
+      "output": 2391
+    },
+    "getOrganizationEventsCount no projects": {
+      "output": 0
+    },
+    "getOrganizationEventsCountSince all golden projects 7 days": {
+      "output": 911
+    },
+    "getOrganizationEventsCountSince utc 1 day": {
+      "output": 89
+    },
+    "getOrganizationEventsCountSince sthlm 45 days": {
+      "output": 1807
+    },
+    "getOrganizationBillingEventsCount active period last 30 days": {
+      "output": 3382
+    },
+    "getOrganizationBillingEventsCount trial window": {
+      "output": 1101
+    },
+    "getOrganizationBillingEventsCount without a period": {
+      "output": 0
+    },
+    "getOrganizationBillingEventsCount without projects": {
+      "output": 0
+    },
+    "getOrganizationBillingEventsCountSerie all golden projects 30 days": {
+      "output": [
+        {
+          "count": 107,
+          "day": "2026-08-25"
+        },
+        {
+          "count": 147,
+          "day": "2026-08-26"
+        },
+        {
+          "count": 131,
+          "day": "2026-08-27"
+        },
+        {
+          "count": 130,
+          "day": "2026-08-28"
+        },
+        {
+          "count": 116,
+          "day": "2026-08-29"
+        },
+        {
+          "count": 102,
+          "day": "2026-08-30"
+        },
+        {
+          "count": 124,
+          "day": "2026-08-31"
+        },
+        {
+          "count": 71,
+          "day": "2026-09-01"
+        },
+        {
+          "count": 115,
+          "day": "2026-09-02"
+        },
+        {
+          "count": 111,
+          "day": "2026-09-03"
+        },
+        {
+          "count": 129,
+          "day": "2026-09-04"
+        },
+        {
+          "count": 113,
+          "day": "2026-09-05"
+        },
+        {
+          "count": 74,
+          "day": "2026-09-06"
+        },
+        {
+          "count": 93,
+          "day": "2026-09-07"
+        },
+        {
+          "count": 117,
+          "day": "2026-09-08"
+        },
+        {
+          "count": 167,
+          "day": "2026-09-09"
+        },
+        {
+          "count": 77,
+          "day": "2026-09-10"
+        },
+        {
+          "count": 122,
+          "day": "2026-09-11"
+        },
+        {
+          "count": 92,
+          "day": "2026-09-12"
+        },
+        {
+          "count": 71,
+          "day": "2026-09-13"
+        },
+        {
+          "count": 87,
+          "day": "2026-09-14"
+        },
+        {
+          "count": 104,
+          "day": "2026-09-15"
+        },
+        {
+          "count": 71,
+          "day": "2026-09-16"
+        },
+        {
+          "count": 140,
+          "day": "2026-09-17"
+        },
+        {
+          "count": 113,
+          "day": "2026-09-18"
+        },
+        {
+          "count": 122,
+          "day": "2026-09-19"
+        },
+        {
+          "count": 83,
+          "day": "2026-09-20"
+        },
+        {
+          "count": 99,
+          "day": "2026-09-21"
+        },
+        {
+          "count": 123,
+          "day": "2026-09-22"
+        },
+        {
+          "count": 164,
+          "day": "2026-09-23"
+        },
+        {
+          "count": 67,
+          "day": "2026-09-24"
+        }
+      ]
+    },
+    "getOrganizationBillingEventsCountSerie utc 7 days": {
+      "output": [
+        {
+          "count": 45,
+          "day": "2026-09-17"
+        },
+        {
+          "count": 37,
+          "day": "2026-09-18"
+        },
+        {
+          "count": 32,
+          "day": "2026-09-19"
+        },
+        {
+          "count": 25,
+          "day": "2026-09-20"
+        },
+        {
+          "count": 33,
+          "day": "2026-09-21"
+        },
+        {
+          "count": 37,
+          "day": "2026-09-22"
+        },
+        {
+          "count": 57,
+          "day": "2026-09-23"
+        },
+        {
+          "count": 32,
+          "day": "2026-09-24"
+        }
+      ]
+    },
+    "getOrganizationBillingEventsCountSerie sthlm before the data": {
+      "output": [
+        {
+          "count": 0,
+          "day": "2026-06-26"
+        },
+        {
+          "count": 0,
+          "day": "2026-06-27"
+        },
+        {
+          "count": 0,
+          "day": "2026-06-28"
+        },
+        {
+          "count": 0,
+          "day": "2026-06-29"
+        },
+        {
+          "count": 0,
+          "day": "2026-06-30"
+        },
+        {
+          "count": 0,
+          "day": "2026-07-01"
+        },
+        {
+          "count": 0,
+          "day": "2026-07-02"
+        },
+        {
+          "count": 0,
+          "day": "2026-07-03"
+        },
+        {
+          "count": 0,
+          "day": "2026-07-04"
+        },
+        {
+          "count": 0,
+          "day": "2026-07-05"
+        }
+      ]
+    }
+  }
+}

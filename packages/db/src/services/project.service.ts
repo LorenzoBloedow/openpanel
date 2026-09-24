@@ -1,12 +1,7 @@
 import { cacheable } from '@openpanel/redis';
-import sqlstring from 'sqlstring';
-import {
-  ch,
-  chQuery,
-  convertClickhouseDateToJs,
-  TABLE_NAMES,
-} from '../clickhouse/client';
-import { clix } from '../clickhouse/query-builder';
+import { anQuery, anQueryOne } from '../analytics/client';
+import { convertClickhouseDateToJs } from '../analytics/dates';
+import { sql } from '../analytics/sql';
 import { db, type Prisma, type Project } from '../prisma-client';
 
 export type IServiceProject = Project;
@@ -98,56 +93,36 @@ export async function getProjects({
 }
 
 /**
- * Fast approximate count of a project's events (excluding session_start /
- * session_end), read from distinct_event_names_mv instead of the raw events
- * table.
- *
- * Why not count raw events: `name NOT IN (...)` is a negation, so it can't
- * prune with idx_name and scans the project's whole events slice — and this
- * runs from the sessions job on every batch. The MV already accumulates
- * `count() AS event_count` per (project_id, name) insert block, so summing
- * it reads a few thousand pre-aggregated rows instead of billions of raw
- * ones.
- *
- * Why approximate: event_count is a plain UInt64, not an aggregate state,
- * so MV counter rows whose (project_id, name, created_at) sort key collides
- * collapse on merge keeping only one block's count. Live ingestion rarely
- * ties on the ms timestamp; bulk imports with coarse timestamps are where
- * collisions come from. The error is strictly downward (measured 0.0011%
- * low on a 1.46B-event project) — acceptable for this display/onboarding
- * counter.
+ * A project's event count (excluding session_start / session_end), from the
+ * analytics.event_names rollup the ingest transaction keeps: a few rows per
+ * project instead of a scan of its events. Exact (the ClickHouse MV it
+ * replaces could undercount).
  */
 export const getProjectEventsCount = async (projectId: string) => {
-  const res = await chQuery<{ count: number }>(
-    `SELECT sum(event_count) as count FROM ${TABLE_NAMES.event_names_mv} WHERE project_id = ${sqlstring.escape(projectId)} AND name NOT IN ('session_start', 'session_end')`
-  );
-  return res[0]?.count;
+  const row = await anQueryOne<{ count: number | null }>(sql`
+    SELECT sum(event_count)::bigint AS count
+    FROM analytics.event_names
+    WHERE project_id = ${projectId}
+      AND name NOT IN ('session_start', 'session_end')
+  `);
+  return row?.count ?? 0;
 };
 
 /**
- * Newest event timestamp per project, for the whole instance in one query.
- * Reads the same pre-aggregated MV as getProjectEventsCount (it stores
- * max(created_at) per (project_id, name) block), so this scans thousands of
- * rows instead of the raw events table. Projects with no events are absent
- * from the map.
+ * Newest event timestamp per project, for the whole instance in one query,
+ * from the same rollup. Session rows are worker-generated (the reaper can
+ * emit session_end after tracking stopped), so only real tracking counts.
+ * Projects with no events are absent from the map.
  */
 export const getLastEventPerProject = async (): Promise<Map<string, Date>> => {
-  const res = await clix(ch)
-    .select<{ project_id: string; last_event_at: string }>([
-      'project_id',
-      'max(created_at) AS last_event_at',
-    ])
-    .from(TABLE_NAMES.event_names_mv)
-    // Session rows are worker-generated (the reaper can emit session_end after
-    // tracking already stopped) — only real tracking activity should count.
-    .where('name', 'NOT IN', ['session_start', 'session_end'])
-    .groupBy(['project_id'])
-    .execute();
+  const rows = await anQuery<{ project_id: string; last_event_at: string }>(sql`
+    SELECT project_id, max(last_seen_at) AS last_event_at
+    FROM analytics.event_names
+    WHERE name NOT IN ('session_start', 'session_end')
+    GROUP BY project_id
+  `);
   return new Map(
-    res.map((row) => [
-      row.project_id,
-      convertClickhouseDateToJs(row.last_event_at),
-    ])
+    rows.map((row) => [row.project_id, convertClickhouseDateToJs(row.last_event_at)]),
   );
 };
 

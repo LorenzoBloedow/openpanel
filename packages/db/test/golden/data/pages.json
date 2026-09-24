@@ -1,0 +1,6805 @@
+{
+  "group": "pages",
+  "anchor": "2026-09-24T03:17:00.000Z",
+  "capturedWith": "ClickHouse 26.1.3.52",
+  "cases": {
+    "getTopPagesCore sthlm last 30 days": {
+      "output": [
+        {
+          "origin": "https://example.com",
+          "pageviews": 107,
+          "path": "/pricing",
+          "revenue": 0,
+          "sessions": 90
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 107,
+          "path": "/docs",
+          "revenue": 0,
+          "sessions": 87
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 101,
+          "path": "/docs/getting-started",
+          "revenue": 0,
+          "sessions": 86
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 92,
+          "path": "/dashboard",
+          "revenue": 0,
+          "sessions": 78
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 99,
+          "path": "/settings/profile",
+          "revenue": 0,
+          "sessions": 78
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 93,
+          "path": "/blog/hello-world",
+          "revenue": 0,
+          "sessions": 75
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 82,
+          "path": "/checkout",
+          "revenue": 0,
+          "sessions": 70
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 75,
+          "path": "/",
+          "revenue": 0,
+          "sessions": 63
+        }
+      ]
+    },
+    "getTopPagesCore ny last 7 days": {
+      "output": [
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 32,
+          "path": "/settings/profile",
+          "revenue": 0,
+          "sessions": 27
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 27,
+          "path": "/docs",
+          "revenue": 0,
+          "sessions": 23
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 25,
+          "path": "/pricing",
+          "revenue": 0,
+          "sessions": 23
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 23,
+          "path": "/dashboard",
+          "revenue": 0,
+          "sessions": 22
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 21,
+          "path": "/",
+          "revenue": 0,
+          "sessions": 21
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 23,
+          "path": "/docs/getting-started",
+          "revenue": 0,
+          "sessions": 20
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 19,
+          "path": "/blog/hello-world",
+          "revenue": 0,
+          "sessions": 17
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 19,
+          "path": "/checkout",
+          "revenue": 0,
+          "sessions": 16
+        }
+      ]
+    },
+    "getTopPagesCore utc last 30 days limit 3": {
+      "output": [
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 87,
+          "path": "/settings/profile",
+          "revenue": 0,
+          "sessions": 73
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 82,
+          "path": "/dashboard",
+          "revenue": 0,
+          "sessions": 71
+        },
+        {
+          "tiedAtLimit": 63
+        }
+      ]
+    },
+    "getTopPagesCore sthlm DST weekend": {
+      "output": [
+        {
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/",
+          "revenue": 0,
+          "sessions": 3
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/blog/hello-world",
+          "revenue": 0,
+          "sessions": 3
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "revenue": 0,
+          "sessions": 1
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "revenue": 0,
+          "sessions": 1
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "revenue": 0,
+          "sessions": 1
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "revenue": 0,
+          "sessions": 1
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "revenue": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    "getEntryExitPagesCore sthlm entry last 30 days": {
+      "output": [
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 110,
+          "path": "/settings/profile",
+          "revenue": 999,
+          "sessions": 41
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 127,
+          "path": "/pricing",
+          "revenue": 10895,
+          "sessions": 41
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 102,
+          "path": "/docs/getting-started",
+          "revenue": 10799,
+          "sessions": 36
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 97,
+          "path": "/dashboard",
+          "revenue": 18697,
+          "sessions": 32
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 86,
+          "path": "/checkout",
+          "revenue": 58186,
+          "sessions": 30
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 87,
+          "path": "/blog/hello-world",
+          "revenue": 18698,
+          "sessions": 29
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 80,
+          "path": "/docs",
+          "revenue": 8898,
+          "sessions": 28
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 67,
+          "path": "/",
+          "revenue": 5899,
+          "sessions": 20
+        }
+      ]
+    },
+    "getEntryExitPagesCore sthlm exit last 30 days": {
+      "output": [
+        {
+          "origin": "https://example.com",
+          "pageviews": 112,
+          "path": "/pricing",
+          "revenue": 12895,
+          "sessions": 39
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 115,
+          "path": "/docs",
+          "revenue": 16698,
+          "sessions": 36
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 98,
+          "path": "/docs/getting-started",
+          "revenue": 1999,
+          "sessions": 34
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 99,
+          "path": "/settings/profile",
+          "revenue": 4996,
+          "sessions": 33
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 90,
+          "path": "/dashboard",
+          "revenue": 6898,
+          "sessions": 31
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 88,
+          "path": "/checkout",
+          "revenue": 66988,
+          "sessions": 29
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 68,
+          "path": "/blog/hello-world",
+          "revenue": 16698,
+          "sessions": 28
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 86,
+          "path": "/",
+          "revenue": 5899,
+          "sessions": 27
+        }
+      ]
+    },
+    "getEntryExitPagesCore ny entry last 30 days browserNotChrome": {
+      "output": [
+        {
+          "origin": "https://example.com",
+          "pageviews": 85,
+          "path": "/docs",
+          "revenue": 19697,
+          "sessions": 27
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 64,
+          "path": "/",
+          "revenue": 10897,
+          "sessions": 23
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 57,
+          "path": "/pricing",
+          "revenue": 11799,
+          "sessions": 22
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 68,
+          "path": "/checkout",
+          "revenue": 31592,
+          "sessions": 16
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 49,
+          "path": "/docs/getting-started",
+          "revenue": 4996,
+          "sessions": 16
+        },
+        {
+          "origin": "https://example.com",
+          "pageviews": 36,
+          "path": "/blog/hello-world",
+          "revenue": 0,
+          "sessions": 15
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 55,
+          "path": "/dashboard",
+          "revenue": 6899,
+          "sessions": 13
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 43,
+          "path": "/settings/profile",
+          "revenue": 4900,
+          "sessions": 13
+        }
+      ]
+    },
+    "getEntryExitPagesCore utc exit last 30 days limit 2": {
+      "output": [
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 94,
+          "path": "/settings/profile",
+          "revenue": 4900,
+          "sessions": 31
+        },
+        {
+          "origin": "https://app.example.com",
+          "pageviews": 68,
+          "path": "/dashboard",
+          "revenue": 12895,
+          "sessions": 29
+        }
+      ]
+    },
+    "getPagePerformanceCore sthlm last 30 days default": {
+      "output": {
+        "pages": [
+          {
+            "avg_duration": 1.39,
+            "bounce_rate": 12.22,
+            "origin": "https://example.com",
+            "pageviews": 107,
+            "path": "/pricing",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 90,
+            "title": "Pricing"
+          },
+          {
+            "avg_duration": 1.53,
+            "bounce_rate": 9.2,
+            "origin": "https://example.com",
+            "pageviews": 107,
+            "path": "/docs",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 87,
+            "title": "Docs"
+          },
+          {
+            "avg_duration": 1.44,
+            "bounce_rate": 12.79,
+            "origin": "https://example.com",
+            "pageviews": 101,
+            "path": "/docs/getting-started",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 86,
+            "title": "Getting started"
+          },
+          {
+            "avg_duration": 1.49,
+            "bounce_rate": 16.67,
+            "origin": "https://app.example.com",
+            "pageviews": 92,
+            "path": "/dashboard",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 78,
+            "title": "Dashboard"
+          },
+          {
+            "avg_duration": 1.38,
+            "bounce_rate": 17.95,
+            "origin": "https://app.example.com",
+            "pageviews": 99,
+            "path": "/settings/profile",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 78,
+            "title": "Settings"
+          },
+          {
+            "avg_duration": 1.28,
+            "bounce_rate": 13.33,
+            "origin": "https://example.com",
+            "pageviews": 93,
+            "path": "/blog/hello-world",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 75,
+            "title": "Hello, world — it's here"
+          },
+          {
+            "avg_duration": 1.59,
+            "bounce_rate": 12.86,
+            "origin": "https://example.com",
+            "pageviews": 82,
+            "path": "/checkout",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 70,
+            "title": "Checkout"
+          },
+          {
+            "avg_duration": 1.26,
+            "bounce_rate": 9.52,
+            "origin": "https://example.com",
+            "pageviews": 75,
+            "path": "/",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 63,
+            "title": "Example — Home"
+          }
+        ],
+        "shown": 8,
+        "total_pages": 8
+      }
+    },
+    "getPagePerformanceCore sthlm last 30 days pageviews asc": {
+      "output": {
+        "pages": [
+          {
+            "avg_duration": 1.26,
+            "bounce_rate": 9.52,
+            "origin": "https://example.com",
+            "pageviews": 75,
+            "path": "/",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 63,
+            "title": "Example — Home"
+          },
+          {
+            "avg_duration": 1.59,
+            "bounce_rate": 12.86,
+            "origin": "https://example.com",
+            "pageviews": 82,
+            "path": "/checkout",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 70,
+            "title": "Checkout"
+          },
+          {
+            "avg_duration": 1.49,
+            "bounce_rate": 16.67,
+            "origin": "https://app.example.com",
+            "pageviews": 92,
+            "path": "/dashboard",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 78,
+            "title": "Dashboard"
+          },
+          {
+            "avg_duration": 1.28,
+            "bounce_rate": 13.33,
+            "origin": "https://example.com",
+            "pageviews": 93,
+            "path": "/blog/hello-world",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 75,
+            "title": "Hello, world — it's here"
+          },
+          {
+            "avg_duration": 1.38,
+            "bounce_rate": 17.95,
+            "origin": "https://app.example.com",
+            "pageviews": 99,
+            "path": "/settings/profile",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 78,
+            "title": "Settings"
+          },
+          {
+            "avg_duration": 1.44,
+            "bounce_rate": 12.79,
+            "origin": "https://example.com",
+            "pageviews": 101,
+            "path": "/docs/getting-started",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 86,
+            "title": "Getting started"
+          },
+          {
+            "avg_duration": 1.53,
+            "bounce_rate": 9.2,
+            "origin": "https://example.com",
+            "pageviews": 107,
+            "path": "/docs",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 87,
+            "title": "Docs"
+          },
+          {
+            "avg_duration": 1.39,
+            "bounce_rate": 12.22,
+            "origin": "https://example.com",
+            "pageviews": 107,
+            "path": "/pricing",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 90,
+            "title": "Pricing"
+          }
+        ],
+        "shown": 8,
+        "total_pages": 8
+      }
+    },
+    "getPagePerformanceCore sthlm last 30 days bounce_rate desc": {
+      "output": {
+        "pages": [
+          {
+            "avg_duration": 1.38,
+            "bounce_rate": 17.95,
+            "origin": "https://app.example.com",
+            "pageviews": 99,
+            "path": "/settings/profile",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 78,
+            "title": "Settings"
+          },
+          {
+            "avg_duration": 1.49,
+            "bounce_rate": 16.67,
+            "origin": "https://app.example.com",
+            "pageviews": 92,
+            "path": "/dashboard",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 78,
+            "title": "Dashboard"
+          },
+          {
+            "avg_duration": 1.28,
+            "bounce_rate": 13.33,
+            "origin": "https://example.com",
+            "pageviews": 93,
+            "path": "/blog/hello-world",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 75,
+            "title": "Hello, world — it's here"
+          },
+          {
+            "avg_duration": 1.59,
+            "bounce_rate": 12.86,
+            "origin": "https://example.com",
+            "pageviews": 82,
+            "path": "/checkout",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 70,
+            "title": "Checkout"
+          },
+          {
+            "avg_duration": 1.44,
+            "bounce_rate": 12.79,
+            "origin": "https://example.com",
+            "pageviews": 101,
+            "path": "/docs/getting-started",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 86,
+            "title": "Getting started"
+          },
+          {
+            "avg_duration": 1.39,
+            "bounce_rate": 12.22,
+            "origin": "https://example.com",
+            "pageviews": 107,
+            "path": "/pricing",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 90,
+            "title": "Pricing"
+          },
+          {
+            "avg_duration": 1.26,
+            "bounce_rate": 9.52,
+            "origin": "https://example.com",
+            "pageviews": 75,
+            "path": "/",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 63,
+            "title": "Example — Home"
+          },
+          {
+            "avg_duration": 1.53,
+            "bounce_rate": 9.2,
+            "origin": "https://example.com",
+            "pageviews": 107,
+            "path": "/docs",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 87,
+            "title": "Docs"
+          }
+        ],
+        "shown": 8,
+        "total_pages": 8
+      }
+    },
+    "getPagePerformanceCore sthlm last 30 days avg_duration asc limit 3": {
+      "output": {
+        "pages": [
+          {
+            "avg_duration": 1.26,
+            "bounce_rate": 9.52,
+            "origin": "https://example.com",
+            "pageviews": 75,
+            "path": "/",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 63,
+            "title": "Example — Home"
+          },
+          {
+            "avg_duration": 1.28,
+            "bounce_rate": 13.33,
+            "origin": "https://example.com",
+            "pageviews": 93,
+            "path": "/blog/hello-world",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 75,
+            "title": "Hello, world — it's here"
+          },
+          {
+            "avg_duration": 1.38,
+            "bounce_rate": 17.95,
+            "origin": "https://app.example.com",
+            "pageviews": 99,
+            "path": "/settings/profile",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 78,
+            "title": "Settings"
+          }
+        ],
+        "shown": 3,
+        "total_pages": 8
+      }
+    },
+    "getPagePerformanceCore ny last 30 days default search=docs": {
+      "output": {
+        "pages": [
+          {
+            "avg_duration": 1.29,
+            "bounce_rate": 11.22,
+            "origin": "https://example.com",
+            "pageviews": 111,
+            "path": "/docs",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 98,
+            "title": "Docs"
+          },
+          {
+            "avg_duration": 1.47,
+            "bounce_rate": 8.75,
+            "origin": "https://example.com",
+            "pageviews": 95,
+            "path": "/docs/getting-started",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 80,
+            "title": "Getting started"
+          }
+        ],
+        "shown": 2,
+        "total_pages": 2
+      }
+    },
+    "getPagePerformanceCore ny last 30 days avg_duration search=Pricing": {
+      "output": {
+        "pages": [
+          {
+            "avg_duration": 1.57,
+            "bounce_rate": 11.69,
+            "origin": "https://example.com",
+            "pageviews": 91,
+            "path": "/pricing",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 77,
+            "title": "Pricing"
+          }
+        ],
+        "shown": 1,
+        "total_pages": 1
+      }
+    },
+    "getPagePerformanceCore utc last 30 days default search=app.example": {
+      "output": {
+        "pages": [
+          {
+            "avg_duration": 1.42,
+            "bounce_rate": 16.44,
+            "origin": "https://app.example.com",
+            "pageviews": 87,
+            "path": "/settings/profile",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 73,
+            "title": "Settings"
+          },
+          {
+            "avg_duration": 1.35,
+            "bounce_rate": 16.9,
+            "origin": "https://app.example.com",
+            "pageviews": 82,
+            "path": "/dashboard",
+            "seo_signals": {
+              "good_landing_page": false,
+              "high_bounce": false,
+              "low_engagement": false
+            },
+            "sessions": 71,
+            "title": "Dashboard"
+          }
+        ],
+        "shown": 2,
+        "total_pages": 2
+      }
+    },
+    "getPagePerformanceCore utc last 30 days default search=no-such-page": {
+      "output": {
+        "pages": [],
+        "shown": 0,
+        "total_pages": 0
+      }
+    },
+    "PagesService.getTopPages sthlm 7d": {
+      "output": [
+        {
+          "avg_duration": 1.42,
+          "bounce_rate": 16.67,
+          "origin": "https://example.com",
+          "pageviews": 30,
+          "path": "/",
+          "sessions": 24,
+          "title": "Example — Home"
+        },
+        {
+          "avg_duration": 1.77,
+          "bounce_rate": 12.5,
+          "origin": "https://example.com",
+          "pageviews": 29,
+          "path": "/docs",
+          "sessions": 24,
+          "title": "Docs"
+        },
+        {
+          "avg_duration": 1.36,
+          "bounce_rate": 12.5,
+          "origin": "https://example.com",
+          "pageviews": 29,
+          "path": "/docs/getting-started",
+          "sessions": 24,
+          "title": "Getting started"
+        },
+        {
+          "avg_duration": 1.18,
+          "bounce_rate": 26.09,
+          "origin": "https://app.example.com",
+          "pageviews": 27,
+          "path": "/settings/profile",
+          "sessions": 23,
+          "title": "Settings"
+        },
+        {
+          "avg_duration": 1.64,
+          "bounce_rate": 0,
+          "origin": "https://example.com",
+          "pageviews": 26,
+          "path": "/pricing",
+          "sessions": 23,
+          "title": "Pricing"
+        },
+        {
+          "avg_duration": 1.14,
+          "bounce_rate": 4.76,
+          "origin": "https://example.com",
+          "pageviews": 26,
+          "path": "/blog/hello-world",
+          "sessions": 21,
+          "title": "Hello, world — it's here"
+        },
+        {
+          "avg_duration": 1.67,
+          "bounce_rate": 11.11,
+          "origin": "https://app.example.com",
+          "pageviews": 20,
+          "path": "/dashboard",
+          "sessions": 18,
+          "title": "Dashboard"
+        },
+        {
+          "avg_duration": 1.38,
+          "bounce_rate": 7.14,
+          "origin": "https://example.com",
+          "pageviews": 17,
+          "path": "/checkout",
+          "sessions": 14,
+          "title": "Checkout"
+        }
+      ]
+    },
+    "PagesService.getTopPages ny today": {
+      "output": [
+        {
+          "avg_duration": 1.48,
+          "bounce_rate": 28.57,
+          "origin": "https://app.example.com",
+          "pageviews": 9,
+          "path": "/settings/profile",
+          "sessions": 7,
+          "title": "Settings"
+        },
+        {
+          "avg_duration": 1.06,
+          "bounce_rate": 14.29,
+          "origin": "https://example.com",
+          "pageviews": 8,
+          "path": "/docs",
+          "sessions": 7,
+          "title": "Docs"
+        },
+        {
+          "avg_duration": 1.45,
+          "bounce_rate": 0,
+          "origin": "https://app.example.com",
+          "pageviews": 7,
+          "path": "/dashboard",
+          "sessions": 6,
+          "title": "Dashboard"
+        },
+        {
+          "avg_duration": 0.78,
+          "bounce_rate": 16.67,
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/blog/hello-world",
+          "sessions": 6,
+          "title": "Hello, world — it's here"
+        },
+        {
+          "avg_duration": 2.06,
+          "bounce_rate": 16.67,
+          "origin": "https://example.com",
+          "pageviews": 8,
+          "path": "/docs/getting-started",
+          "sessions": 6,
+          "title": "Getting started"
+        },
+        {
+          "avg_duration": 1.7,
+          "bounce_rate": 0,
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/pricing",
+          "sessions": 5,
+          "title": "Pricing"
+        },
+        {
+          "avg_duration": 1.89,
+          "bounce_rate": 0,
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/checkout",
+          "sessions": 2,
+          "title": "Checkout"
+        },
+        {
+          "avg_duration": 2.45,
+          "bounce_rate": 0,
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1,
+          "title": "Example — Home"
+        }
+      ]
+    },
+    "PagesService.getTopPages utc 30d limit 2": {
+      "output": [
+        {
+          "avg_duration": 1.41,
+          "bounce_rate": 16.22,
+          "origin": "https://app.example.com",
+          "pageviews": 89,
+          "path": "/settings/profile",
+          "sessions": 74,
+          "title": "Settings"
+        },
+        {
+          "avg_duration": 1.36,
+          "bounce_rate": 17.81,
+          "origin": "https://app.example.com",
+          "pageviews": 86,
+          "path": "/dashboard",
+          "sessions": 73,
+          "title": "Dashboard"
+        }
+      ]
+    },
+    "PagesService.getPageTimeseries sthlm 30d day": {
+      "output": [
+        {
+          "date": "2026-08-25 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 5,
+          "path": "/dashboard",
+          "sessions": 4
+        },
+        {
+          "date": "2026-08-25 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-25 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-25 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/blog/hello-world",
+          "sessions": 6
+        },
+        {
+          "date": "2026-08-25 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/checkout",
+          "sessions": 4
+        },
+        {
+          "date": "2026-08-25 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-25 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs/getting-started",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-25 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/pricing",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-26 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 9,
+          "path": "/dashboard",
+          "sessions": 7
+        },
+        {
+          "date": "2026-08-26 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 9,
+          "path": "/settings/profile",
+          "sessions": 7
+        },
+        {
+          "date": "2026-08-26 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/",
+          "sessions": 4
+        },
+        {
+          "date": "2026-08-26 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/blog/hello-world",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-26 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/checkout",
+          "sessions": 5
+        },
+        {
+          "date": "2026-08-26 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/docs",
+          "sessions": 6
+        },
+        {
+          "date": "2026-08-26 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-26 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-08-27 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 4,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-27 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/settings/profile",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-27 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-27 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-27 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 9,
+          "path": "/docs",
+          "sessions": 6
+        },
+        {
+          "date": "2026-08-27 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-27 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 7,
+          "path": "/pricing",
+          "sessions": 7
+        },
+        {
+          "date": "2026-08-28 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 7,
+          "path": "/dashboard",
+          "sessions": 6
+        },
+        {
+          "date": "2026-08-28 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-28 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/",
+          "sessions": 4
+        },
+        {
+          "date": "2026-08-28 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/blog/hello-world",
+          "sessions": 6
+        },
+        {
+          "date": "2026-08-28 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/checkout",
+          "sessions": 4
+        },
+        {
+          "date": "2026-08-28 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-28 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/docs/getting-started",
+          "sessions": 6
+        },
+        {
+          "date": "2026-08-28 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/pricing",
+          "sessions": 4
+        },
+        {
+          "date": "2026-08-29 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-08-29 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-29 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs/getting-started",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-29 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-08-30 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-30 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-08-30 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-08-30 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-08-30 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-08-30 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/docs",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-30 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-08-30 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-31 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 7,
+          "path": "/dashboard",
+          "sessions": 4
+        },
+        {
+          "date": "2026-08-31 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 6,
+          "path": "/settings/profile",
+          "sessions": 4
+        },
+        {
+          "date": "2026-08-31 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-08-31 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/blog/hello-world",
+          "sessions": 4
+        },
+        {
+          "date": "2026-08-31 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-31 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-31 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-31 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-01 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-01 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-01 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-01 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-01 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/checkout",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-01 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-01 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-01 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-02 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-02 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 4,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-02 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-02 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/blog/hello-world",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-02 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-02 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/docs",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-02 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-02 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/pricing",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-03 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-03 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-03 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-03 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-03 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-03 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-03 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-04 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 4,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-04 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 9,
+          "path": "/settings/profile",
+          "sessions": 6
+        },
+        {
+          "date": "2026-09-04 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-04 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/blog/hello-world",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-04 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/checkout",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-04 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/docs",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-04 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs/getting-started",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-04 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-05 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 5,
+          "path": "/dashboard",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-05 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 4,
+          "path": "/settings/profile",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-05 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-05 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/blog/hello-world",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-05 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/checkout",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-05 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/docs",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-05 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 7,
+          "path": "/docs/getting-started",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-05 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 7,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-06 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-06 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-06 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-06 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-06 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-06 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/docs",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-06 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-06 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-07 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-07 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-07 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-07 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-07 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-07 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-08 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-08 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 5,
+          "path": "/settings/profile",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/blog/hello-world",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/checkout",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/docs/getting-started",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-09 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 4,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-09 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 7,
+          "path": "/settings/profile",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-09 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-09 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/blog/hello-world",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-09 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 7,
+          "path": "/checkout",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-09 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 7,
+          "path": "/docs",
+          "sessions": 6
+        },
+        {
+          "date": "2026-09-09 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-09 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-10 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-10 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-10 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-10 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-10 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-10 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-10 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-10 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-11 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-11 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/settings/profile",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-11 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/checkout",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-11 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-11 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs/getting-started",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-11 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/pricing",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-12 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-12 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 4,
+          "path": "/settings/profile",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-12 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-12 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/blog/hello-world",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-12 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-12 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-12 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-12 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/pricing",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-13 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/settings/profile",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-13 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-13 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-13 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs/getting-started",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-13 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-14 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-14 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-14 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 7,
+          "path": "/blog/hello-world",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-14 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-14 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/docs",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-14 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/docs/getting-started",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-14 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-15 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/dashboard",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-15 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 4,
+          "path": "/settings/profile",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-15 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-15 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-15 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 7,
+          "path": "/checkout",
+          "sessions": 7
+        },
+        {
+          "date": "2026-09-15 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-15 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-15 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-16 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-16 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-16 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-16 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/blog/hello-world",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-16 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-16 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-16 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-16 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 5,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-17 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-17 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-17 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/blog/hello-world",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-17 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/checkout",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-17 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/docs",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-17 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/docs/getting-started",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-17 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-18 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 5,
+          "path": "/settings/profile",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-18 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-18 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/blog/hello-world",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-18 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/docs",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-18 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/docs/getting-started",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-18 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-19 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/dashboard",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-19 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-19 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-19 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/blog/hello-world",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-19 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/checkout",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-19 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/docs",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-19 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 8,
+          "path": "/docs/getting-started",
+          "sessions": 7
+        },
+        {
+          "date": "2026-09-19 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/docs/getting-started",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/dashboard",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 7,
+          "path": "/settings/profile",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs/getting-started",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-22 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 5,
+          "path": "/settings/profile",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-22 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-22 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/blog/hello-world",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-22 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/checkout",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-22 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/docs",
+          "sessions": 6
+        },
+        {
+          "date": "2026-09-22 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs/getting-started",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-22 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 5,
+          "path": "/dashboard",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-23 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-23 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-23 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/blog/hello-world",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-23 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-23 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/docs",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-23 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs/getting-started",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-23 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-24 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-24 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-24 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-24 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 2
+        }
+      ]
+    },
+    "PagesService.getPageTimeseries sthlm 7d hour": {
+      "output": [
+        {
+          "date": "2026-09-17 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 01:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 02:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 03:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 04:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 05:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 08:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 09:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 10:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-17 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-17 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 12:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 13:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 13:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 13:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 13:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-17 13:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 13:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 13:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-17 14:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 15:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/dashboard",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-17 15:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 15:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 17:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 18:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 19:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 19:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 19:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 19:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 19:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 20:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 21:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 21:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 22:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-17 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 01:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 01:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-18 01:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 01:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 01:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 02:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 03:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 04:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 05:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 08:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 09:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 09:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 09:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 10:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 12:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 13:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 14:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 15:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 15:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 15:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-18 17:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 18:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 19:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 20:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 21:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 22:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-18 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 01:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 02:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 03:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 04:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 05:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 08:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 08:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 09:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 09:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 09:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 09:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 10:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 12:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 13:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 14:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 15:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 16:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 17:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 18:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/blog/hello-world",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-19 18:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 18:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 18:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 18:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 19:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 20:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 20:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-19 21:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 22:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-19 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 01:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 02:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 03:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 04:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 05:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 08:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 09:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 10:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 11:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 12:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 13:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 14:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 15:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 15:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 15:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 16:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 17:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 17:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 17:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 18:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 19:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 19:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 19:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 20:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 21:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 21:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 21:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-20 22:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-20 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 4,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 01:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 02:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 03:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 04:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 05:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 08:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 09:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 09:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 09:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 09:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 10:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 10:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 11:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 12:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 12:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 12:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 12:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 13:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 14:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 15:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 16:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 17:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 18:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-21 19:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 20:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 21:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 22:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-21 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 01:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 01:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 02:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 03:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 04:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 05:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 08:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 09:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 10:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 11:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 12:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 12:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 12:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 12:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-22 13:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 14:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 14:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 14:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 14:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 14:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 15:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-22 16:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 17:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 18:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 19:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 20:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 21:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-22 22:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 22:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 22:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 22:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-22 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 01:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 02:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 03:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 04:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 05:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 08:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 09:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-23 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs/getting-started",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-23 10:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 11:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 11:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 12:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 13:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 14:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 15:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 15:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 15:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 15:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 16:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 17:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 17:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 17:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 18:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 18:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 18:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 19:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 20:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-23 21:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 2,
+          "path": "/settings/profile",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-23 22:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 22:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 22:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 22:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 01:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 02:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 03:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 04:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 04:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 04:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 04:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 04:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 04:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 05:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 05:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 05:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-24 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 08:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 09:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 10:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 11:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 12:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 13:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 14:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 15:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 16:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 17:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 18:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 19:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 20:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 21:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 22:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-09-24 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        }
+      ]
+    },
+    "PagesService.getPageTimeseries ny 3m week": {
+      "output": [
+        {
+          "date": "2026-06-21",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-06-28",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-07-05",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-07-12",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-07-19",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-07-26",
+          "origin": "https://app.example.com",
+          "pageviews": 16,
+          "path": "/dashboard",
+          "sessions": 15
+        },
+        {
+          "date": "2026-07-26",
+          "origin": "https://app.example.com",
+          "pageviews": 26,
+          "path": "/settings/profile",
+          "sessions": 22
+        },
+        {
+          "date": "2026-07-26",
+          "origin": "https://example.com",
+          "pageviews": 25,
+          "path": "/",
+          "sessions": 21
+        },
+        {
+          "date": "2026-07-26",
+          "origin": "https://example.com",
+          "pageviews": 15,
+          "path": "/blog/hello-world",
+          "sessions": 12
+        },
+        {
+          "date": "2026-07-26",
+          "origin": "https://example.com",
+          "pageviews": 22,
+          "path": "/checkout",
+          "sessions": 18
+        },
+        {
+          "date": "2026-07-26",
+          "origin": "https://example.com",
+          "pageviews": 27,
+          "path": "/docs",
+          "sessions": 23
+        },
+        {
+          "date": "2026-07-26",
+          "origin": "https://example.com",
+          "pageviews": 17,
+          "path": "/docs/getting-started",
+          "sessions": 14
+        },
+        {
+          "date": "2026-07-26",
+          "origin": "https://example.com",
+          "pageviews": 15,
+          "path": "/pricing",
+          "sessions": 14
+        },
+        {
+          "date": "2026-08-02",
+          "origin": "https://app.example.com",
+          "pageviews": 31,
+          "path": "/dashboard",
+          "sessions": 25
+        },
+        {
+          "date": "2026-08-02",
+          "origin": "https://app.example.com",
+          "pageviews": 27,
+          "path": "/settings/profile",
+          "sessions": 22
+        },
+        {
+          "date": "2026-08-02",
+          "origin": "https://example.com",
+          "pageviews": 27,
+          "path": "/",
+          "sessions": 22
+        },
+        {
+          "date": "2026-08-02",
+          "origin": "https://example.com",
+          "pageviews": 21,
+          "path": "/blog/hello-world",
+          "sessions": 19
+        },
+        {
+          "date": "2026-08-02",
+          "origin": "https://example.com",
+          "pageviews": 25,
+          "path": "/checkout",
+          "sessions": 20
+        },
+        {
+          "date": "2026-08-02",
+          "origin": "https://example.com",
+          "pageviews": 22,
+          "path": "/docs",
+          "sessions": 16
+        },
+        {
+          "date": "2026-08-02",
+          "origin": "https://example.com",
+          "pageviews": 29,
+          "path": "/docs/getting-started",
+          "sessions": 21
+        },
+        {
+          "date": "2026-08-02",
+          "origin": "https://example.com",
+          "pageviews": 21,
+          "path": "/pricing",
+          "sessions": 19
+        },
+        {
+          "date": "2026-08-09",
+          "origin": "https://app.example.com",
+          "pageviews": 25,
+          "path": "/dashboard",
+          "sessions": 19
+        },
+        {
+          "date": "2026-08-09",
+          "origin": "https://app.example.com",
+          "pageviews": 16,
+          "path": "/settings/profile",
+          "sessions": 13
+        },
+        {
+          "date": "2026-08-09",
+          "origin": "https://example.com",
+          "pageviews": 25,
+          "path": "/",
+          "sessions": 20
+        },
+        {
+          "date": "2026-08-09",
+          "origin": "https://example.com",
+          "pageviews": 19,
+          "path": "/blog/hello-world",
+          "sessions": 14
+        },
+        {
+          "date": "2026-08-09",
+          "origin": "https://example.com",
+          "pageviews": 10,
+          "path": "/checkout",
+          "sessions": 10
+        },
+        {
+          "date": "2026-08-09",
+          "origin": "https://example.com",
+          "pageviews": 18,
+          "path": "/docs",
+          "sessions": 13
+        },
+        {
+          "date": "2026-08-09",
+          "origin": "https://example.com",
+          "pageviews": 24,
+          "path": "/docs/getting-started",
+          "sessions": 19
+        },
+        {
+          "date": "2026-08-09",
+          "origin": "https://example.com",
+          "pageviews": 16,
+          "path": "/pricing",
+          "sessions": 15
+        },
+        {
+          "date": "2026-08-16",
+          "origin": "https://app.example.com",
+          "pageviews": 17,
+          "path": "/dashboard",
+          "sessions": 15
+        },
+        {
+          "date": "2026-08-16",
+          "origin": "https://app.example.com",
+          "pageviews": 23,
+          "path": "/settings/profile",
+          "sessions": 18
+        },
+        {
+          "date": "2026-08-16",
+          "origin": "https://example.com",
+          "pageviews": 10,
+          "path": "/",
+          "sessions": 10
+        },
+        {
+          "date": "2026-08-16",
+          "origin": "https://example.com",
+          "pageviews": 24,
+          "path": "/blog/hello-world",
+          "sessions": 17
+        },
+        {
+          "date": "2026-08-16",
+          "origin": "https://example.com",
+          "pageviews": 19,
+          "path": "/checkout",
+          "sessions": 16
+        },
+        {
+          "date": "2026-08-16",
+          "origin": "https://example.com",
+          "pageviews": 28,
+          "path": "/docs",
+          "sessions": 18
+        },
+        {
+          "date": "2026-08-16",
+          "origin": "https://example.com",
+          "pageviews": 18,
+          "path": "/docs/getting-started",
+          "sessions": 15
+        },
+        {
+          "date": "2026-08-16",
+          "origin": "https://example.com",
+          "pageviews": 21,
+          "path": "/pricing",
+          "sessions": 18
+        },
+        {
+          "date": "2026-08-23",
+          "origin": "https://app.example.com",
+          "pageviews": 20,
+          "path": "/dashboard",
+          "sessions": 17
+        },
+        {
+          "date": "2026-08-23",
+          "origin": "https://app.example.com",
+          "pageviews": 30,
+          "path": "/settings/profile",
+          "sessions": 26
+        },
+        {
+          "date": "2026-08-23",
+          "origin": "https://example.com",
+          "pageviews": 28,
+          "path": "/",
+          "sessions": 20
+        },
+        {
+          "date": "2026-08-23",
+          "origin": "https://example.com",
+          "pageviews": 24,
+          "path": "/blog/hello-world",
+          "sessions": 22
+        },
+        {
+          "date": "2026-08-23",
+          "origin": "https://example.com",
+          "pageviews": 27,
+          "path": "/checkout",
+          "sessions": 22
+        },
+        {
+          "date": "2026-08-23",
+          "origin": "https://example.com",
+          "pageviews": 31,
+          "path": "/docs",
+          "sessions": 25
+        },
+        {
+          "date": "2026-08-23",
+          "origin": "https://example.com",
+          "pageviews": 34,
+          "path": "/docs/getting-started",
+          "sessions": 26
+        },
+        {
+          "date": "2026-08-23",
+          "origin": "https://example.com",
+          "pageviews": 21,
+          "path": "/pricing",
+          "sessions": 17
+        },
+        {
+          "date": "2026-08-30",
+          "origin": "https://app.example.com",
+          "pageviews": 15,
+          "path": "/dashboard",
+          "sessions": 12
+        },
+        {
+          "date": "2026-08-30",
+          "origin": "https://app.example.com",
+          "pageviews": 19,
+          "path": "/settings/profile",
+          "sessions": 16
+        },
+        {
+          "date": "2026-08-30",
+          "origin": "https://example.com",
+          "pageviews": 25,
+          "path": "/",
+          "sessions": 23
+        },
+        {
+          "date": "2026-08-30",
+          "origin": "https://example.com",
+          "pageviews": 27,
+          "path": "/blog/hello-world",
+          "sessions": 22
+        },
+        {
+          "date": "2026-08-30",
+          "origin": "https://example.com",
+          "pageviews": 22,
+          "path": "/checkout",
+          "sessions": 17
+        },
+        {
+          "date": "2026-08-30",
+          "origin": "https://example.com",
+          "pageviews": 26,
+          "path": "/docs",
+          "sessions": 23
+        },
+        {
+          "date": "2026-08-30",
+          "origin": "https://example.com",
+          "pageviews": 24,
+          "path": "/docs/getting-started",
+          "sessions": 18
+        },
+        {
+          "date": "2026-08-30",
+          "origin": "https://example.com",
+          "pageviews": 19,
+          "path": "/pricing",
+          "sessions": 16
+        },
+        {
+          "date": "2026-09-06",
+          "origin": "https://app.example.com",
+          "pageviews": 15,
+          "path": "/dashboard",
+          "sessions": 12
+        },
+        {
+          "date": "2026-09-06",
+          "origin": "https://app.example.com",
+          "pageviews": 20,
+          "path": "/settings/profile",
+          "sessions": 17
+        },
+        {
+          "date": "2026-09-06",
+          "origin": "https://example.com",
+          "pageviews": 20,
+          "path": "/",
+          "sessions": 16
+        },
+        {
+          "date": "2026-09-06",
+          "origin": "https://example.com",
+          "pageviews": 22,
+          "path": "/blog/hello-world",
+          "sessions": 18
+        },
+        {
+          "date": "2026-09-06",
+          "origin": "https://example.com",
+          "pageviews": 29,
+          "path": "/checkout",
+          "sessions": 23
+        },
+        {
+          "date": "2026-09-06",
+          "origin": "https://example.com",
+          "pageviews": 24,
+          "path": "/docs",
+          "sessions": 22
+        },
+        {
+          "date": "2026-09-06",
+          "origin": "https://example.com",
+          "pageviews": 16,
+          "path": "/docs/getting-started",
+          "sessions": 14
+        },
+        {
+          "date": "2026-09-06",
+          "origin": "https://example.com",
+          "pageviews": 18,
+          "path": "/pricing",
+          "sessions": 15
+        },
+        {
+          "date": "2026-09-13",
+          "origin": "https://app.example.com",
+          "pageviews": 16,
+          "path": "/dashboard",
+          "sessions": 16
+        },
+        {
+          "date": "2026-09-13",
+          "origin": "https://app.example.com",
+          "pageviews": 20,
+          "path": "/settings/profile",
+          "sessions": 18
+        },
+        {
+          "date": "2026-09-13",
+          "origin": "https://example.com",
+          "pageviews": 21,
+          "path": "/",
+          "sessions": 21
+        },
+        {
+          "date": "2026-09-13",
+          "origin": "https://example.com",
+          "pageviews": 19,
+          "path": "/blog/hello-world",
+          "sessions": 18
+        },
+        {
+          "date": "2026-09-13",
+          "origin": "https://example.com",
+          "pageviews": 12,
+          "path": "/checkout",
+          "sessions": 12
+        },
+        {
+          "date": "2026-09-13",
+          "origin": "https://example.com",
+          "pageviews": 21,
+          "path": "/docs",
+          "sessions": 20
+        },
+        {
+          "date": "2026-09-13",
+          "origin": "https://example.com",
+          "pageviews": 17,
+          "path": "/docs/getting-started",
+          "sessions": 16
+        },
+        {
+          "date": "2026-09-13",
+          "origin": "https://example.com",
+          "pageviews": 25,
+          "path": "/pricing",
+          "sessions": 21
+        },
+        {
+          "date": "2026-09-20",
+          "origin": "https://app.example.com",
+          "pageviews": 13,
+          "path": "/dashboard",
+          "sessions": 12
+        },
+        {
+          "date": "2026-09-20",
+          "origin": "https://app.example.com",
+          "pageviews": 21,
+          "path": "/settings/profile",
+          "sessions": 17
+        },
+        {
+          "date": "2026-09-20",
+          "origin": "https://example.com",
+          "pageviews": 8,
+          "path": "/",
+          "sessions": 8
+        },
+        {
+          "date": "2026-09-20",
+          "origin": "https://example.com",
+          "pageviews": 13,
+          "path": "/blog/hello-world",
+          "sessions": 12
+        },
+        {
+          "date": "2026-09-20",
+          "origin": "https://example.com",
+          "pageviews": 13,
+          "path": "/checkout",
+          "sessions": 10
+        },
+        {
+          "date": "2026-09-20",
+          "origin": "https://example.com",
+          "pageviews": 17,
+          "path": "/docs",
+          "sessions": 14
+        },
+        {
+          "date": "2026-09-20",
+          "origin": "https://example.com",
+          "pageviews": 14,
+          "path": "/docs/getting-started",
+          "sessions": 12
+        },
+        {
+          "date": "2026-09-20",
+          "origin": "https://example.com",
+          "pageviews": 12,
+          "path": "/pricing",
+          "sessions": 12
+        }
+      ]
+    },
+    "PagesService.getPageTimeseries utc 12m month": {
+      "output": [
+        {
+          "date": "2025-09-01",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2025-10-01",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2025-11-01",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2025-12-01",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-01-01",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-02-01",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-01",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/dashboard",
+          "sessions": 2
+        },
+        {
+          "date": "2026-03-01",
+          "origin": "https://app.example.com",
+          "pageviews": 3,
+          "path": "/settings/profile",
+          "sessions": 3
+        },
+        {
+          "date": "2026-03-01",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-01",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/blog/hello-world",
+          "sessions": 3
+        },
+        {
+          "date": "2026-03-01",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/checkout",
+          "sessions": 4
+        },
+        {
+          "date": "2026-03-01",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs",
+          "sessions": 3
+        },
+        {
+          "date": "2026-03-01",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 3
+        },
+        {
+          "date": "2026-04-01",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-05-01",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-06-01",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-07-01",
+          "origin": "https://app.example.com",
+          "pageviews": 28,
+          "path": "/dashboard",
+          "sessions": 23
+        },
+        {
+          "date": "2026-07-01",
+          "origin": "https://app.example.com",
+          "pageviews": 23,
+          "path": "/settings/profile",
+          "sessions": 17
+        },
+        {
+          "date": "2026-07-01",
+          "origin": "https://example.com",
+          "pageviews": 25,
+          "path": "/",
+          "sessions": 21
+        },
+        {
+          "date": "2026-07-01",
+          "origin": "https://example.com",
+          "pageviews": 23,
+          "path": "/blog/hello-world",
+          "sessions": 19
+        },
+        {
+          "date": "2026-07-01",
+          "origin": "https://example.com",
+          "pageviews": 24,
+          "path": "/checkout",
+          "sessions": 21
+        },
+        {
+          "date": "2026-07-01",
+          "origin": "https://example.com",
+          "pageviews": 23,
+          "path": "/docs",
+          "sessions": 21
+        },
+        {
+          "date": "2026-07-01",
+          "origin": "https://example.com",
+          "pageviews": 25,
+          "path": "/docs/getting-started",
+          "sessions": 21
+        },
+        {
+          "date": "2026-07-01",
+          "origin": "https://example.com",
+          "pageviews": 23,
+          "path": "/pricing",
+          "sessions": 20
+        },
+        {
+          "date": "2026-08-01",
+          "origin": "https://app.example.com",
+          "pageviews": 91,
+          "path": "/dashboard",
+          "sessions": 80
+        },
+        {
+          "date": "2026-08-01",
+          "origin": "https://app.example.com",
+          "pageviews": 123,
+          "path": "/settings/profile",
+          "sessions": 96
+        },
+        {
+          "date": "2026-08-01",
+          "origin": "https://example.com",
+          "pageviews": 89,
+          "path": "/",
+          "sessions": 71
+        },
+        {
+          "date": "2026-08-01",
+          "origin": "https://example.com",
+          "pageviews": 96,
+          "path": "/blog/hello-world",
+          "sessions": 76
+        },
+        {
+          "date": "2026-08-01",
+          "origin": "https://example.com",
+          "pageviews": 84,
+          "path": "/checkout",
+          "sessions": 65
+        },
+        {
+          "date": "2026-08-01",
+          "origin": "https://example.com",
+          "pageviews": 90,
+          "path": "/docs",
+          "sessions": 76
+        },
+        {
+          "date": "2026-08-01",
+          "origin": "https://example.com",
+          "pageviews": 100,
+          "path": "/docs/getting-started",
+          "sessions": 83
+        },
+        {
+          "date": "2026-08-01",
+          "origin": "https://example.com",
+          "pageviews": 104,
+          "path": "/pricing",
+          "sessions": 89
+        },
+        {
+          "date": "2026-09-01",
+          "origin": "https://app.example.com",
+          "pageviews": 66,
+          "path": "/dashboard",
+          "sessions": 54
+        },
+        {
+          "date": "2026-09-01",
+          "origin": "https://app.example.com",
+          "pageviews": 66,
+          "path": "/settings/profile",
+          "sessions": 59
+        },
+        {
+          "date": "2026-09-01",
+          "origin": "https://example.com",
+          "pageviews": 54,
+          "path": "/",
+          "sessions": 48
+        },
+        {
+          "date": "2026-09-01",
+          "origin": "https://example.com",
+          "pageviews": 57,
+          "path": "/blog/hello-world",
+          "sessions": 50
+        },
+        {
+          "date": "2026-09-01",
+          "origin": "https://example.com",
+          "pageviews": 58,
+          "path": "/checkout",
+          "sessions": 48
+        },
+        {
+          "date": "2026-09-01",
+          "origin": "https://example.com",
+          "pageviews": 57,
+          "path": "/docs",
+          "sessions": 49
+        },
+        {
+          "date": "2026-09-01",
+          "origin": "https://example.com",
+          "pageviews": 54,
+          "path": "/docs/getting-started",
+          "sessions": 46
+        },
+        {
+          "date": "2026-09-01",
+          "origin": "https://example.com",
+          "pageviews": 56,
+          "path": "/pricing",
+          "sessions": 47
+        }
+      ]
+    },
+    "PagesService.getPageTimeseries sthlm 30d day /pricing": {
+      "output": [
+        {
+          "date": "2026-08-25 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/pricing",
+          "sessions": 3
+        },
+        {
+          "date": "2026-08-26 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-08-27 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 7,
+          "path": "/pricing",
+          "sessions": 7
+        },
+        {
+          "date": "2026-08-28 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/pricing",
+          "sessions": 4
+        },
+        {
+          "date": "2026-08-29 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-08-30 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-08-31 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-01 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-02 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/pricing",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-03 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-04 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-05 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 7,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-06 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-07 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-09 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-10 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-11 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/pricing",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-12 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 5,
+          "path": "/pricing",
+          "sessions": 4
+        },
+        {
+          "date": "2026-09-13 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-14 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 4,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-15 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-16 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-17 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-18 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-19 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-20 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 3
+        },
+        {
+          "date": "2026-09-21 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/pricing",
+          "sessions": 2
+        },
+        {
+          "date": "2026-09-22 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-09-23 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 6,
+          "path": "/pricing",
+          "sessions": 5
+        },
+        {
+          "date": "2026-09-24 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/pricing",
+          "sessions": 2
+        }
+      ]
+    },
+    "PagesService.getPageTimeseries sthlm DST weekend hour": {
+      "output": [
+        {
+          "date": "2026-03-28 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 01:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 02:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 03:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 04:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 05:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 08:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 09:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 10:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 11:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 12:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 13:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 14:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 15:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 16:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 17:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 18:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 19:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 20:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 21:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 22:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-28 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 01:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-29 01:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-29 03:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/dashboard",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-29 03:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-29 03:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 2
+        },
+        {
+          "date": "2026-03-29 03:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-29 03:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-29 03:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-29 03:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-29 04:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/blog/hello-world",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-29 05:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 08:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 09:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 10:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 11:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 12:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 13:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 14:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 15:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 16:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 17:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 18:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 19:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 20:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 21:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 22:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-29 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 01:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 02:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 03:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 04:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 05:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 06:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 07:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 08:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 09:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 10:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 11:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 12:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 13:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 14:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 15:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 16:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 17:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 18:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 19:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 20:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 21:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 22:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-30 23:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        }
+      ]
+    },
+    "PagesService.getPageTimeseries ny DST fortnight day": {
+      "output": [
+        {
+          "date": "2026-03-01 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-02 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-03 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-04 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-05 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-06 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-07 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-08 00:00:00",
+          "origin": "https://app.example.com",
+          "pageviews": 1,
+          "path": "/settings/profile",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 2,
+          "path": "/",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/blog/hello-world",
+          "sessions": 3
+        },
+        {
+          "date": "2026-03-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/checkout",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 3,
+          "path": "/docs",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/docs/getting-started",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-08 00:00:00",
+          "origin": "https://example.com",
+          "pageviews": 1,
+          "path": "/pricing",
+          "sessions": 1
+        },
+        {
+          "date": "2026-03-09 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-10 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-11 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-12 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-13 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-14 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        },
+        {
+          "date": "2026-03-15 00:00:00",
+          "origin": "",
+          "pageviews": 0,
+          "path": "",
+          "sessions": 0
+        }
+      ]
+    },
+    "getPageConversionsCore sthlm revenue last 30 days": {
+      "output": [
+        {
+          "conversion_rate": 43.48,
+          "origin": "https://example.com",
+          "path": "/checkout",
+          "total_visitors": 69,
+          "unique_converters": 30
+        },
+        {
+          "conversion_rate": 17.81,
+          "origin": "https://example.com",
+          "path": "/blog/hello-world",
+          "total_visitors": 73,
+          "unique_converters": 13
+        },
+        {
+          "conversion_rate": 13.64,
+          "origin": "https://example.com",
+          "path": "/pricing",
+          "total_visitors": 88,
+          "unique_converters": 12
+        },
+        {
+          "conversion_rate": 11.54,
+          "origin": "https://app.example.com",
+          "path": "/settings/profile",
+          "total_visitors": 78,
+          "unique_converters": 9
+        },
+        {
+          "conversion_rate": 10.47,
+          "origin": "https://example.com",
+          "path": "/docs",
+          "total_visitors": 86,
+          "unique_converters": 9
+        },
+        {
+          "conversion_rate": 9.3,
+          "origin": "https://example.com",
+          "path": "/docs/getting-started",
+          "total_visitors": 86,
+          "unique_converters": 8
+        },
+        {
+          "conversion_rate": 9.21,
+          "origin": "https://app.example.com",
+          "path": "/dashboard",
+          "total_visitors": 76,
+          "unique_converters": 7
+        },
+        {
+          "conversion_rate": 7.94,
+          "origin": "https://example.com",
+          "path": "/",
+          "total_visitors": 63,
+          "unique_converters": 5
+        }
+      ]
+    },
+    "getPageConversionsCore sthlm purchase last 30 days window 1h": {
+      "output": [
+        {
+          "conversion_rate": 43.48,
+          "origin": "https://example.com",
+          "path": "/checkout",
+          "total_visitors": 69,
+          "unique_converters": 30
+        },
+        {
+          "conversion_rate": 12.5,
+          "origin": "https://example.com",
+          "path": "/pricing",
+          "total_visitors": 88,
+          "unique_converters": 11
+        },
+        {
+          "conversion_rate": 13.7,
+          "origin": "https://example.com",
+          "path": "/blog/hello-world",
+          "total_visitors": 73,
+          "unique_converters": 10
+        },
+        {
+          "conversion_rate": 10.26,
+          "origin": "https://app.example.com",
+          "path": "/settings/profile",
+          "total_visitors": 78,
+          "unique_converters": 8
+        },
+        {
+          "conversion_rate": 8.14,
+          "origin": "https://example.com",
+          "path": "/docs",
+          "total_visitors": 86,
+          "unique_converters": 7
+        },
+        {
+          "conversion_rate": 7.89,
+          "origin": "https://app.example.com",
+          "path": "/dashboard",
+          "total_visitors": 76,
+          "unique_converters": 6
+        },
+        {
+          "conversion_rate": 5.81,
+          "origin": "https://example.com",
+          "path": "/docs/getting-started",
+          "total_visitors": 86,
+          "unique_converters": 5
+        },
+        {
+          "conversion_rate": 6.35,
+          "origin": "https://example.com",
+          "path": "/",
+          "total_visitors": 63,
+          "unique_converters": 4
+        }
+      ]
+    },
+    "getPageConversionsCore ny signup last 60 days window 168h": {
+      "output": [
+        {
+          "conversion_rate": 2.63,
+          "origin": "https://example.com",
+          "path": "/blog/hello-world",
+          "total_visitors": 152,
+          "unique_converters": 4
+        },
+        {
+          "conversion_rate": 2.31,
+          "origin": "https://example.com",
+          "path": "/docs",
+          "total_visitors": 173,
+          "unique_converters": 4
+        },
+        {
+          "conversion_rate": 2.13,
+          "origin": "https://app.example.com",
+          "path": "/dashboard",
+          "total_visitors": 141,
+          "unique_converters": 3
+        },
+        {
+          "conversion_rate": 2.03,
+          "origin": "https://example.com",
+          "path": "/checkout",
+          "total_visitors": 148,
+          "unique_converters": 3
+        },
+        {
+          "conversion_rate": 1.21,
+          "origin": "https://app.example.com",
+          "path": "/settings/profile",
+          "total_visitors": 165,
+          "unique_converters": 2
+        },
+        {
+          "conversion_rate": 1.31,
+          "origin": "https://example.com",
+          "path": "/docs/getting-started",
+          "total_visitors": 153,
+          "unique_converters": 2
+        },
+        {
+          "conversion_rate": 0.62,
+          "origin": "https://example.com",
+          "path": "/",
+          "total_visitors": 161,
+          "unique_converters": 1
+        },
+        {
+          "conversion_rate": 0.68,
+          "origin": "https://example.com",
+          "path": "/pricing",
+          "total_visitors": 146,
+          "unique_converters": 1
+        }
+      ]
+    },
+    "getPageConversionsCore utc button_click last 30 days limit 3": {
+      "output": [
+        {
+          "conversion_rate": 42.25,
+          "origin": "https://app.example.com",
+          "path": "/dashboard",
+          "total_visitors": 71,
+          "unique_converters": 30
+        },
+        {
+          "conversion_rate": 38.36,
+          "origin": "https://app.example.com",
+          "path": "/settings/profile",
+          "total_visitors": 73,
+          "unique_converters": 28
+        },
+        {
+          "tiedAtLimit": 26
+        }
+      ]
+    },
+    "getPageConversionsCore ny link_out last 7 days window 2h": {
+      "output": [
+        {
+          "conversion_rate": 26.09,
+          "origin": "https://app.example.com",
+          "path": "/settings/profile",
+          "total_visitors": 23,
+          "unique_converters": 6
+        },
+        {
+          "conversion_rate": 27.27,
+          "origin": "https://example.com",
+          "path": "/docs",
+          "total_visitors": 22,
+          "unique_converters": 6
+        },
+        {
+          "conversion_rate": 27.27,
+          "origin": "https://example.com",
+          "path": "/pricing",
+          "total_visitors": 22,
+          "unique_converters": 6
+        },
+        {
+          "conversion_rate": 25,
+          "origin": "https://app.example.com",
+          "path": "/dashboard",
+          "total_visitors": 20,
+          "unique_converters": 5
+        },
+        {
+          "conversion_rate": 19.05,
+          "origin": "https://example.com",
+          "path": "/",
+          "total_visitors": 21,
+          "unique_converters": 4
+        },
+        {
+          "conversion_rate": 22.22,
+          "origin": "https://example.com",
+          "path": "/docs/getting-started",
+          "total_visitors": 18,
+          "unique_converters": 4
+        },
+        {
+          "conversion_rate": 13.33,
+          "origin": "https://example.com",
+          "path": "/blog/hello-world",
+          "total_visitors": 15,
+          "unique_converters": 2
+        },
+        {
+          "conversion_rate": 12.5,
+          "origin": "https://example.com",
+          "path": "/checkout",
+          "total_visitors": 16,
+          "unique_converters": 2
+        }
+      ]
+    }
+  }
+}

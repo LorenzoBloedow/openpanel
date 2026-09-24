@@ -1,0 +1,6048 @@
+{
+  "group": "profiles",
+  "anchor": "2026-09-24T03:25:00.000Z",
+  "capturedWith": "ClickHouse 26.1.3.52",
+  "cases": {
+    "getProfileById sthlm user-alice": {
+      "output": {
+        "avatar": "",
+        "createdAt": "2026-07-26T13:43:00.000Z",
+        "email": "alice@example.com",
+        "firstName": "Alice",
+        "groups": [
+          "acme"
+        ],
+        "id": "user-alice",
+        "isExternal": true,
+        "lastName": "Andersson",
+        "lastSeenAt": "2026-09-22T10:51:21.000Z",
+        "projectId": "golden-sthlm",
+        "properties": {
+          "age": "34",
+          "browser": "Firefox",
+          "city": "Berlin",
+          "company": {
+            "name": "acme"
+          },
+          "country": "DE",
+          "device": "desktop",
+          "os": "Linux",
+          "plan": "pro",
+          "region": "Berlin"
+        }
+      }
+    },
+    "getProfileById ny user-chloe": {
+      "output": {
+        "avatar": "",
+        "createdAt": "2026-07-31T19:30:00.000Z",
+        "email": "chloe@example.fr",
+        "firstName": "Chloé",
+        "groups": [
+          "acme"
+        ],
+        "id": "user-chloe",
+        "isExternal": true,
+        "lastName": "Dupont",
+        "lastSeenAt": "2026-09-11T07:02:38.000Z",
+        "projectId": "golden-ny",
+        "properties": {
+          "age": "41",
+          "browser": "Edge",
+          "company": {
+            "name": "acme"
+          },
+          "device": "desktop",
+          "os": "Windows",
+          "plan": "enterprise"
+        }
+      }
+    },
+    "getProfileById utc anonymous device": {
+      "output": {
+        "avatar": "",
+        "createdAt": "2026-07-26T19:01:00.000Z",
+        "email": "",
+        "firstName": "",
+        "groups": [],
+        "id": "dev-gold-000",
+        "isExternal": false,
+        "lastName": "",
+        "lastSeenAt": "2026-09-23T10:15:08.000Z",
+        "projectId": "golden-utc",
+        "properties": {
+          "browser": "Firefox",
+          "city": "London",
+          "country": "GB",
+          "device": "desktop",
+          "os": "Linux",
+          "path": "/",
+          "referrer": "https://t.co/",
+          "region": "England"
+        }
+      }
+    },
+    "getProfileById misses": {
+      "output": {
+        "emptyId": null,
+        "emptyProject": null,
+        "quoted": null,
+        "unknown": null
+      }
+    },
+    "getProfiles": {
+      "output": {
+        "empty": [],
+        "mixed": [
+          {
+            "avatar": "",
+            "createdAt": "2026-03-08T07:10:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-031",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T13:27:05.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "London",
+              "country": "GB",
+              "device": "desktop",
+              "os": "Mac OS",
+              "path": "/checkout",
+              "region": "England"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-26T13:43:00.000Z",
+            "email": "alice@example.com",
+            "firstName": "Alice",
+            "groups": [
+              "acme"
+            ],
+            "id": "user-alice",
+            "isExternal": true,
+            "lastName": "Andersson",
+            "lastSeenAt": "2026-09-22T10:51:21.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "age": "34",
+              "browser": "Firefox",
+              "city": "Berlin",
+              "company": {
+                "name": "acme"
+              },
+              "country": "DE",
+              "device": "desktop",
+              "os": "Linux",
+              "plan": "pro",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-30T09:04:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-005",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-20T22:32:41.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Firefox",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/settings/profile",
+              "referrer": "https://www.google.com/",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-07T07:26:00.000Z",
+            "email": "bob@example.com",
+            "firstName": "Bob",
+            "groups": [
+              "globex"
+            ],
+            "id": "user-bob",
+            "isExternal": true,
+            "lastName": "O'Brien",
+            "lastSeenAt": "2026-09-22T07:34:45.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "age": "28",
+              "browser": "Mobile Safari",
+              "city": "Berlin",
+              "company": {
+                "name": "globex"
+              },
+              "country": "DE",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "free",
+              "region": "Berlin"
+            }
+          }
+        ]
+      }
+    },
+    "getProfileList sthlm all (full rows)": {
+      "output": {
+        "count": 48,
+        "data": [
+          {
+            "avatar": "",
+            "createdAt": "2026-08-18T16:17:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-027",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T19:29:17.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Stockholm",
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/settings/profile",
+              "referrer": "https://www.google.com/",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-16T19:45:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-019",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T15:13:08.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Firefox",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/checkout",
+              "referrer": "https://duckduckgo.com/",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-07T07:26:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-001",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T19:07:00.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/settings/profile",
+              "referrer": "https://www.google.com/",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-07T07:26:00.000Z",
+            "email": "bob@example.com",
+            "firstName": "Bob",
+            "groups": [
+              "globex"
+            ],
+            "id": "user-bob",
+            "isExternal": true,
+            "lastName": "O'Brien",
+            "lastSeenAt": "2026-09-22T07:34:45.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "age": "28",
+              "browser": "Mobile Safari",
+              "city": "Berlin",
+              "company": {
+                "name": "globex"
+              },
+              "country": "DE",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "free",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-07T06:55:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-011",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-19T22:59:30.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/settings/profile",
+              "referrer": "https://www.google.com/",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-05T07:57:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-002",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T20:50:02.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/dashboard",
+              "referrer": "https://github.com/openpanel-dev/openpanel",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-05T07:57:00.000Z",
+            "email": "chloe@example.fr",
+            "firstName": "Chloé",
+            "groups": [
+              "acme"
+            ],
+            "id": "user-chloe",
+            "isExternal": true,
+            "lastName": "Dupont",
+            "lastSeenAt": "2026-09-23T20:50:02.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "age": "41",
+              "browser": "Chrome Mobile",
+              "city": "Berlin",
+              "company": {
+                "name": "acme"
+              },
+              "country": "DE",
+              "device": "mobile",
+              "os": "Android",
+              "plan": "enterprise",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-05T06:14:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-034",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-21T10:02:31.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/blog/hello-world",
+              "referrer": "https://github.com/openpanel-dev/openpanel",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-03T15:09:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-038",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T22:20:00.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-02T07:30:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-036",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-18T07:17:00.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/pricing",
+              "referrer": "https://t.co/",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-01T16:08:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-015",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-17T13:39:38.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "Stockholm",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/pricing",
+              "referrer": "https://t.co/",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-08-01T08:23:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-008",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-11T16:33:07.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "San Francisco",
+              "country": "US",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/pricing",
+              "referrer": "https://duckduckgo.com/",
+              "region": "California"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-31T14:09:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-010",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-15T06:31:16.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/checkout",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-30T19:00:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-020",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-24T03:03:00.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/docs",
+              "referrer": "https://www.google.com/",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-30T09:04:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-005",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-20T22:32:41.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Firefox",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/settings/profile",
+              "referrer": "https://www.google.com/",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-30T09:04:00.000Z",
+            "email": "farah@example.com",
+            "firstName": "Farah",
+            "groups": [],
+            "id": "user-farah",
+            "isExternal": true,
+            "lastName": "Khan",
+            "lastSeenAt": "2026-09-20T22:32:41.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "age": "30",
+              "browser": "Firefox",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Linux",
+              "plan": "free",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-30T07:41:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-013",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T08:36:47.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/docs/getting-started",
+              "referrer": "https://duckduckgo.com/",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-29T16:16:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-012",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-14T16:28:41.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/dashboard",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-29T14:50:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-014",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-21T16:59:18.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/settings/profile",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-28T22:19:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-023",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-24T03:23:41.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Mac OS",
+              "path": "/pricing",
+              "referrer": "https://duckduckgo.com/",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-28T22:07:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-018",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T16:18:50.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "San Francisco",
+              "country": "US",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/dashboard",
+              "referrer": "https://github.com/openpanel-dev/openpanel",
+              "region": "California"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-28T19:47:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-039",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-15T16:26:50.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "London",
+              "country": "GB",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/docs/getting-started",
+              "referrer": "https://www.reddit.com/",
+              "region": "England"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-28T18:46:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-022",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-24T03:02:24.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "city": "Stockholm",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/",
+              "referrer": "https://www.google.com/",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-28T13:22:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-006",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-21T08:28:19.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "city": "London",
+              "country": "GB",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/settings/profile",
+              "referrer": "https://t.co/",
+              "region": "England"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-28T13:22:00.000Z",
+            "email": "gustav@example.se",
+            "firstName": "Gustav",
+            "groups": [
+              "initech"
+            ],
+            "id": "user-gustav",
+            "isExternal": true,
+            "lastName": "Öberg",
+            "lastSeenAt": "2026-09-21T08:28:19.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "age": "45",
+              "browser": "Edge",
+              "city": "London",
+              "company": {
+                "name": "initech"
+              },
+              "country": "GB",
+              "device": "desktop",
+              "os": "Windows",
+              "plan": "pro",
+              "region": "England"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-28T12:16:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-021",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-24T03:22:03.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/settings/profile",
+              "referrer": "https://t.co/",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T22:15:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-025",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-20T22:24:30.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/docs",
+              "referrer": "https://t.co/",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T20:56:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-028",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-20T13:57:42.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Firefox",
+              "city": "London",
+              "country": "GB",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/pricing",
+              "referrer": "https://t.co/",
+              "region": "England"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T15:25:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-009",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-21T10:04:15.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "city": "New York",
+              "country": "US",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/dashboard",
+              "region": "New York"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T11:43:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-007",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-20T13:32:00.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/docs",
+              "referrer": "https://github.com/openpanel-dev/openpanel",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T11:43:00.000Z",
+            "email": "hana@example.jp",
+            "firstName": "Hana",
+            "groups": [
+              "acme"
+            ],
+            "id": "user-hana",
+            "isExternal": true,
+            "lastName": "Sato",
+            "lastSeenAt": "2026-09-20T13:32:00.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Göteborg",
+              "company": {
+                "name": "acme"
+              },
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "enterprise",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T11:09:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-037",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-22T12:39:46.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "San Francisco",
+              "country": "US",
+              "device": "desktop",
+              "os": "Mac OS",
+              "path": "/dashboard",
+              "region": "California"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T10:43:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-003",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-17T23:24:15.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Mac OS",
+              "path": "/blog/hello-world",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T10:43:00.000Z",
+            "email": "dmitri@example.com",
+            "firstName": "Dmitri",
+            "groups": [
+              "initech"
+            ],
+            "id": "user-dmitri",
+            "isExternal": true,
+            "lastName": "Ivanov",
+            "lastSeenAt": "2026-09-17T23:24:15.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "age": "22",
+              "browser": "Chrome",
+              "city": "Berlin",
+              "company": {
+                "name": "initech"
+              },
+              "country": "DE",
+              "device": "desktop",
+              "os": "Mac OS",
+              "plan": "free",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T07:25:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-026",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-22T14:08:16.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "Stockholm",
+              "country": "SE",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/docs",
+              "referrer": "https://www.google.com/",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-26T22:09:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-029",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-19T16:56:00.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "New York",
+              "country": "US",
+              "device": "tablet",
+              "os": "iOS",
+              "path": "/blog/hello-world",
+              "region": "New York"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-26T15:20:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-035",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T08:23:19.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "Stockholm",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/blog/hello-world",
+              "referrer": "https://www.google.com/",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-26T14:58:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-024",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-24T03:06:50.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Firefox",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/settings/profile",
+              "referrer": "https://github.com/openpanel-dev/openpanel",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-26T14:49:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-017",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-03T19:37:53.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/blog/hello-world",
+              "referrer": "https://t.co/",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-26T13:43:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-000",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T07:19:39.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Firefox",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-26T13:43:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-004",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-20T09:52:43.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "New York",
+              "country": "US",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/dashboard",
+              "referrer": "https://t.co/",
+              "region": "New York"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-26T13:43:00.000Z",
+            "email": "alice@example.com",
+            "firstName": "Alice",
+            "groups": [
+              "acme"
+            ],
+            "id": "user-alice",
+            "isExternal": true,
+            "lastName": "Andersson",
+            "lastSeenAt": "2026-09-22T10:51:21.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "age": "34",
+              "browser": "Firefox",
+              "city": "Berlin",
+              "company": {
+                "name": "acme"
+              },
+              "country": "DE",
+              "device": "desktop",
+              "os": "Linux",
+              "plan": "pro",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-26T13:43:00.000Z",
+            "email": "eve@example.com",
+            "firstName": "Eve",
+            "groups": [
+              "globex"
+            ],
+            "id": "user-eve",
+            "isExternal": true,
+            "lastName": "Smith",
+            "lastSeenAt": "2026-09-20T09:52:43.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "age": "37",
+              "browser": "Mobile Safari",
+              "city": "New York",
+              "company": {
+                "name": "globex"
+              },
+              "country": "US",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "pro",
+              "region": "New York"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-26T10:31:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-016",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-20T15:53:35.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/settings/profile"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-03-08T08:30:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-033",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-14T09:13:16.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/docs/getting-started",
+              "referrer": "https://github.com/openpanel-dev/openpanel",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-03-08T07:50:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-032",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-17T11:49:38.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/docs",
+              "referrer": "https://duckduckgo.com/",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-03-08T07:10:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-031",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-23T13:27:05.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "London",
+              "country": "GB",
+              "device": "desktop",
+              "os": "Mac OS",
+              "path": "/checkout",
+              "region": "England"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-03-08T06:30:00.000Z",
+            "email": "",
+            "firstName": "",
+            "groups": [],
+            "id": "dev-gold-030",
+            "isExternal": false,
+            "lastName": "",
+            "lastSeenAt": "2026-09-19T14:37:00.000Z",
+            "projectId": "golden-sthlm",
+            "properties": {
+              "browser": "Firefox",
+              "city": "San Francisco",
+              "country": "US",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/checkout",
+              "referrer": "https://www.reddit.com/",
+              "region": "California"
+            }
+          }
+        ]
+      }
+    },
+    "getProfileList ny identified (full rows)": {
+      "output": {
+        "count": 8,
+        "data": [
+          {
+            "avatar": "",
+            "createdAt": "2026-08-03T13:41:00.000Z",
+            "email": "farah@example.com",
+            "firstName": "Farah",
+            "groups": [],
+            "id": "user-farah",
+            "isExternal": true,
+            "lastName": "Khan",
+            "lastSeenAt": "2026-09-21T12:59:49.000Z",
+            "projectId": "golden-ny",
+            "properties": {
+              "age": "30",
+              "browser": "Chrome",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Mac OS",
+              "plan": "free",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-31T19:30:00.000Z",
+            "email": "chloe@example.fr",
+            "firstName": "Chloé",
+            "groups": [
+              "acme"
+            ],
+            "id": "user-chloe",
+            "isExternal": true,
+            "lastName": "Dupont",
+            "lastSeenAt": "2026-09-11T07:02:38.000Z",
+            "projectId": "golden-ny",
+            "properties": {
+              "age": "41",
+              "browser": "Edge",
+              "company": {
+                "name": "acme"
+              },
+              "device": "desktop",
+              "os": "Windows",
+              "plan": "enterprise"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-30T15:25:00.000Z",
+            "email": "gustav@example.se",
+            "firstName": "Gustav",
+            "groups": [
+              "initech"
+            ],
+            "id": "user-gustav",
+            "isExternal": true,
+            "lastName": "Öberg",
+            "lastSeenAt": "2026-09-15T19:49:59.000Z",
+            "projectId": "golden-ny",
+            "properties": {
+              "age": "45",
+              "browser": "Chrome",
+              "city": "New York",
+              "company": {
+                "name": "initech"
+              },
+              "country": "US",
+              "device": "desktop",
+              "os": "Windows",
+              "plan": "pro",
+              "region": "New York"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-29T07:50:00.000Z",
+            "email": "hana@example.jp",
+            "firstName": "Hana",
+            "groups": [
+              "acme"
+            ],
+            "id": "user-hana",
+            "isExternal": true,
+            "lastName": "Sato",
+            "lastSeenAt": "2026-09-23T10:19:40.000Z",
+            "projectId": "golden-ny",
+            "properties": {
+              "browser": "Chrome",
+              "city": "Berlin",
+              "company": {
+                "name": "acme"
+              },
+              "country": "DE",
+              "device": "desktop",
+              "os": "Windows",
+              "plan": "enterprise",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-29T07:10:00.000Z",
+            "email": "eve@example.com",
+            "firstName": "Eve",
+            "groups": [
+              "globex"
+            ],
+            "id": "user-eve",
+            "isExternal": true,
+            "lastName": "Smith",
+            "lastSeenAt": "2026-09-23T19:19:49.000Z",
+            "projectId": "golden-ny",
+            "properties": {
+              "age": "37",
+              "browser": "Chrome Mobile",
+              "city": "Stockholm",
+              "company": {
+                "name": "globex"
+              },
+              "country": "SE",
+              "device": "mobile",
+              "os": "Android",
+              "plan": "pro",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T23:02:00.000Z",
+            "email": "bob@example.com",
+            "firstName": "Bob",
+            "groups": [
+              "globex"
+            ],
+            "id": "user-bob",
+            "isExternal": true,
+            "lastName": "O'Brien",
+            "lastSeenAt": "2026-09-20T17:55:01.000Z",
+            "projectId": "golden-ny",
+            "properties": {
+              "age": "28",
+              "browser": "Chrome",
+              "city": "Göteborg",
+              "company": {
+                "name": "globex"
+              },
+              "country": "SE",
+              "device": "desktop",
+              "os": "Windows",
+              "plan": "free",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T17:56:00.000Z",
+            "email": "dmitri@example.com",
+            "firstName": "Dmitri",
+            "groups": [
+              "initech"
+            ],
+            "id": "user-dmitri",
+            "isExternal": true,
+            "lastName": "Ivanov",
+            "lastSeenAt": "2026-09-19T23:19:25.000Z",
+            "projectId": "golden-ny",
+            "properties": {
+              "age": "22",
+              "browser": "Firefox",
+              "city": "London",
+              "company": {
+                "name": "initech"
+              },
+              "country": "GB",
+              "device": "desktop",
+              "os": "Linux",
+              "plan": "free",
+              "region": "England"
+            }
+          },
+          {
+            "avatar": "",
+            "createdAt": "2026-07-27T09:19:00.000Z",
+            "email": "alice@example.com",
+            "firstName": "Alice",
+            "groups": [
+              "acme"
+            ],
+            "id": "user-alice",
+            "isExternal": true,
+            "lastName": "Andersson",
+            "lastSeenAt": "2026-09-23T15:40:21.000Z",
+            "projectId": "golden-ny",
+            "properties": {
+              "age": "34",
+              "browser": "Mobile Safari",
+              "city": "Göteborg",
+              "company": {
+                "name": "acme"
+              },
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "pro",
+              "region": "Västra Götaland"
+            }
+          }
+        ]
+      }
+    },
+    "getProfileList utc anonymous": {
+      "output": {
+        "count": 40,
+        "data": [
+          "dev-gold-011",
+          "dev-gold-009",
+          "dev-gold-002",
+          "dev-gold-013",
+          "dev-gold-007",
+          "dev-gold-018",
+          "dev-gold-008",
+          "dev-gold-004",
+          "dev-gold-035",
+          "dev-gold-026",
+          "dev-gold-023",
+          "dev-gold-006",
+          "dev-gold-017",
+          "dev-gold-027",
+          "dev-gold-028",
+          "dev-gold-019",
+          "dev-gold-020",
+          "dev-gold-010",
+          "dev-gold-036",
+          "dev-gold-022",
+          "dev-gold-012",
+          "dev-gold-003",
+          "dev-gold-039",
+          "dev-gold-016",
+          "dev-gold-029",
+          "dev-gold-037",
+          "dev-gold-024",
+          "dev-gold-014",
+          "dev-gold-025",
+          "dev-gold-034",
+          "dev-gold-005",
+          "dev-gold-000",
+          "dev-gold-015",
+          "dev-gold-038",
+          "dev-gold-001",
+          "dev-gold-021",
+          "dev-gold-033",
+          "dev-gold-032",
+          "dev-gold-031",
+          "dev-gold-030"
+        ]
+      }
+    },
+    "getProfileList sthlm pages of 10": {
+      "output": [
+        {
+          "count": 48,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-019",
+            "dev-gold-001",
+            "user-bob",
+            "dev-gold-011",
+            "dev-gold-002",
+            "user-chloe",
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036"
+          ]
+        },
+        {
+          "count": 48,
+          "data": [
+            "dev-gold-015",
+            "dev-gold-008",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-005",
+            "user-farah",
+            "dev-gold-013",
+            "dev-gold-012",
+            "dev-gold-014",
+            "dev-gold-023"
+          ]
+        },
+        {
+          "count": 48,
+          "data": [
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-022",
+            "dev-gold-006",
+            "user-gustav",
+            "dev-gold-021",
+            "dev-gold-025",
+            "dev-gold-028",
+            "dev-gold-009",
+            {
+              "tiedAtPageEdge": "2026-07-27T11:43:00.000Z"
+            }
+          ]
+        },
+        {
+          "count": 48,
+          "data": [
+            {
+              "tiedAtPageEdge": "2026-07-27T11:43:00.000Z"
+            },
+            "dev-gold-037",
+            "dev-gold-003",
+            "user-dmitri",
+            "dev-gold-026",
+            "dev-gold-029",
+            "dev-gold-035",
+            "dev-gold-024",
+            "dev-gold-017",
+            {
+              "tiedAtPageEdge": "2026-07-26T13:43:00.000Z"
+            }
+          ]
+        },
+        {
+          "count": 48,
+          "data": [
+            {
+              "tiedAtPageEdge": "2026-07-26T13:43:00.000Z"
+            },
+            {
+              "tiedAtPageEdge": "2026-07-26T13:43:00.000Z"
+            },
+            {
+              "tiedAtPageEdge": "2026-07-26T13:43:00.000Z"
+            },
+            "dev-gold-016",
+            "dev-gold-033",
+            "dev-gold-032",
+            "dev-gold-031",
+            "dev-gold-030"
+          ]
+        },
+        {
+          "count": 48,
+          "data": []
+        }
+      ]
+    },
+    "getProfileList ny identified pages of 3": {
+      "output": [
+        {
+          "count": 8,
+          "data": [
+            "user-farah",
+            "user-chloe",
+            "user-gustav"
+          ]
+        },
+        {
+          "count": 8,
+          "data": [
+            "user-hana",
+            "user-eve",
+            "user-bob"
+          ]
+        },
+        {
+          "count": 8,
+          "data": [
+            "user-dmitri",
+            "user-alice"
+          ]
+        }
+      ]
+    },
+    "getProfileList sthlm search names and tokens": {
+      "output": {
+        "\"  hana  \"": {
+          "count": 1,
+          "data": [
+            "user-hana"
+          ]
+        },
+        "\"Alice Andersson\"": {
+          "count": 1,
+          "data": [
+            "user-alice"
+          ]
+        },
+        "\"alice andersson example com user zzz\"": {
+          "count": 1,
+          "data": [
+            "user-alice"
+          ]
+        },
+        "\"alice\"": {
+          "count": 1,
+          "data": [
+            "user-alice"
+          ]
+        },
+        "\"andersson ALICE\"": {
+          "count": 1,
+          "data": [
+            "user-alice"
+          ]
+        },
+        "\"dev-gold-03\"": {
+          "count": 10,
+          "data": [
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036",
+            "dev-gold-039",
+            "dev-gold-037",
+            "dev-gold-035",
+            "dev-gold-033",
+            "dev-gold-032",
+            "dev-gold-031",
+            "dev-gold-030"
+          ]
+        },
+        "\"eve smith globex\"": {
+          "count": 0,
+          "data": []
+        },
+        "\"user-farah\"": {
+          "count": 1,
+          "data": [
+            "user-farah"
+          ]
+        }
+      }
+    },
+    "getProfileList sthlm search case and unicode": {
+      "output": {
+        "\"CHLOÉ\"": {
+          "count": 1,
+          "data": [
+            "user-chloe"
+          ]
+        },
+        "\"Chloé\"": {
+          "count": 1,
+          "data": [
+            "user-chloe"
+          ]
+        },
+        "\"EXAMPLE.JP\"": {
+          "count": 1,
+          "data": [
+            "user-hana"
+          ]
+        },
+        "\"chloe\"": {
+          "count": 1,
+          "data": [
+            "user-chloe"
+          ]
+        },
+        "\"ÖBERG\"": {
+          "count": 1,
+          "data": [
+            "user-gustav"
+          ]
+        },
+        "\"öberg\"": {
+          "count": 1,
+          "data": [
+            "user-gustav"
+          ]
+        }
+      }
+    },
+    "getProfileList sthlm search special characters": {
+      "output": {
+        "\"\"": {
+          "count": 48,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-019",
+            "dev-gold-001",
+            "user-bob",
+            "dev-gold-011",
+            "dev-gold-002",
+            "user-chloe",
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036",
+            "dev-gold-015",
+            "dev-gold-008",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-005",
+            "user-farah",
+            "dev-gold-013",
+            "dev-gold-012",
+            "dev-gold-014",
+            "dev-gold-023",
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-022",
+            "dev-gold-006",
+            "user-gustav",
+            "dev-gold-021",
+            "dev-gold-025",
+            "dev-gold-028",
+            "dev-gold-009",
+            "dev-gold-007",
+            "user-hana",
+            "dev-gold-037",
+            "dev-gold-003",
+            "user-dmitri",
+            "dev-gold-026",
+            "dev-gold-029",
+            "dev-gold-035",
+            "dev-gold-024",
+            "dev-gold-017",
+            "dev-gold-000",
+            "dev-gold-004",
+            "user-alice",
+            "user-eve",
+            "dev-gold-016",
+            "dev-gold-033",
+            "dev-gold-032",
+            "dev-gold-031",
+            "dev-gold-030"
+          ]
+        },
+        "\"%\"": {
+          "count": 48,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-019",
+            "dev-gold-001",
+            "user-bob",
+            "dev-gold-011",
+            "dev-gold-002",
+            "user-chloe",
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036",
+            "dev-gold-015",
+            "dev-gold-008",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-005",
+            "user-farah",
+            "dev-gold-013",
+            "dev-gold-012",
+            "dev-gold-014",
+            "dev-gold-023",
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-022",
+            "dev-gold-006",
+            "user-gustav",
+            "dev-gold-021",
+            "dev-gold-025",
+            "dev-gold-028",
+            "dev-gold-009",
+            "dev-gold-007",
+            "user-hana",
+            "dev-gold-037",
+            "dev-gold-003",
+            "user-dmitri",
+            "dev-gold-026",
+            "dev-gold-029",
+            "dev-gold-035",
+            "dev-gold-024",
+            "dev-gold-017",
+            "dev-gold-000",
+            "dev-gold-004",
+            "user-alice",
+            "user-eve",
+            "dev-gold-016",
+            "dev-gold-033",
+            "dev-gold-032",
+            "dev-gold-031",
+            "dev-gold-030"
+          ]
+        },
+        "\"'; DROP TABLE profiles; --\"": {
+          "count": 0,
+          "data": []
+        },
+        "\"-gold-\"": {
+          "count": 40,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-019",
+            "dev-gold-001",
+            "dev-gold-011",
+            "dev-gold-002",
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036",
+            "dev-gold-015",
+            "dev-gold-008",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-005",
+            "dev-gold-013",
+            "dev-gold-012",
+            "dev-gold-014",
+            "dev-gold-023",
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-022",
+            "dev-gold-006",
+            "dev-gold-021",
+            "dev-gold-025",
+            "dev-gold-028",
+            "dev-gold-009",
+            "dev-gold-007",
+            "dev-gold-037",
+            "dev-gold-003",
+            "dev-gold-026",
+            "dev-gold-029",
+            "dev-gold-035",
+            "dev-gold-024",
+            "dev-gold-017",
+            "dev-gold-000",
+            "dev-gold-004",
+            "dev-gold-016",
+            "dev-gold-033",
+            "dev-gold-032",
+            "dev-gold-031",
+            "dev-gold-030"
+          ]
+        },
+        "\"O'Brien\"": {
+          "count": 1,
+          "data": [
+            "user-bob"
+          ]
+        },
+        "\"\\\"\"": {
+          "count": 0,
+          "data": []
+        },
+        "\"_\"": {
+          "count": 48,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-019",
+            "dev-gold-001",
+            "user-bob",
+            "dev-gold-011",
+            "dev-gold-002",
+            "user-chloe",
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036",
+            "dev-gold-015",
+            "dev-gold-008",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-005",
+            "user-farah",
+            "dev-gold-013",
+            "dev-gold-012",
+            "dev-gold-014",
+            "dev-gold-023",
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-022",
+            "dev-gold-006",
+            "user-gustav",
+            "dev-gold-021",
+            "dev-gold-025",
+            "dev-gold-028",
+            "dev-gold-009",
+            "dev-gold-007",
+            "user-hana",
+            "dev-gold-037",
+            "dev-gold-003",
+            "user-dmitri",
+            "dev-gold-026",
+            "dev-gold-029",
+            "dev-gold-035",
+            "dev-gold-024",
+            "dev-gold-017",
+            "dev-gold-000",
+            "dev-gold-004",
+            "user-alice",
+            "user-eve",
+            "dev-gold-016",
+            "dev-gold-033",
+            "dev-gold-032",
+            "dev-gold-031",
+            "dev-gold-030"
+          ]
+        },
+        "\"o'b\"": {
+          "count": 1,
+          "data": [
+            "user-bob"
+          ]
+        }
+      }
+    },
+    "getProfileList sthlm property filters": {
+      "output": {
+        "city isNotNull and device mobile": {
+          "count": 18,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-001",
+            "user-bob",
+            "dev-gold-011",
+            "dev-gold-002",
+            "user-chloe",
+            "dev-gold-036",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-013",
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-021",
+            "dev-gold-007",
+            "user-hana",
+            "dev-gold-026",
+            "dev-gold-004",
+            "user-eve"
+          ]
+        },
+        "company name is acme": {
+          "count": 3,
+          "data": [
+            "user-chloe",
+            "user-hana",
+            "user-alice"
+          ]
+        },
+        "email contains EXAMPLE.COM": {
+          "count": 5,
+          "data": [
+            "user-bob",
+            "user-farah",
+            "user-dmitri",
+            "user-alice",
+            "user-eve"
+          ]
+        },
+        "first_name isNull": {
+          "count": 40,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-019",
+            "dev-gold-001",
+            "dev-gold-011",
+            "dev-gold-002",
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036",
+            "dev-gold-015",
+            "dev-gold-008",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-005",
+            "dev-gold-013",
+            "dev-gold-012",
+            "dev-gold-014",
+            "dev-gold-023",
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-022",
+            "dev-gold-006",
+            "dev-gold-021",
+            "dev-gold-025",
+            "dev-gold-028",
+            "dev-gold-009",
+            "dev-gold-007",
+            "dev-gold-037",
+            "dev-gold-003",
+            "dev-gold-026",
+            "dev-gold-029",
+            "dev-gold-035",
+            "dev-gold-024",
+            "dev-gold-017",
+            "dev-gold-000",
+            "dev-gold-004",
+            "dev-gold-016",
+            "dev-gold-033",
+            "dev-gold-032",
+            "dev-gold-031",
+            "dev-gold-030"
+          ]
+        },
+        "last_name startsWith O": {
+          "count": 1,
+          "data": [
+            "user-bob"
+          ]
+        },
+        "os regex": {
+          "count": 20,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-001",
+            "user-bob",
+            "dev-gold-011",
+            "dev-gold-002",
+            "user-chloe",
+            "dev-gold-036",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-013",
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-021",
+            "dev-gold-007",
+            "user-hana",
+            "dev-gold-026",
+            "dev-gold-029",
+            "dev-gold-004",
+            "user-eve",
+            "dev-gold-016"
+          ]
+        },
+        "plan is pro": {
+          "count": 3,
+          "data": [
+            "user-gustav",
+            "user-alice",
+            "user-eve"
+          ]
+        },
+        "plan isNot free,pro": {
+          "count": 42,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-019",
+            "dev-gold-001",
+            "dev-gold-011",
+            "dev-gold-002",
+            "user-chloe",
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036",
+            "dev-gold-015",
+            "dev-gold-008",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-005",
+            "dev-gold-013",
+            "dev-gold-012",
+            "dev-gold-014",
+            "dev-gold-023",
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-022",
+            "dev-gold-006",
+            "dev-gold-021",
+            "dev-gold-025",
+            "dev-gold-028",
+            "dev-gold-009",
+            "dev-gold-007",
+            "user-hana",
+            "dev-gold-037",
+            "dev-gold-003",
+            "dev-gold-026",
+            "dev-gold-029",
+            "dev-gold-035",
+            "dev-gold-024",
+            "dev-gold-017",
+            "dev-gold-000",
+            "dev-gold-004",
+            "dev-gold-016",
+            "dev-gold-033",
+            "dev-gold-032",
+            "dev-gold-031",
+            "dev-gold-030"
+          ]
+        },
+        "properties.plan is pro (dropped)": {
+          "count": 48,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-019",
+            "dev-gold-001",
+            "user-bob",
+            "dev-gold-011",
+            "dev-gold-002",
+            "user-chloe",
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036",
+            "dev-gold-015",
+            "dev-gold-008",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-005",
+            "user-farah",
+            "dev-gold-013",
+            "dev-gold-012",
+            "dev-gold-014",
+            "dev-gold-023",
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-022",
+            "dev-gold-006",
+            "user-gustav",
+            "dev-gold-021",
+            "dev-gold-025",
+            "dev-gold-028",
+            "dev-gold-009",
+            "dev-gold-007",
+            "user-hana",
+            "dev-gold-037",
+            "dev-gold-003",
+            "user-dmitri",
+            "dev-gold-026",
+            "dev-gold-029",
+            "dev-gold-035",
+            "dev-gold-024",
+            "dev-gold-017",
+            "dev-gold-000",
+            "dev-gold-004",
+            "user-alice",
+            "user-eve",
+            "dev-gold-016",
+            "dev-gold-033",
+            "dev-gold-032",
+            "dev-gold-031",
+            "dev-gold-030"
+          ]
+        }
+      }
+    },
+    "getProfileList sthlm comparison filters": {
+      "output": {
+        "age gt 4 as number": {
+          "count": 7,
+          "data": [
+            "user-bob",
+            "user-chloe",
+            "user-farah",
+            "user-gustav",
+            "user-dmitri",
+            "user-alice",
+            "user-eve"
+          ]
+        },
+        "age gt 4 as text": {
+          "count": 2,
+          "data": [
+            "user-chloe",
+            "user-gustav"
+          ]
+        },
+        "age lte 30 as number": {
+          "count": 3,
+          "data": [
+            "user-bob",
+            "user-farah",
+            "user-dmitri"
+          ]
+        },
+        "created_at gte 56 days ago as datetime": {
+          "count": 17,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-019",
+            "dev-gold-001",
+            "user-bob",
+            "dev-gold-011",
+            "dev-gold-002",
+            "user-chloe",
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036",
+            "dev-gold-015",
+            "dev-gold-008",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-005",
+            "user-farah",
+            "dev-gold-013"
+          ]
+        }
+      }
+    },
+    "getProfileList sthlm group and cohort filters": {
+      "output": {
+        "group name is Globex Corporation": {
+          "count": 2,
+          "data": [
+            "user-bob",
+            "user-eve"
+          ]
+        },
+        "group seats gt 10 as number": {
+          "count": 5,
+          "data": [
+            "user-bob",
+            "user-chloe",
+            "user-hana",
+            "user-alice",
+            "user-eve"
+          ]
+        },
+        "group type is company": {
+          "count": 7,
+          "data": [
+            "user-bob",
+            "user-chloe",
+            "user-gustav",
+            "user-hana",
+            "user-dmitri",
+            "user-alice",
+            "user-eve"
+          ]
+        },
+        "inCohort powerUsers": {
+          "count": 3,
+          "data": [
+            "user-chloe",
+            "user-hana",
+            "user-alice"
+          ]
+        },
+        "notInCohort freePlan": {
+          "count": 45,
+          "data": [
+            "dev-gold-027",
+            "dev-gold-019",
+            "dev-gold-001",
+            "dev-gold-011",
+            "dev-gold-002",
+            "user-chloe",
+            "dev-gold-034",
+            "dev-gold-038",
+            "dev-gold-036",
+            "dev-gold-015",
+            "dev-gold-008",
+            "dev-gold-010",
+            "dev-gold-020",
+            "dev-gold-005",
+            "dev-gold-013",
+            "dev-gold-012",
+            "dev-gold-014",
+            "dev-gold-023",
+            "dev-gold-018",
+            "dev-gold-039",
+            "dev-gold-022",
+            "dev-gold-006",
+            "user-gustav",
+            "dev-gold-021",
+            "dev-gold-025",
+            "dev-gold-028",
+            "dev-gold-009",
+            "dev-gold-007",
+            "user-hana",
+            "dev-gold-037",
+            "dev-gold-003",
+            "dev-gold-026",
+            "dev-gold-029",
+            "dev-gold-035",
+            "dev-gold-024",
+            "dev-gold-017",
+            "dev-gold-000",
+            "dev-gold-004",
+            "user-alice",
+            "user-eve",
+            "dev-gold-016",
+            "dev-gold-033",
+            "dev-gold-032",
+            "dev-gold-031",
+            "dev-gold-030"
+          ]
+        }
+      }
+    },
+    "getProfileList ny search + isExternal + filter": {
+      "output": {
+        "count": 5,
+        "data": [
+          "user-farah",
+          "user-chloe",
+          "user-hana",
+          "user-bob",
+          "user-dmitri"
+        ]
+      }
+    },
+    "getProfileMetrics sthlm user-alice": {
+      "output": {
+        "avgEventsPerSession": 9.5,
+        "avgTimeBetweenSessions": 555655.7,
+        "bounceRate": 0,
+        "conversionEvents": 18,
+        "durationAvg": 6.37,
+        "durationP90": 11.08,
+        "firstSeen": "2026-07-26T13:43:00.000Z",
+        "lastSeen": "2026-09-22T10:51:21.000Z",
+        "revenue": 0,
+        "screenViews": 50,
+        "sessions": 10,
+        "totalEvents": 95,
+        "uniqueDaysActive": 13
+      }
+    },
+    "getProfileMetrics ny anonymous device": {
+      "output": {
+        "avgEventsPerSession": 5.92,
+        "avgTimeBetweenSessions": 368501.8,
+        "bounceRate": 0,
+        "conversionEvents": 21,
+        "durationAvg": 5.29,
+        "durationP90": 11.73,
+        "firstSeen": "2026-08-03T23:02:00.000Z",
+        "lastSeen": "2026-09-24T03:22:21.000Z",
+        "revenue": 6898,
+        "screenViews": 31,
+        "sessions": 13,
+        "totalEvents": 77,
+        "uniqueDaysActive": 13
+      }
+    },
+    "getProfileMetrics utc unknown profile": {
+      "output": {
+        "avgEventsPerSession": null,
+        "avgTimeBetweenSessions": 0,
+        "bounceRate": null,
+        "conversionEvents": 0,
+        "durationAvg": null,
+        "durationP90": null,
+        "firstSeen": null,
+        "lastSeen": null,
+        "revenue": 0,
+        "screenViews": 0,
+        "sessions": 0,
+        "totalEvents": 0,
+        "uniqueDaysActive": 0
+      }
+    },
+    "getProfileMetricsCore": {
+      "output": {
+        "nyBob": {
+          "avgEventsPerSession": 7.25,
+          "avgSessionDurationMin": 5.78,
+          "avgTimeBetweenSessionsSec": 430325.5,
+          "bounceRate": 0,
+          "conversionEvents": 19,
+          "firstSeen": "2026-07-27T23:02:00.000Z",
+          "lastSeen": "2026-09-20T17:55:01.000Z",
+          "p90SessionDurationMin": 9.9,
+          "profileId": "user-bob",
+          "revenue": 7898,
+          "screenViews": 43,
+          "sessions": 12,
+          "totalEvents": 87,
+          "uniqueDaysActive": 13
+        },
+        "sthlmDstVisitor": {
+          "avgEventsPerSession": 6.88,
+          "avgSessionDurationMin": 5.43,
+          "avgTimeBetweenSessionsSec": 1125148,
+          "bounceRate": 0,
+          "conversionEvents": 30,
+          "firstSeen": "2026-03-08T06:30:00.000Z",
+          "lastSeen": "2026-09-19T14:37:00.000Z",
+          "p90SessionDurationMin": 12.78,
+          "profileId": "dev-gold-030",
+          "revenue": 11798,
+          "screenViews": 48,
+          "sessions": 16,
+          "totalEvents": 110,
+          "uniqueDaysActive": 15
+        }
+      }
+    },
+    "findProfilesCore sthlm defaults": {
+      "output": [
+        {
+          "avatar": "",
+          "created_at": "2026-08-18 16:17:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-027",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-23 19:29:17.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Mobile Safari",
+            "city": "Stockholm",
+            "country": "SE",
+            "device": "mobile",
+            "os": "iOS",
+            "path": "/settings/profile",
+            "referrer": "https://www.google.com/",
+            "region": "Stockholm County"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-16 19:45:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-019",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-23 15:13:08.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Firefox",
+            "city": "Berlin",
+            "country": "DE",
+            "device": "desktop",
+            "os": "Linux",
+            "path": "/checkout",
+            "referrer": "https://duckduckgo.com/",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-07 07:26:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-001",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-23 19:07:00.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Mobile Safari",
+            "city": "Berlin",
+            "country": "DE",
+            "device": "mobile",
+            "os": "iOS",
+            "path": "/settings/profile",
+            "referrer": "https://www.google.com/",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-07 07:26:00.000",
+          "email": "bob@example.com",
+          "first_name": "Bob",
+          "groups": [
+            "globex"
+          ],
+          "id": "user-bob",
+          "is_external": true,
+          "last_name": "O'Brien",
+          "last_seen_at": "2026-09-22 07:34:45.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "age": "28",
+            "browser": "Mobile Safari",
+            "city": "Berlin",
+            "company.name": "globex",
+            "country": "DE",
+            "device": "mobile",
+            "os": "iOS",
+            "plan": "free",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-07 06:55:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-011",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-19 22:59:30.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Mobile Safari",
+            "city": "Berlin",
+            "country": "DE",
+            "device": "mobile",
+            "os": "iOS",
+            "path": "/settings/profile",
+            "referrer": "https://www.google.com/",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-05 07:57:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-002",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-23 20:50:02.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Chrome Mobile",
+            "city": "Berlin",
+            "country": "DE",
+            "device": "mobile",
+            "os": "Android",
+            "path": "/dashboard",
+            "referrer": "https://github.com/openpanel-dev/openpanel",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-05 07:57:00.000",
+          "email": "chloe@example.fr",
+          "first_name": "Chloé",
+          "groups": [
+            "acme"
+          ],
+          "id": "user-chloe",
+          "is_external": true,
+          "last_name": "Dupont",
+          "last_seen_at": "2026-09-23 20:50:02.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "age": "41",
+            "browser": "Chrome Mobile",
+            "city": "Berlin",
+            "company.name": "acme",
+            "country": "DE",
+            "device": "mobile",
+            "os": "Android",
+            "plan": "enterprise",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-05 06:14:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-034",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-21 10:02:31.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Edge",
+            "city": "Bengaluru",
+            "country": "IN",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/blog/hello-world",
+            "referrer": "https://github.com/openpanel-dev/openpanel",
+            "region": "Karnataka"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-03 15:09:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-038",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-23 22:20:00.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Edge",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-02 07:30:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-036",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-18 07:17:00.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Mobile Safari",
+            "city": "Berlin",
+            "country": "DE",
+            "device": "mobile",
+            "os": "iOS",
+            "path": "/pricing",
+            "referrer": "https://t.co/",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-01 16:08:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-015",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-17 13:39:38.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Chrome",
+            "city": "Stockholm",
+            "country": "SE",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/pricing",
+            "referrer": "https://t.co/",
+            "region": "Stockholm County"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-01 08:23:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-008",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-11 16:33:07.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Chrome",
+            "city": "San Francisco",
+            "country": "US",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/pricing",
+            "referrer": "https://duckduckgo.com/",
+            "region": "California"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-31 14:09:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-010",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-15 06:31:16.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Mobile Safari",
+            "city": "Göteborg",
+            "country": "SE",
+            "device": "mobile",
+            "os": "iOS",
+            "path": "/checkout",
+            "region": "Västra Götaland"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-30 19:00:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-020",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-24 03:03:00.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Chrome Mobile",
+            "city": "Göteborg",
+            "country": "SE",
+            "device": "mobile",
+            "os": "Android",
+            "path": "/docs",
+            "referrer": "https://www.google.com/",
+            "region": "Västra Götaland"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-30 09:04:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-005",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-20 22:32:41.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Firefox",
+            "city": "Bengaluru",
+            "country": "IN",
+            "device": "desktop",
+            "os": "Linux",
+            "path": "/settings/profile",
+            "referrer": "https://www.google.com/",
+            "region": "Karnataka"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-30 09:04:00.000",
+          "email": "farah@example.com",
+          "first_name": "Farah",
+          "groups": [],
+          "id": "user-farah",
+          "is_external": true,
+          "last_name": "Khan",
+          "last_seen_at": "2026-09-20 22:32:41.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "age": "30",
+            "browser": "Firefox",
+            "city": "Bengaluru",
+            "country": "IN",
+            "device": "desktop",
+            "os": "Linux",
+            "plan": "free",
+            "region": "Karnataka"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-30 07:41:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-013",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-23 08:36:47.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Chrome Mobile",
+            "city": "Bengaluru",
+            "country": "IN",
+            "device": "mobile",
+            "os": "Android",
+            "path": "/docs/getting-started",
+            "referrer": "https://duckduckgo.com/",
+            "region": "Karnataka"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-29 16:16:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-012",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-14 16:28:41.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Edge",
+            "city": "Bengaluru",
+            "country": "IN",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/dashboard",
+            "region": "Karnataka"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-29 14:50:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-014",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-21 16:59:18.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Edge",
+            "city": "Berlin",
+            "country": "DE",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/settings/profile",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-28 22:19:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-023",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-24 03:23:41.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Chrome",
+            "city": "Bengaluru",
+            "country": "IN",
+            "device": "desktop",
+            "os": "Mac OS",
+            "path": "/pricing",
+            "referrer": "https://duckduckgo.com/",
+            "region": "Karnataka"
+          }
+        }
+      ]
+    },
+    "findProfilesCore ny oldest first": {
+      "output": [
+        {
+          "avatar": "",
+          "created_at": "2026-03-08 06:30:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-030",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-19 16:49:07.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Firefox",
+            "city": "Berlin",
+            "country": "DE",
+            "device": "desktop",
+            "os": "Linux",
+            "path": "/blog/hello-world",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-03-08 07:10:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-031",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-23 14:38:00.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Mobile Safari",
+            "city": "Stockholm",
+            "country": "SE",
+            "device": "tablet",
+            "os": "iOS",
+            "path": "/docs",
+            "referrer": "https://www.google.com/",
+            "region": "Stockholm County"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-03-08 07:50:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-032",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-22 15:43:14.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Edge",
+            "city": "Bengaluru",
+            "country": "IN",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/dashboard",
+            "referrer": "https://www.google.com/",
+            "region": "Karnataka"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-03-08 08:30:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-033",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-17 15:11:27.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Chrome",
+            "city": "Stockholm",
+            "country": "SE",
+            "device": "desktop",
+            "os": "Mac OS",
+            "path": "/",
+            "referrer": "https://www.google.com/",
+            "region": "Stockholm County"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-26 08:39:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-019",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-23 11:19:00.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Edge",
+            "city": "Stockholm",
+            "country": "SE",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/blog/hello-world",
+            "referrer": "https://t.co/",
+            "region": "Stockholm County"
+          }
+        }
+      ]
+    },
+    "findProfilesCore sthlm name and email": {
+      "output": {
+        "both": [
+          {
+            "avatar": "",
+            "created_at": "2026-08-07 07:26:00.000",
+            "email": "bob@example.com",
+            "first_name": "Bob",
+            "groups": [
+              "globex"
+            ],
+            "id": "user-bob",
+            "is_external": true,
+            "last_name": "O'Brien",
+            "last_seen_at": "2026-09-22 07:34:45.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "age": "28",
+              "browser": "Mobile Safari",
+              "city": "Berlin",
+              "company.name": "globex",
+              "country": "DE",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "free",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-30 09:04:00.000",
+            "email": "farah@example.com",
+            "first_name": "Farah",
+            "groups": [],
+            "id": "user-farah",
+            "is_external": true,
+            "last_name": "Khan",
+            "last_seen_at": "2026-09-20 22:32:41.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "age": "30",
+              "browser": "Firefox",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Linux",
+              "plan": "free",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-27 10:43:00.000",
+            "email": "dmitri@example.com",
+            "first_name": "Dmitri",
+            "groups": [
+              "initech"
+            ],
+            "id": "user-dmitri",
+            "is_external": true,
+            "last_name": "Ivanov",
+            "last_seen_at": "2026-09-17 23:24:15.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "age": "22",
+              "browser": "Chrome",
+              "city": "Berlin",
+              "company.name": "initech",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Mac OS",
+              "plan": "free",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-26 13:43:00.000",
+            "email": "alice@example.com",
+            "first_name": "Alice",
+            "groups": [
+              "acme"
+            ],
+            "id": "user-alice",
+            "is_external": true,
+            "last_name": "Andersson",
+            "last_seen_at": "2026-09-22 10:51:21.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "age": "34",
+              "browser": "Firefox",
+              "city": "Berlin",
+              "company.name": "acme",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Linux",
+              "plan": "pro",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-26 13:43:00.000",
+            "email": "eve@example.com",
+            "first_name": "Eve",
+            "groups": [
+              "globex"
+            ],
+            "id": "user-eve",
+            "is_external": true,
+            "last_name": "Smith",
+            "last_seen_at": "2026-09-20 09:52:43.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "age": "37",
+              "browser": "Mobile Safari",
+              "city": "New York",
+              "company.name": "globex",
+              "country": "US",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "pro",
+              "region": "New York"
+            }
+          }
+        ],
+        "email": [
+          {
+            "avatar": "",
+            "created_at": "2026-07-28 13:22:00.000",
+            "email": "gustav@example.se",
+            "first_name": "Gustav",
+            "groups": [
+              "initech"
+            ],
+            "id": "user-gustav",
+            "is_external": true,
+            "last_name": "Öberg",
+            "last_seen_at": "2026-09-21 08:28:19.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "age": "45",
+              "browser": "Edge",
+              "city": "London",
+              "company.name": "initech",
+              "country": "GB",
+              "device": "desktop",
+              "os": "Windows",
+              "plan": "pro",
+              "region": "England"
+            }
+          }
+        ],
+        "name": [
+          {
+            "avatar": "",
+            "created_at": "2026-07-28 13:22:00.000",
+            "email": "gustav@example.se",
+            "first_name": "Gustav",
+            "groups": [
+              "initech"
+            ],
+            "id": "user-gustav",
+            "is_external": true,
+            "last_name": "Öberg",
+            "last_seen_at": "2026-09-21 08:28:19.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "age": "45",
+              "browser": "Edge",
+              "city": "London",
+              "company.name": "initech",
+              "country": "GB",
+              "device": "desktop",
+              "os": "Windows",
+              "plan": "pro",
+              "region": "England"
+            }
+          }
+        ]
+      }
+    },
+    "findProfilesCore utc profile properties": {
+      "output": {
+        "city": [
+          {
+            "avatar": "",
+            "created_at": "2026-08-04 20:28:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-018",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-18 08:21:00.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Firefox",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/pricing",
+              "referrer": "https://www.reddit.com/",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-08-04 18:06:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-008",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-17 17:51:13.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Firefox",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/docs/getting-started",
+              "referrer": "https://www.reddit.com/",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-29 11:26:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-019",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-08-23 23:50:00.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Edge",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/docs/getting-started",
+              "referrer": "https://t.co/",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-28 23:06:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-010",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-10 09:50:48.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/docs/getting-started",
+              "referrer": "https://duckduckgo.com/",
+              "region": "Västra Götaland"
+            }
+          }
+        ],
+        "country": [
+          {
+            "avatar": "",
+            "created_at": "2026-08-04 20:28:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-018",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-18 08:21:00.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Firefox",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/pricing",
+              "referrer": "https://www.reddit.com/",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-08-04 18:06:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-008",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-17 17:51:13.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Firefox",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/docs/getting-started",
+              "referrer": "https://www.reddit.com/",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-31 12:10:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-035",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-20 23:08:00.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Chrome",
+              "city": "Stockholm",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Mac OS",
+              "path": "/",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-29 11:26:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-019",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-08-23 23:50:00.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Edge",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/docs/getting-started",
+              "referrer": "https://t.co/",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-28 23:06:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-010",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-10 09:50:48.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/docs/getting-started",
+              "referrer": "https://duckduckgo.com/",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-27 09:47:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-034",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-15 17:37:31.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Stockholm",
+              "country": "SE",
+              "device": "tablet",
+              "os": "iOS",
+              "path": "/docs/getting-started",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-26 13:22:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-001",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-23 10:14:05.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Stockholm",
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/blog/hello-world",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-26 13:22:00.000",
+            "email": "bob@example.com",
+            "first_name": "Bob",
+            "groups": [
+              "globex"
+            ],
+            "id": "user-bob",
+            "is_external": true,
+            "last_name": "O'Brien",
+            "last_seen_at": "2026-09-23 10:14:05.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "age": "28",
+              "browser": "Mobile Safari",
+              "city": "Stockholm",
+              "company.name": "globex",
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "free",
+              "region": "Stockholm County"
+            }
+          }
+        ],
+        "device": [
+          {
+            "avatar": "",
+            "created_at": "2026-07-31 07:11:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-023",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-24 03:04:00.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Mobile Safari",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/dashboard",
+              "referrer": "https://github.com/openpanel-dev/openpanel"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-27 22:21:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-037",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-15 19:36:51.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "London",
+              "country": "GB",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/settings/profile",
+              "referrer": "https://www.reddit.com/",
+              "region": "England"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-26 13:22:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-001",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-23 10:14:05.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Stockholm",
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/blog/hello-world",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-26 13:22:00.000",
+            "email": "bob@example.com",
+            "first_name": "Bob",
+            "groups": [
+              "globex"
+            ],
+            "id": "user-bob",
+            "is_external": true,
+            "last_name": "O'Brien",
+            "last_seen_at": "2026-09-23 10:14:05.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "age": "28",
+              "browser": "Mobile Safari",
+              "city": "Stockholm",
+              "company.name": "globex",
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "free",
+              "region": "Stockholm County"
+            }
+          }
+        ]
+      }
+    },
+    "findProfilesCore activity conditions": {
+      "output": {
+        "nyMinSessions14": [
+          {
+            "avatar": "",
+            "created_at": "2026-08-08 22:00:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-009",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-17 11:04:00.000",
+            "project_id": "golden-ny",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "London",
+              "country": "GB",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/pricing",
+              "referrer": "https://duckduckgo.com/",
+              "region": "England"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-30 12:34:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-034",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-18 14:12:16.000",
+            "project_id": "golden-ny",
+            "properties": {
+              "browser": "Edge",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/docs",
+              "referrer": "https://www.google.com/",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-28 18:38:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-028",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-20 06:46:00.000",
+            "project_id": "golden-ny",
+            "properties": {
+              "browser": "Chrome",
+              "city": "San Francisco",
+              "country": "US",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/settings/profile",
+              "region": "California"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-28 10:14:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-025",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-21 16:00:38.000",
+            "project_id": "golden-ny",
+            "properties": {
+              "browser": "Chrome",
+              "city": "New York",
+              "country": "US",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/docs/getting-started",
+              "referrer": "https://www.google.com/",
+              "region": "New York"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-27 10:00:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-024",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-24 03:02:15.000",
+            "project_id": "golden-ny",
+            "properties": {
+              "browser": "Chrome",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/settings/profile",
+              "referrer": "https://duckduckgo.com/",
+              "region": "Karnataka"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-27 09:19:00.000",
+            "email": "alice@example.com",
+            "first_name": "Alice",
+            "groups": [
+              "acme"
+            ],
+            "id": "user-alice",
+            "is_external": true,
+            "last_name": "Andersson",
+            "last_seen_at": "2026-09-23 15:40:21.000",
+            "project_id": "golden-ny",
+            "properties": {
+              "age": "34",
+              "browser": "Mobile Safari",
+              "city": "Göteborg",
+              "company.name": "acme",
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "pro",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-26 08:39:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-019",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-23 11:19:00.000",
+            "project_id": "golden-ny",
+            "properties": {
+              "browser": "Edge",
+              "city": "Stockholm",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/blog/hello-world",
+              "referrer": "https://t.co/",
+              "region": "Stockholm County"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-03-08 06:30:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-030",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-19 16:49:07.000",
+            "project_id": "golden-ny",
+            "properties": {
+              "browser": "Firefox",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Linux",
+              "path": "/blog/hello-world",
+              "region": "Berlin"
+            }
+          }
+        ],
+        "sthlmInactive10d": [
+          {
+            "avatar": "",
+            "created_at": "2026-08-05 07:57:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-002",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-23 20:50:02.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome Mobile",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "mobile",
+              "os": "Android",
+              "path": "/dashboard",
+              "referrer": "https://github.com/openpanel-dev/openpanel",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-08-01 08:23:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-008",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-11 16:33:07.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "San Francisco",
+              "country": "US",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/pricing",
+              "referrer": "https://duckduckgo.com/",
+              "region": "California"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-27 11:43:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-007",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-20 13:32:00.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/docs",
+              "referrer": "https://github.com/openpanel-dev/openpanel",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-27 10:43:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-003",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-17 23:24:15.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "browser": "Chrome",
+              "city": "Berlin",
+              "country": "DE",
+              "device": "desktop",
+              "os": "Mac OS",
+              "path": "/blog/hello-world",
+              "region": "Berlin"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-26 14:49:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-017",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-03 19:37:53.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "browser": "Edge",
+              "city": "Göteborg",
+              "country": "SE",
+              "device": "desktop",
+              "os": "Windows",
+              "path": "/blog/hello-world",
+              "referrer": "https://t.co/",
+              "region": "Västra Götaland"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-26 13:43:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-004",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-20 09:52:43.000",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "browser": "Mobile Safari",
+              "city": "New York",
+              "country": "US",
+              "device": "mobile",
+              "os": "iOS",
+              "path": "/dashboard",
+              "referrer": "https://t.co/",
+              "region": "New York"
+            }
+          }
+        ],
+        "utcPerformedSignup": [
+          {
+            "avatar": "",
+            "created_at": "2026-07-29 18:03:00.000",
+            "email": "alice@example.com",
+            "first_name": "Alice",
+            "groups": [
+              "acme"
+            ],
+            "id": "user-alice",
+            "is_external": true,
+            "last_name": "Andersson",
+            "last_seen_at": "2026-09-23 10:15:08.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "age": "34",
+              "browser": "Firefox",
+              "city": "London",
+              "company.name": "acme",
+              "country": "GB",
+              "device": "desktop",
+              "os": "Linux",
+              "plan": "pro",
+              "region": "England"
+            }
+          },
+          {
+            "avatar": "",
+            "created_at": "2026-07-26 13:22:00.000",
+            "email": "bob@example.com",
+            "first_name": "Bob",
+            "groups": [
+              "globex"
+            ],
+            "id": "user-bob",
+            "is_external": true,
+            "last_name": "O'Brien",
+            "last_seen_at": "2026-09-23 10:14:05.000",
+            "project_id": "golden-utc",
+            "properties": {
+              "age": "28",
+              "browser": "Mobile Safari",
+              "city": "Stockholm",
+              "company.name": "globex",
+              "country": "SE",
+              "device": "mobile",
+              "os": "iOS",
+              "plan": "free",
+              "region": "Stockholm County"
+            }
+          }
+        ]
+      }
+    },
+    "findProfilesCore sthlm filters and a capped limit": {
+      "output": [
+        {
+          "avatar": "",
+          "created_at": "2026-07-27 10:43:00.000",
+          "email": "dmitri@example.com",
+          "first_name": "Dmitri",
+          "groups": [
+            "initech"
+          ],
+          "id": "user-dmitri",
+          "is_external": true,
+          "last_name": "Ivanov",
+          "last_seen_at": "2026-09-17 23:24:15.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "age": "22",
+            "browser": "Chrome",
+            "city": "Berlin",
+            "company.name": "initech",
+            "country": "DE",
+            "device": "desktop",
+            "os": "Mac OS",
+            "plan": "free",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-27 11:43:00.000",
+          "email": "hana@example.jp",
+          "first_name": "Hana",
+          "groups": [
+            "acme"
+          ],
+          "id": "user-hana",
+          "is_external": true,
+          "last_name": "Sato",
+          "last_seen_at": "2026-09-20 13:32:00.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "browser": "Mobile Safari",
+            "city": "Göteborg",
+            "company.name": "acme",
+            "country": "SE",
+            "device": "mobile",
+            "os": "iOS",
+            "plan": "enterprise",
+            "region": "Västra Götaland"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-30 09:04:00.000",
+          "email": "farah@example.com",
+          "first_name": "Farah",
+          "groups": [],
+          "id": "user-farah",
+          "is_external": true,
+          "last_name": "Khan",
+          "last_seen_at": "2026-09-20 22:32:41.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "age": "30",
+            "browser": "Firefox",
+            "city": "Bengaluru",
+            "country": "IN",
+            "device": "desktop",
+            "os": "Linux",
+            "plan": "free",
+            "region": "Karnataka"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-05 07:57:00.000",
+          "email": "chloe@example.fr",
+          "first_name": "Chloé",
+          "groups": [
+            "acme"
+          ],
+          "id": "user-chloe",
+          "is_external": true,
+          "last_name": "Dupont",
+          "last_seen_at": "2026-09-23 20:50:02.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "age": "41",
+            "browser": "Chrome Mobile",
+            "city": "Berlin",
+            "company.name": "acme",
+            "country": "DE",
+            "device": "mobile",
+            "os": "Android",
+            "plan": "enterprise",
+            "region": "Berlin"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-07 07:26:00.000",
+          "email": "bob@example.com",
+          "first_name": "Bob",
+          "groups": [
+            "globex"
+          ],
+          "id": "user-bob",
+          "is_external": true,
+          "last_name": "O'Brien",
+          "last_seen_at": "2026-09-22 07:34:45.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "age": "28",
+            "browser": "Mobile Safari",
+            "city": "Berlin",
+            "company.name": "globex",
+            "country": "DE",
+            "device": "mobile",
+            "os": "iOS",
+            "plan": "free",
+            "region": "Berlin"
+          }
+        }
+      ]
+    },
+    "findProfilesCore ny combined": {
+      "output": [
+        {
+          "avatar": "",
+          "created_at": "2026-08-09 13:18:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-018",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-17 08:12:52.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Chrome",
+            "city": "San Francisco",
+            "country": "US",
+            "device": "desktop",
+            "os": "Mac OS",
+            "path": "/blog/hello-world",
+            "region": "California"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-08-07 20:02:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-038",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-20 06:23:55.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Firefox",
+            "city": "San Francisco",
+            "country": "US",
+            "device": "desktop",
+            "os": "Linux",
+            "path": "/blog/hello-world",
+            "referrer": "https://t.co/",
+            "region": "California"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-30 15:25:00.000",
+          "email": "gustav@example.se",
+          "first_name": "Gustav",
+          "groups": [
+            "initech"
+          ],
+          "id": "user-gustav",
+          "is_external": true,
+          "last_name": "Öberg",
+          "last_seen_at": "2026-09-15 19:49:59.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "age": "45",
+            "browser": "Chrome",
+            "city": "New York",
+            "company.name": "initech",
+            "country": "US",
+            "device": "desktop",
+            "os": "Windows",
+            "plan": "pro",
+            "region": "New York"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-28 18:38:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-028",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-20 06:46:00.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Chrome",
+            "city": "San Francisco",
+            "country": "US",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/settings/profile",
+            "region": "California"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-28 10:14:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-025",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-21 16:00:38.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Chrome",
+            "city": "New York",
+            "country": "US",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/docs/getting-started",
+            "referrer": "https://www.google.com/",
+            "region": "New York"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-27 15:40:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-039",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-23 06:27:00.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Edge",
+            "city": "San Francisco",
+            "country": "US",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/pricing",
+            "region": "California"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-27 13:28:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-020",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-24 03:19:00.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Chrome",
+            "city": "New York",
+            "country": "US",
+            "device": "desktop",
+            "os": "Mac OS",
+            "path": "/settings/profile",
+            "referrer": "https://duckduckgo.com/",
+            "region": "New York"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-26 23:50:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-014",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-16 12:35:00.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Chrome",
+            "city": "San Francisco",
+            "country": "US",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/dashboard",
+            "referrer": "https://www.reddit.com/",
+            "region": "California"
+          }
+        },
+        {
+          "avatar": "",
+          "created_at": "2026-07-26 19:40:00.000",
+          "email": "",
+          "first_name": "",
+          "groups": [],
+          "id": "dev-gold-017",
+          "is_external": false,
+          "last_name": "",
+          "last_seen_at": "2026-09-23 14:22:12.000",
+          "project_id": "golden-ny",
+          "properties": {
+            "browser": "Edge",
+            "city": "San Francisco",
+            "country": "US",
+            "device": "desktop",
+            "os": "Windows",
+            "path": "/dashboard",
+            "referrer": "https://github.com/openpanel-dev/openpanel",
+            "region": "California"
+          }
+        }
+      ]
+    },
+    "getProfileWithEvents sthlm user-alice 10 events": {
+      "output": {
+        "profile": {
+          "avatar": "",
+          "created_at": "2026-07-26 13:43:00.000",
+          "email": "alice@example.com",
+          "first_name": "Alice",
+          "groups": [
+            "acme"
+          ],
+          "id": "user-alice",
+          "is_external": true,
+          "last_name": "Andersson",
+          "last_seen_at": "2026-09-22 10:51:21.000",
+          "project_id": "golden-sthlm",
+          "properties": {
+            "age": "34",
+            "browser": "Firefox",
+            "city": "Berlin",
+            "company.name": "acme",
+            "country": "DE",
+            "device": "desktop",
+            "os": "Linux",
+            "plan": "pro",
+            "region": "Berlin"
+          }
+        },
+        "recent_events": [
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "Berlin",
+            "country": "DE",
+            "created_at": "2026-09-22 10:51:22.000",
+            "device": "desktop",
+            "device_id": "dev-gold-000",
+            "duration": 261000,
+            "groups": [
+              "acme"
+            ],
+            "id": "56962221-f8c3-416f-9804-1e8aa3bb511a",
+            "imported_at": null,
+            "inserted_at": "2026-09-22 10:51:22.000",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "model": "",
+            "name": "session_end",
+            "origin": "https://app.example.com",
+            "os": "Linux",
+            "os_version": "",
+            "path": "/settings/profile",
+            "profile_id": "user-alice",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "__bounce": "false"
+            },
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "Berlin",
+            "revenue": 0,
+            "sdk_name": "web",
+            "sdk_version": "1.4.0",
+            "session_id": "sess-5e116222-a33e"
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "Berlin",
+            "country": "DE",
+            "created_at": "2026-09-22 10:51:21.000",
+            "device": "desktop",
+            "device_id": "dev-gold-000",
+            "duration": 0,
+            "groups": [
+              "acme"
+            ],
+            "id": "f598cde7-0efb-4715-a0b5-74a578fb1a0f",
+            "imported_at": null,
+            "inserted_at": "2026-09-22 10:51:21.000",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "model": "",
+            "name": "screen_view",
+            "origin": "https://app.example.com",
+            "os": "Linux",
+            "os_version": "",
+            "path": "/settings/profile",
+            "profile_id": "user-alice",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "__title": "Settings"
+            },
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "Berlin",
+            "revenue": 0,
+            "sdk_name": "web",
+            "sdk_version": "1.4.0",
+            "session_id": "sess-5e116222-a33e"
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "Berlin",
+            "country": "DE",
+            "created_at": "2026-09-22 10:50:53.000",
+            "device": "desktop",
+            "device_id": "dev-gold-000",
+            "duration": 0,
+            "groups": [
+              "acme"
+            ],
+            "id": "6b4482f0-f89a-45cc-b79b-7f0c2fa3ff51",
+            "imported_at": null,
+            "inserted_at": "2026-09-22 10:50:53.000",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "model": "",
+            "name": "button_click",
+            "origin": "https://app.example.com",
+            "os": "Linux",
+            "os_version": "",
+            "path": "/settings/profile",
+            "profile_id": "user-alice",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "button": "footer",
+              "price": "free",
+              "variant": "a"
+            },
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "Berlin",
+            "revenue": 0,
+            "sdk_name": "web",
+            "sdk_version": "1.4.0",
+            "session_id": "sess-5e116222-a33e"
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "Berlin",
+            "country": "DE",
+            "created_at": "2026-09-22 10:50:13.000",
+            "device": "desktop",
+            "device_id": "dev-gold-000",
+            "duration": 40000,
+            "groups": [
+              "acme"
+            ],
+            "id": "4887119e-9d8e-4d9d-86de-7742bfbca6cf",
+            "imported_at": null,
+            "inserted_at": "2026-09-22 10:50:13.000",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "model": "",
+            "name": "screen_view",
+            "origin": "https://app.example.com",
+            "os": "Linux",
+            "os_version": "",
+            "path": "/settings/profile",
+            "profile_id": "user-alice",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "__title": "Settings"
+            },
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "Berlin",
+            "revenue": 0,
+            "sdk_name": "web",
+            "sdk_version": "1.4.0",
+            "session_id": "sess-5e116222-a33e"
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "Berlin",
+            "country": "DE",
+            "created_at": "2026-09-22 10:48:54.000",
+            "device": "desktop",
+            "device_id": "dev-gold-000",
+            "duration": 0,
+            "groups": [
+              "acme"
+            ],
+            "id": "99cbbec1-64d9-4fc4-a321-df5eee7b570e",
+            "imported_at": null,
+            "inserted_at": "2026-09-22 10:48:54.000",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "model": "",
+            "name": "button_click",
+            "origin": "https://example.com",
+            "os": "Linux",
+            "os_version": "",
+            "path": "/docs",
+            "profile_id": "user-alice",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "button": "footer",
+              "price": "19",
+              "variant": "a"
+            },
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "Berlin",
+            "revenue": 0,
+            "sdk_name": "web",
+            "sdk_version": "1.4.0",
+            "session_id": "sess-5e116222-a33e"
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "Berlin",
+            "country": "DE",
+            "created_at": "2026-09-22 10:48:20.000",
+            "device": "desktop",
+            "device_id": "dev-gold-000",
+            "duration": 34000,
+            "groups": [
+              "acme"
+            ],
+            "id": "5e2feb54-d023-4562-b130-76912c1909b0",
+            "imported_at": null,
+            "inserted_at": "2026-09-22 10:48:20.000",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "model": "",
+            "name": "screen_view",
+            "origin": "https://example.com",
+            "os": "Linux",
+            "os_version": "",
+            "path": "/docs",
+            "profile_id": "user-alice",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "__title": "Docs"
+            },
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "Berlin",
+            "revenue": 0,
+            "sdk_name": "web",
+            "sdk_version": "1.4.0",
+            "session_id": "sess-5e116222-a33e"
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "Berlin",
+            "country": "DE",
+            "created_at": "2026-09-22 10:47:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-000",
+            "duration": 80000,
+            "groups": [
+              "acme"
+            ],
+            "id": "62c8c2f0-440c-4583-92b1-5be2dfe54d7e",
+            "imported_at": null,
+            "inserted_at": "2026-09-22 10:47:00.000",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "model": "",
+            "name": "screen_view",
+            "origin": "https://app.example.com",
+            "os": "Linux",
+            "os_version": "",
+            "path": "/settings/profile",
+            "profile_id": "user-alice",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "__title": "Settings"
+            },
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "Berlin",
+            "revenue": 0,
+            "sdk_name": "web",
+            "sdk_version": "1.4.0",
+            "session_id": "sess-5e116222-a33e"
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "Berlin",
+            "country": "DE",
+            "created_at": "2026-09-22 10:46:59.900",
+            "device": "desktop",
+            "device_id": "dev-gold-000",
+            "duration": 0,
+            "groups": [
+              "acme"
+            ],
+            "id": "d9a7290e-cc7d-400c-ac6e-437ed71e3941",
+            "imported_at": null,
+            "inserted_at": "2026-09-22 10:46:59.900",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "model": "",
+            "name": "session_start",
+            "origin": "https://app.example.com",
+            "os": "Linux",
+            "os_version": "",
+            "path": "/settings/profile",
+            "profile_id": "user-alice",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "__title": "Settings"
+            },
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "Berlin",
+            "revenue": 0,
+            "sdk_name": "web",
+            "sdk_version": "1.4.0",
+            "session_id": "sess-5e116222-a33e"
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "Berlin",
+            "country": "DE",
+            "created_at": "2026-09-04 16:09:01.000",
+            "device": "desktop",
+            "device_id": "dev-gold-000",
+            "duration": 0,
+            "groups": [
+              "acme"
+            ],
+            "id": "624f0705-044d-466d-9ce7-5530b5b77e86",
+            "imported_at": null,
+            "inserted_at": "2026-09-04 16:09:01.000",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "model": "",
+            "name": "session_end",
+            "origin": "https://app.example.com",
+            "os": "Linux",
+            "os_version": "",
+            "path": "/dashboard",
+            "profile_id": "user-alice",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "__bounce": "true"
+            },
+            "referrer": "https://github.com/openpanel-dev/openpanel",
+            "referrer_name": "GitHub",
+            "referrer_type": "social",
+            "region": "Berlin",
+            "revenue": 0,
+            "sdk_name": "web",
+            "sdk_version": "1.4.0",
+            "session_id": "sess-01a62e21-e557"
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "Berlin",
+            "country": "DE",
+            "created_at": "2026-09-04 16:09:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-000",
+            "duration": 0,
+            "groups": [
+              "acme"
+            ],
+            "id": "3be80e29-8aab-42fb-9db4-abde57f55710",
+            "imported_at": null,
+            "inserted_at": "2026-09-04 16:09:00.000",
+            "latitude": 52.52,
+            "longitude": 13.405,
+            "model": "",
+            "name": "screen_view",
+            "origin": "https://app.example.com",
+            "os": "Linux",
+            "os_version": "",
+            "path": "/dashboard",
+            "profile_id": "user-alice",
+            "project_id": "golden-sthlm",
+            "properties": {
+              "__title": "Dashboard"
+            },
+            "referrer": "https://github.com/openpanel-dev/openpanel",
+            "referrer_name": "GitHub",
+            "referrer_type": "social",
+            "region": "Berlin",
+            "revenue": 0,
+            "sdk_name": "web",
+            "sdk_version": "1.4.0",
+            "session_id": "sess-01a62e21-e557"
+          }
+        ]
+      }
+    },
+    "getProfileWithEvents ny anonymous device and unknown profile": {
+      "output": {
+        "device": {
+          "profile": {
+            "avatar": "",
+            "created_at": "2026-08-03 23:02:00.000",
+            "email": "",
+            "first_name": "",
+            "groups": [],
+            "id": "dev-gold-021",
+            "is_external": false,
+            "last_name": "",
+            "last_seen_at": "2026-09-24 03:22:21.000",
+            "project_id": "golden-ny",
+            "properties": {
+              "browser": "Chrome",
+              "city": "Bengaluru",
+              "country": "IN",
+              "device": "desktop",
+              "os": "Mac OS",
+              "path": "/settings/profile",
+              "referrer": "https://t.co/",
+              "region": "Karnataka"
+            }
+          },
+          "recent_events": [
+            {
+              "created_at": "2026-09-24 03:22:21.000",
+              "id": "83e8c35b-46e8-4dfd-b368-9d326c4edf44",
+              "name": "button_click",
+              "session_id": "sess-e61b2b9e-1b35"
+            },
+            {
+              "created_at": "2026-09-24 03:21:58.000",
+              "id": "ea56a59d-07fe-4adc-a434-4ea360f527c5",
+              "name": "screen_view",
+              "session_id": "sess-e61b2b9e-1b35"
+            },
+            {
+              "created_at": "2026-09-24 03:18:46.000",
+              "id": "ea2efc93-1ebe-4a5f-a174-264e4d8ad721",
+              "name": "button_click",
+              "session_id": "sess-e61b2b9e-1b35"
+            },
+            {
+              "created_at": "2026-09-24 03:18:27.000",
+              "id": "7261000d-a896-4737-b0ab-f3d7e8217028",
+              "name": "screen_view",
+              "session_id": "sess-e61b2b9e-1b35"
+            },
+            {
+              "created_at": "2026-09-24 03:15:31.000",
+              "id": "5e31dc92-0fa9-4db1-bd3c-90eecbb8b147",
+              "name": "screen_view",
+              "session_id": "sess-e61b2b9e-1b35"
+            },
+            {
+              "created_at": "2026-09-24 03:12:05.000",
+              "id": "e5b1d310-859e-4248-a450-464807a84bec",
+              "name": "button_click",
+              "session_id": "sess-e61b2b9e-1b35"
+            },
+            {
+              "created_at": "2026-09-24 03:12:00.000",
+              "id": "7c1fb0fc-2e0b-4a43-8c56-b11b3117fe0d",
+              "name": "screen_view",
+              "session_id": "sess-e61b2b9e-1b35"
+            },
+            {
+              "created_at": "2026-09-24 03:11:59.900",
+              "id": "6fd3bfe7-55d9-49db-88c5-d1d4622ff427",
+              "name": "session_start",
+              "session_id": "sess-e61b2b9e-1b35"
+            },
+            {
+              "created_at": "2026-09-19 23:08:01.000",
+              "id": "671a2853-fe26-4dd2-aa49-5469187ed410",
+              "name": "session_end",
+              "session_id": "sess-14674fa9-38f3"
+            },
+            {
+              "created_at": "2026-09-19 23:08:00.000",
+              "id": "b623c94d-5b8c-48ef-95bc-5ad109d889bb",
+              "name": "screen_view",
+              "session_id": "sess-14674fa9-38f3"
+            },
+            {
+              "created_at": "2026-09-19 23:07:59.900",
+              "id": "c27349d7-f36e-4042-91d5-8aa4e301c7bd",
+              "name": "session_start",
+              "session_id": "sess-14674fa9-38f3"
+            },
+            {
+              "created_at": "2026-09-16 13:42:01.000",
+              "id": "98136878-9c4f-47d1-b0fa-adeb046eddbe",
+              "name": "session_end",
+              "session_id": "sess-af86a7b6-c2e8"
+            },
+            {
+              "created_at": "2026-09-16 13:42:00.000",
+              "id": "dd0f9264-cc27-4c5f-a9ef-feac98c4079e",
+              "name": "screen_view",
+              "session_id": "sess-af86a7b6-c2e8"
+            },
+            {
+              "created_at": "2026-09-16 13:41:59.900",
+              "id": "08228d07-dbbc-4387-bccd-cd0986e1ed44",
+              "name": "session_start",
+              "session_id": "sess-af86a7b6-c2e8"
+            },
+            {
+              "created_at": "2026-09-03 23:10:25.000",
+              "id": "78ec5f11-c3c6-4591-9505-d52a9ad0d7e4",
+              "name": "session_end",
+              "session_id": "sess-e26c4f75-89a2"
+            },
+            {
+              "created_at": "2026-09-03 23:10:24.000",
+              "id": "d41ed9c3-7482-4133-a69a-482f2dc06730",
+              "name": "screen_view",
+              "session_id": "sess-e26c4f75-89a2"
+            },
+            {
+              "created_at": "2026-09-03 23:09:43.000",
+              "id": "0d5490ca-1ea4-46b8-8ecd-114690e6a2fb",
+              "name": "button_click",
+              "session_id": "sess-e26c4f75-89a2"
+            },
+            {
+              "created_at": "2026-09-03 23:09:20.000",
+              "id": "44a042c4-9831-45b4-a9d6-6eacf2dfb760",
+              "name": "screen_view",
+              "session_id": "sess-e26c4f75-89a2"
+            },
+            {
+              "created_at": "2026-09-03 23:06:00.000",
+              "id": "533caae9-dda6-4ca7-b2b9-f9f7a917fd99",
+              "name": "screen_view",
+              "session_id": "sess-e26c4f75-89a2"
+            },
+            {
+              "created_at": "2026-09-03 23:05:59.900",
+              "id": "e431c3f2-5f61-4ee0-bc71-477c9c780f75",
+              "name": "session_start",
+              "session_id": "sess-e26c4f75-89a2"
+            },
+            {
+              "created_at": "2026-08-31 11:23:01.000",
+              "id": "69fbca0d-229f-478a-a8b5-d5d97c4c91f6",
+              "name": "session_end",
+              "session_id": "sess-47911ced-6c46"
+            },
+            {
+              "created_at": "2026-08-31 11:23:00.000",
+              "id": "35ca3e1c-3eec-4678-b1bf-71cbdfccae7f",
+              "name": "screen_view",
+              "session_id": "sess-47911ced-6c46"
+            },
+            {
+              "created_at": "2026-08-31 11:22:59.900",
+              "id": "f01a7bdf-7a62-49c0-be7a-e044d6476862",
+              "name": "session_start",
+              "session_id": "sess-47911ced-6c46"
+            },
+            {
+              "created_at": "2026-08-29 18:56:40.000",
+              "id": "8fd2effd-2b18-49f7-acf2-5d8a4a2509f8",
+              "name": "session_end",
+              "session_id": "sess-9aa09aa6-3d72"
+            },
+            {
+              "created_at": "2026-08-29 18:56:39.000",
+              "id": "3beff734-805a-4ab2-94f5-24f241c4ecbf",
+              "name": "button_click",
+              "session_id": "sess-9aa09aa6-3d72"
+            },
+            {
+              "created_at": "2026-08-29 18:56:12.000",
+              "id": "c66d593f-8470-4dc3-8925-f10b3363768f",
+              "name": "screen_view",
+              "session_id": "sess-9aa09aa6-3d72"
+            },
+            {
+              "created_at": "2026-08-29 18:53:00.000",
+              "id": "8ebf829e-45ea-4f4e-a30a-662f4691bdb5",
+              "name": "screen_view",
+              "session_id": "sess-9aa09aa6-3d72"
+            },
+            {
+              "created_at": "2026-08-29 18:52:59.900",
+              "id": "26c8dfe3-5ff7-43a3-9214-c57142985557",
+              "name": "session_start",
+              "session_id": "sess-9aa09aa6-3d72"
+            },
+            {
+              "created_at": "2026-08-26 13:47:47.000",
+              "id": "d8e0eaed-5d56-4cad-a588-b12d48f3470b",
+              "name": "session_end",
+              "session_id": "sess-32422330-b5f4"
+            },
+            {
+              "created_at": "2026-08-26 13:47:46.000",
+              "id": "ddf377bf-0556-4b52-a3bf-2839a3f673ed",
+              "name": "link_out",
+              "session_id": "sess-32422330-b5f4"
+            },
+            {
+              "created_at": "2026-08-26 13:47:38.000",
+              "id": "ffc0a9eb-1f29-45cf-99b2-dcb47d093374",
+              "name": "screen_view",
+              "session_id": "sess-32422330-b5f4"
+            },
+            {
+              "created_at": "2026-08-26 13:46:05.000",
+              "id": "91a02078-08ae-4796-bf41-4989a8ae46e0",
+              "name": "purchase",
+              "session_id": "sess-32422330-b5f4"
+            },
+            {
+              "created_at": "2026-08-26 13:46:04.000",
+              "id": "6a76c16e-e802-46bd-bb0d-551de21d8e9a",
+              "name": "revenue",
+              "session_id": "sess-32422330-b5f4"
+            },
+            {
+              "created_at": "2026-08-26 13:45:19.000",
+              "id": "82dcfd10-d342-4f0f-b1aa-fdbf8977d871",
+              "name": "button_click",
+              "session_id": "sess-32422330-b5f4"
+            },
+            {
+              "created_at": "2026-08-26 13:45:04.000",
+              "id": "a634b3fc-00af-48ff-b05a-869455041507",
+              "name": "screen_view",
+              "session_id": "sess-32422330-b5f4"
+            },
+            {
+              "created_at": "2026-08-26 13:41:54.000",
+              "id": "fdeb28f1-e0e1-4982-90bd-6e1ad09b585f",
+              "name": "screen_view",
+              "session_id": "sess-32422330-b5f4"
+            },
+            {
+              "created_at": "2026-08-26 13:41:00.000",
+              "id": "17523b6e-7384-4da8-8f34-b3c04f5aca9e",
+              "name": "screen_view",
+              "session_id": "sess-32422330-b5f4"
+            },
+            {
+              "created_at": "2026-08-26 13:40:59.900",
+              "id": "2d6730f2-e390-42dc-8eae-abe7d509f652",
+              "name": "session_start",
+              "session_id": "sess-32422330-b5f4"
+            },
+            {
+              "created_at": "2026-08-25 16:23:28.000",
+              "id": "75b10e05-c262-4486-81f7-f5ea65b138c3",
+              "name": "session_end",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:23:27.000",
+              "id": "74a29208-82fd-4a72-ba86-70f8524e16e4",
+              "name": "screen_view",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:22:13.000",
+              "id": "c6a3b087-fbd7-4c29-894e-949f6e2beb00",
+              "name": "button_click",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:21:47.000",
+              "id": "2ea38865-152f-44f5-a496-61dd76acd015",
+              "name": "screen_view",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:20:49.000",
+              "id": "d296a0c6-64de-42f8-9290-9228f6a21441",
+              "name": "purchase",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:20:48.000",
+              "id": "3fed7f14-c963-411d-b245-f8a958eeb7e9",
+              "name": "revenue",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:19:48.000",
+              "id": "bfbef169-dece-4ac9-bc50-e9551d8bf724",
+              "name": "screen_view",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:17:45.000",
+              "id": "f48f508f-fd05-4740-bd6e-2952e6bc4291",
+              "name": "button_click",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:17:04.000",
+              "id": "cddd1fbb-33de-489e-94ef-62bad022ae6c",
+              "name": "link_out",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:17:00.000",
+              "id": "f106e68d-3378-4791-b80d-936c77e87b44",
+              "name": "screen_view",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:14:14.000",
+              "id": "78ff9834-c632-4ba6-bca1-aa9907421f8f",
+              "name": "button_click",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:14:00.000",
+              "id": "e66a4833-5522-4276-a3f8-00c0dbdbb7c9",
+              "name": "screen_view",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-25 16:13:59.900",
+              "id": "641d023a-6257-498a-a7bc-4674314b4a6f",
+              "name": "session_start",
+              "session_id": "sess-f97804fe-ad28"
+            },
+            {
+              "created_at": "2026-08-24 20:34:16.000",
+              "id": "f28e8259-b8af-44b5-aa59-900d9855642d",
+              "name": "session_end",
+              "session_id": "sess-0ee06ae4-421e"
+            },
+            {
+              "created_at": "2026-08-24 20:34:15.000",
+              "id": "e54b1211-40de-422c-9763-0cc24f13b8b7",
+              "name": "button_click",
+              "session_id": "sess-0ee06ae4-421e"
+            },
+            {
+              "created_at": "2026-08-24 20:34:00.000",
+              "id": "a6aaac2a-9acb-458d-8b02-ca54de6cd387",
+              "name": "screen_view",
+              "session_id": "sess-0ee06ae4-421e"
+            },
+            {
+              "created_at": "2026-08-24 20:33:59.900",
+              "id": "01de8ac4-b758-4023-a4c1-c5f1b678751c",
+              "name": "session_start",
+              "session_id": "sess-0ee06ae4-421e"
+            },
+            {
+              "created_at": "2026-08-16 12:41:30.000",
+              "id": "f4b4d8f2-83c1-4791-aa2f-74f5455ae011",
+              "name": "session_end",
+              "session_id": "sess-b7cd0066-8847"
+            },
+            {
+              "created_at": "2026-08-16 12:41:29.000",
+              "id": "302f69af-f67f-42e6-8084-0fff7248f145",
+              "name": "button_click",
+              "session_id": "sess-b7cd0066-8847"
+            },
+            {
+              "created_at": "2026-08-16 12:41:00.000",
+              "id": "ef226f53-cc62-4409-962a-751330161b3c",
+              "name": "screen_view",
+              "session_id": "sess-b7cd0066-8847"
+            },
+            {
+              "created_at": "2026-08-16 12:40:59.900",
+              "id": "85637d13-588d-4ff6-972e-341f74d1a7bf",
+              "name": "session_start",
+              "session_id": "sess-b7cd0066-8847"
+            },
+            {
+              "created_at": "2026-08-13 11:29:01.000",
+              "id": "42eddea8-18b3-4ed0-ba6d-4e01ca621b89",
+              "name": "session_end",
+              "session_id": "sess-b62b7597-25ae"
+            },
+            {
+              "created_at": "2026-08-13 11:29:00.000",
+              "id": "e0b2a16f-042b-4266-9503-17c3cf0429dc",
+              "name": "screen_view",
+              "session_id": "sess-b62b7597-25ae"
+            },
+            {
+              "created_at": "2026-08-13 11:28:59.900",
+              "id": "dc264e41-dc1a-4a3f-974e-d425583feaee",
+              "name": "session_start",
+              "session_id": "sess-b62b7597-25ae"
+            },
+            {
+              "created_at": "2026-08-04 07:38:04.000",
+              "id": "8dfa4d77-26a7-4484-8423-f5dce21882f6",
+              "name": "session_end",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-04 07:38:03.000",
+              "id": "108fd972-7542-4aed-ac1d-dc55dcedfd13",
+              "name": "purchase",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-04 07:38:02.000",
+              "id": "c9d265dd-45b6-4a6c-9e08-5b7ed3257c94",
+              "name": "revenue",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-04 07:37:02.000",
+              "id": "3fa66d85-81f3-4505-bce9-8255e31575bc",
+              "name": "screen_view",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-04 07:34:38.000",
+              "id": "a2eb2bff-cbe2-499c-8fb0-19810c96a307",
+              "name": "screen_view",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-04 07:31:55.000",
+              "id": "a580e8c9-8cc2-4a30-998d-302718759554",
+              "name": "screen_view",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-04 07:27:58.000",
+              "id": "1fe0d282-a831-426f-891f-95592ddec6b3",
+              "name": "screen_view",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-04 07:24:41.000",
+              "id": "de42fbbc-ed0d-4e37-885c-65bbc09e63e4",
+              "name": "screen_view",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-04 07:21:02.000",
+              "id": "addee29b-0270-4b7f-9752-e8f20bef077e",
+              "name": "link_out",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-04 07:21:00.000",
+              "id": "e0bc0daa-f1a8-44a3-874e-d8f299271820",
+              "name": "screen_view",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-04 07:20:59.900",
+              "id": "9022751c-0862-4da7-b854-e8936b9aae0e",
+              "name": "session_start",
+              "session_id": "sess-0da99acc-f5b9"
+            },
+            {
+              "created_at": "2026-08-03 23:02:19.000",
+              "id": "1068983e-d898-4325-ba5b-84bad1c03dfc",
+              "name": "session_end",
+              "session_id": "sess-9c62816f-a8c4"
+            },
+            {
+              "created_at": "2026-08-03 23:02:18.000",
+              "id": "f44e2b83-c5cf-4b8f-9d02-6d53277cb412",
+              "name": "button_click",
+              "session_id": "sess-9c62816f-a8c4"
+            },
+            {
+              "created_at": "2026-08-03 23:02:00.000",
+              "id": "ad0927ea-a08b-417e-b846-6431cfe41a12",
+              "name": "screen_view",
+              "session_id": "sess-9c62816f-a8c4"
+            },
+            {
+              "created_at": "2026-08-03 23:01:59.900",
+              "id": "392d8359-ff48-4b3b-a6ce-dabc5449ba54",
+              "name": "session_start",
+              "session_id": "sess-9c62816f-a8c4"
+            }
+          ]
+        },
+        "unknown": {
+          "profile": null,
+          "recent_events": []
+        }
+      }
+    },
+    "getProfileSessionsCore": {
+      "output": {
+        "sthlmDstVisitor": [
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-09-19 14:37:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 0,
+            "ended_at": "2026-09-19 14:37:00.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/checkout",
+            "event_count": 0,
+            "exit_origin": "https://example.com",
+            "exit_path": "/checkout",
+            "groups": [],
+            "id": "sess-cf14e30a-52e7",
+            "is_bounce": true,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "https://www.reddit.com/",
+            "referrer_name": "Reddit",
+            "referrer_type": "social",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 1,
+            "sign": 1,
+            "utm_campaign": "launch_week",
+            "utm_content": "post_1",
+            "utm_medium": "social",
+            "utm_source": "reddit",
+            "utm_term": "analytics",
+            "version": 1
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-09-17 13:20:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 0,
+            "ended_at": "2026-09-17 13:20:00.000",
+            "entry_origin": "https://app.example.com",
+            "entry_path": "/dashboard",
+            "event_count": 0,
+            "exit_origin": "https://app.example.com",
+            "exit_path": "/dashboard",
+            "groups": [],
+            "id": "sess-8796b151-9dd8",
+            "is_bounce": true,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "https://www.reddit.com/",
+            "referrer_name": "Reddit",
+            "referrer_type": "social",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 1,
+            "sign": 1,
+            "utm_campaign": "launch_week",
+            "utm_content": "post_1",
+            "utm_medium": "social",
+            "utm_source": "reddit",
+            "utm_term": "analytics",
+            "version": 1
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-09-03 14:07:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 24000,
+            "ended_at": "2026-09-03 14:07:24.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/",
+            "event_count": 1,
+            "exit_origin": "https://example.com",
+            "exit_path": "/",
+            "groups": [],
+            "id": "sess-70552177-4310",
+            "is_bounce": true,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "",
+            "referrer_name": "",
+            "referrer_type": "",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 1,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 2
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-09-02 08:56:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 198000,
+            "ended_at": "2026-09-02 08:59:18.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/pricing",
+            "event_count": 0,
+            "exit_origin": "https://example.com",
+            "exit_path": "/docs",
+            "groups": [],
+            "id": "sess-1edc75f3-1a6c",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "",
+            "referrer_name": "",
+            "referrer_type": "",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 2,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 2
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-08-26 16:09:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 71000,
+            "ended_at": "2026-08-26 16:10:11.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/docs",
+            "event_count": 4,
+            "exit_origin": "https://example.com",
+            "exit_path": "/pricing",
+            "groups": [],
+            "id": "sess-ffc7f54a-8311",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "https://t.co/",
+            "referrer_name": "Twitter",
+            "referrer_type": "social",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 2,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 6
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-08-20 16:10:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 470000,
+            "ended_at": "2026-08-20 16:17:50.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/",
+            "event_count": 1,
+            "exit_origin": "https://example.com",
+            "exit_path": "/checkout",
+            "groups": [],
+            "id": "sess-1c62c60e-a8ba",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "",
+            "referrer_name": "",
+            "referrer_type": "",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 5,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 6
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-08-16 22:37:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 351000,
+            "ended_at": "2026-08-16 22:42:51.000",
+            "entry_origin": "https://app.example.com",
+            "entry_path": "/settings/profile",
+            "event_count": 2,
+            "exit_origin": "https://example.com",
+            "exit_path": "/pricing",
+            "groups": [],
+            "id": "sess-4a01b391-4700",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 4,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 6
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-08-15 12:18:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 32000,
+            "ended_at": "2026-08-15 12:18:32.000",
+            "entry_origin": "https://app.example.com",
+            "entry_path": "/settings/profile",
+            "event_count": 1,
+            "exit_origin": "https://app.example.com",
+            "exit_path": "/settings/profile",
+            "groups": [],
+            "id": "sess-bee5f3fb-0aa3",
+            "is_bounce": true,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "",
+            "referrer_name": "",
+            "referrer_type": "",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 1,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 2
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-08-14 10:34:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 710000,
+            "ended_at": "2026-08-14 10:45:50.000",
+            "entry_origin": "https://app.example.com",
+            "entry_path": "/settings/profile",
+            "event_count": 8,
+            "exit_origin": "https://example.com",
+            "exit_path": "/blog/hello-world",
+            "groups": [],
+            "id": "sess-ea913b11-cb38",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "https://duckduckgo.com/",
+            "referrer_name": "DuckDuckGo",
+            "referrer_type": "search",
+            "region": "California",
+            "revenue": 6898,
+            "screen_view_count": 6,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 14
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-08-11 08:18:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 8000,
+            "ended_at": "2026-08-11 08:18:08.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/",
+            "event_count": 1,
+            "exit_origin": "https://example.com",
+            "exit_path": "/",
+            "groups": [],
+            "id": "sess-4d688fb2-bcec",
+            "is_bounce": true,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "",
+            "referrer_name": "",
+            "referrer_type": "",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 1,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 2
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-08-07 15:23:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 794000,
+            "ended_at": "2026-08-07 15:36:14.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/blog/hello-world",
+            "event_count": 3,
+            "exit_origin": "https://example.com",
+            "exit_path": "/blog/hello-world",
+            "groups": [],
+            "id": "sess-a7d7f9c6-c06c",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "https://duckduckgo.com/",
+            "referrer_name": "DuckDuckGo",
+            "referrer_type": "search",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 6,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 9
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-08-02 22:49:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 97000,
+            "ended_at": "2026-08-02 22:50:37.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/docs/getting-started",
+            "event_count": 0,
+            "exit_origin": "https://example.com",
+            "exit_path": "/blog/hello-world",
+            "groups": [],
+            "id": "sess-436916f9-1a02",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "",
+            "referrer_name": "",
+            "referrer_type": "",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 2,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 2
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-07-30 14:40:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 791000,
+            "ended_at": "2026-07-30 14:53:11.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/pricing",
+            "event_count": 4,
+            "exit_origin": "https://example.com",
+            "exit_path": "/",
+            "groups": [],
+            "id": "sess-3ff60d6e-fa59",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "",
+            "referrer_name": "",
+            "referrer_type": "",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 6,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 10
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-07-30 11:45:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 470000,
+            "ended_at": "2026-07-30 11:52:50.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/docs/getting-started",
+            "event_count": 2,
+            "exit_origin": "https://example.com",
+            "exit_path": "/blog/hello-world",
+            "groups": [],
+            "id": "sess-3286f906-ea3d",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "https://t.co/",
+            "referrer_name": "Twitter",
+            "referrer_type": "social",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 5,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 7
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-03-29 00:30:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 128000,
+            "ended_at": "2026-03-29 00:32:08.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/blog/hello-world",
+            "event_count": 0,
+            "exit_origin": "https://example.com",
+            "exit_path": "/",
+            "groups": [],
+            "id": "sess-a562e33e-e617",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "",
+            "referrer_name": "Newsletter",
+            "referrer_type": "email",
+            "region": "California",
+            "revenue": 0,
+            "screen_view_count": 2,
+            "sign": 1,
+            "utm_campaign": "spring_launch",
+            "utm_content": "",
+            "utm_medium": "email",
+            "utm_source": "newsletter",
+            "utm_term": "",
+            "version": 2
+          },
+          {
+            "brand": "",
+            "browser": "Firefox",
+            "browser_version": "127.0",
+            "city": "San Francisco",
+            "country": "US",
+            "created_at": "2026-03-08 06:30:00.000",
+            "device": "desktop",
+            "device_id": "dev-gold-030",
+            "duration": 418000,
+            "ended_at": "2026-03-08 06:36:58.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/checkout",
+            "event_count": 3,
+            "exit_origin": "https://app.example.com",
+            "exit_path": "/dashboard",
+            "groups": [],
+            "id": "sess-644d57e2-a375",
+            "is_bounce": false,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "model": "",
+            "os": "Linux",
+            "os_version": "",
+            "profile_id": "dev-gold-030",
+            "project_id": "golden-sthlm",
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "California",
+            "revenue": 4900,
+            "screen_view_count": 3,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 6
+          }
+        ],
+        "utcHana5": [
+          {
+            "brand": "Samsung",
+            "browser": "Chrome Mobile",
+            "browser_version": "126.0.0.0",
+            "city": "London",
+            "country": "GB",
+            "created_at": "2026-09-23 16:08:00.000",
+            "device": "mobile",
+            "device_id": "dev-gold-007",
+            "duration": 226000,
+            "ended_at": "2026-09-23 16:11:46.000",
+            "entry_origin": "https://app.example.com",
+            "entry_path": "/dashboard",
+            "event_count": 2,
+            "exit_origin": "https://example.com",
+            "exit_path": "/blog/hello-world",
+            "groups": [
+              "acme"
+            ],
+            "id": "sess-c949656a-f7c1",
+            "is_bounce": false,
+            "latitude": 51.5072,
+            "longitude": -0.1276,
+            "model": "SM-S918B",
+            "os": "Android",
+            "os_version": "14",
+            "profile_id": "user-hana",
+            "project_id": "golden-utc",
+            "referrer": "https://duckduckgo.com/",
+            "referrer_name": "DuckDuckGo",
+            "referrer_type": "search",
+            "region": "England",
+            "revenue": 0,
+            "screen_view_count": 3,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 5
+          },
+          {
+            "brand": "Samsung",
+            "browser": "Chrome Mobile",
+            "browser_version": "126.0.0.0",
+            "city": "London",
+            "country": "GB",
+            "created_at": "2026-09-07 09:49:00.000",
+            "device": "mobile",
+            "device_id": "dev-gold-007",
+            "duration": 0,
+            "ended_at": "2026-09-07 09:49:00.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/",
+            "event_count": 0,
+            "exit_origin": "https://example.com",
+            "exit_path": "/",
+            "groups": [
+              "acme"
+            ],
+            "id": "sess-cd5600b4-53d4",
+            "is_bounce": true,
+            "latitude": 51.5072,
+            "longitude": -0.1276,
+            "model": "SM-S918B",
+            "os": "Android",
+            "os_version": "14",
+            "profile_id": "user-hana",
+            "project_id": "golden-utc",
+            "referrer": "",
+            "referrer_name": "",
+            "referrer_type": "",
+            "region": "England",
+            "revenue": 0,
+            "screen_view_count": 1,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 1
+          },
+          {
+            "brand": "Samsung",
+            "browser": "Chrome Mobile",
+            "browser_version": "126.0.0.0",
+            "city": "London",
+            "country": "GB",
+            "created_at": "2026-08-29 10:59:00.000",
+            "device": "mobile",
+            "device_id": "dev-gold-007",
+            "duration": 17000,
+            "ended_at": "2026-08-29 10:59:17.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/pricing",
+            "event_count": 1,
+            "exit_origin": "https://example.com",
+            "exit_path": "/pricing",
+            "groups": [
+              "acme"
+            ],
+            "id": "sess-f89ce184-86a9",
+            "is_bounce": true,
+            "latitude": 51.5072,
+            "longitude": -0.1276,
+            "model": "SM-S918B",
+            "os": "Android",
+            "os_version": "14",
+            "profile_id": "user-hana",
+            "project_id": "golden-utc",
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "England",
+            "revenue": 0,
+            "screen_view_count": 1,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 2
+          },
+          {
+            "brand": "Samsung",
+            "browser": "Chrome Mobile",
+            "browser_version": "126.0.0.0",
+            "city": "London",
+            "country": "GB",
+            "created_at": "2026-08-23 20:28:00.000",
+            "device": "mobile",
+            "device_id": "dev-gold-007",
+            "duration": 158000,
+            "ended_at": "2026-08-23 20:30:38.000",
+            "entry_origin": "https://example.com",
+            "entry_path": "/docs/getting-started",
+            "event_count": 0,
+            "exit_origin": "https://example.com",
+            "exit_path": "/blog/hello-world",
+            "groups": [
+              "acme"
+            ],
+            "id": "sess-97439e18-2d85",
+            "is_bounce": false,
+            "latitude": 51.5072,
+            "longitude": -0.1276,
+            "model": "SM-S918B",
+            "os": "Android",
+            "os_version": "14",
+            "profile_id": "user-hana",
+            "project_id": "golden-utc",
+            "referrer": "",
+            "referrer_name": "",
+            "referrer_type": "",
+            "region": "England",
+            "revenue": 0,
+            "screen_view_count": 2,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 2
+          },
+          {
+            "brand": "Samsung",
+            "browser": "Chrome Mobile",
+            "browser_version": "126.0.0.0",
+            "city": "London",
+            "country": "GB",
+            "created_at": "2026-08-19 15:35:00.000",
+            "device": "mobile",
+            "device_id": "dev-gold-007",
+            "duration": 208000,
+            "ended_at": "2026-08-19 15:38:28.000",
+            "entry_origin": "https://app.example.com",
+            "entry_path": "/settings/profile",
+            "event_count": 1,
+            "exit_origin": "https://app.example.com",
+            "exit_path": "/settings/profile",
+            "groups": [
+              "acme"
+            ],
+            "id": "sess-2d8c0dd0-a8b3",
+            "is_bounce": false,
+            "latitude": 51.5072,
+            "longitude": -0.1276,
+            "model": "SM-S918B",
+            "os": "Android",
+            "os_version": "14",
+            "profile_id": "user-hana",
+            "project_id": "golden-utc",
+            "referrer": "https://www.google.com/",
+            "referrer_name": "Google",
+            "referrer_type": "search",
+            "region": "England",
+            "revenue": 0,
+            "screen_view_count": 2,
+            "sign": 1,
+            "utm_campaign": "",
+            "utm_content": "",
+            "utm_medium": "",
+            "utm_source": "",
+            "utm_term": "",
+            "version": 3
+          }
+        ]
+      }
+    },
+    "getProfilePropertyKeys": {
+      "output": {
+        "ny": [
+          "age",
+          "browser",
+          "city",
+          "company.name",
+          "country",
+          "device",
+          "os",
+          "plan",
+          "region"
+        ],
+        "sthlm": [
+          "age",
+          "browser",
+          "city",
+          "company.name",
+          "country",
+          "device",
+          "os",
+          "plan",
+          "region"
+        ],
+        "unknown": []
+      }
+    }
+  }
+}

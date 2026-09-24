@@ -24,6 +24,13 @@ vi.mock('../../src/buffers', () => {
   };
 });
 
+// The tRPC cacheMiddleware (router cases) still calls getRedisCache, which
+// the Redis-free @openpanel/redis no longer exports: a cache that never hits.
+vi.mock('@openpanel/redis', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@openpanel/redis')>()),
+  getRedisCache: () => ({ getJson: async () => null, setJson: async () => undefined }),
+}));
+
 import { loadDatasetIntoClickhouse } from '../fixtures/load-clickhouse';
 import { GOLDEN_GROUPS } from './cases';
 import {

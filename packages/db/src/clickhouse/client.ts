@@ -379,19 +379,6 @@ export async function chQuery<T extends Record<string, any>>(
   return (await chQueryWithMeta<T>(query, clickhouseSettings)).data;
 }
 
-export function formatClickhouseDate(
-  date: Date | string,
-  skipTime = false
-): string {
-  if (skipTime) {
-    return new Date(date).toISOString().split('T')[0]!;
-  }
-  return new Date(date)
-    .toISOString()
-    .replace('T', ' ')
-    .replace(/(\.\d{3})?Z+$/, '');
-}
-
 export function toDate(str: string, interval?: IInterval) {
   // If it does not match the regex it's a column name eg 'created_at'
   if (!interval || interval === 'minute' || interval === 'hour') {
@@ -409,19 +396,10 @@ export function toDate(str: string, interval?: IInterval) {
   return `toDate(${str})`;
 }
 
-export function convertClickhouseDateToJs(date: string) {
-  return new Date(`${date.replace(' ', 'T')}Z`);
-}
-
-const ROLLUP_DATE_PREFIX = '1970-01-01';
-export function isClickhouseDefaultMinDate(date: string): boolean {
-  return date.startsWith(ROLLUP_DATE_PREFIX) || date.startsWith('1969-12-31');
-}
-export function toNullIfDefaultMinDate(date?: string | null): Date | null {
-  if (!date) {
-    return null;
-  }
-  return isClickhouseDefaultMinDate(date)
-    ? null
-    : convertClickhouseDateToJs(date);
-}
+// Moved to the analytics layer; re-exported while ClickHouse is ported.
+export {
+  convertClickhouseDateToJs,
+  formatClickhouseDate,
+  isClickhouseDefaultMinDate,
+  toNullIfDefaultMinDate,
+} from '../analytics/dates';

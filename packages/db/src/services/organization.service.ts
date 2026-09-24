@@ -1,10 +1,10 @@
 import { DateTime } from '@openpanel/common';
 import { cacheable } from '@openpanel/redis';
-import sqlstring from 'sqlstring';
-import { chQuery, formatClickhouseDate } from '../clickhouse/client';
+import { anQuery, anQueryOne } from '../analytics/client';
+import { gapFill } from '../analytics/fill';
+import { sql } from '../analytics/sql';
 import type { Invite, Prisma, ProjectAccess, User } from '../prisma-client';
 import { db } from '../prisma-client';
-import { createSqlBuilder } from '../sql-builder';
 import { getOrganizationAccess, getProjectAccess } from './access.service';
 import type { IServiceProject } from './project.service';
 export type IServiceOrganization = Awaited<
@@ -236,15 +236,16 @@ export async function getOrganizationBillingEventsCount(
     return 0;
   }
 
-  const { sb, getSql } = createSqlBuilder();
-
-  sb.select.count = 'COUNT(*) AS count';
-  sb.where.projectIds = `project_id IN (${organization.projects.map((project) => sqlstring.escape(project.id)).join(',')})`;
-  sb.where.createdAt = `created_at BETWEEN ${sqlstring.escape(formatClickhouseDate(periodStart))} AND ${sqlstring.escape(formatClickhouseDate(periodEnd))}`;
-  sb.where.names = `name NOT IN ('session_start', 'session_end')`;
-
-  const res = await chQuery<{ count: number }>(getSql());
-  return res[0]?.count;
+  // Whole seconds, as the ClickHouse DateTime comparison had them.
+  const row = await anQueryOne<{ count: number }>(sql`
+    SELECT count(*)::int AS count
+    FROM analytics.events
+    WHERE project_id = ANY(${organization.projects.map((project) => project.id)}::text[])
+      AND created_at BETWEEN date_trunc('second', ${periodStart.toISOString()}::timestamptz)
+        AND date_trunc('second', ${periodEnd.toISOString()}::timestamptz)
+      AND name NOT IN ('session_start', 'session_end')
+  `);
+  return row?.count ?? 0;
 }
 
 // Lifetime event count for a set of projects (excluding session bookkeeping
@@ -255,14 +256,13 @@ export async function getOrganizationEventsCount(projectIds: string[]) {
     return 0;
   }
 
-  const { sb, getSql } = createSqlBuilder();
-
-  sb.select.count = 'COUNT(*) AS count';
-  sb.where.projectIds = `project_id IN (${projectIds.map((id) => sqlstring.escape(id)).join(',')})`;
-  sb.where.names = `name NOT IN ('session_start', 'session_end')`;
-
-  const res = await chQuery<{ count: number }>(getSql());
-  return res[0]?.count ?? 0;
+  const row = await anQueryOne<{ count: number }>(sql`
+    SELECT count(*)::int AS count
+    FROM analytics.events
+    WHERE project_id = ANY(${projectIds}::text[])
+      AND name NOT IN ('session_start', 'session_end')
+  `);
+  return row?.count ?? 0;
 }
 
 // Events in a recent window, for organizations whose trial lapsed but whose
@@ -277,15 +277,15 @@ export async function getOrganizationEventsCountSince(
     return 0;
   }
 
-  const { sb, getSql } = createSqlBuilder();
-
-  sb.select.count = 'COUNT(*) AS count';
-  sb.where.projectIds = `project_id IN (${projectIds.map((id) => sqlstring.escape(id)).join(',')})`;
-  sb.where.names = `name NOT IN ('session_start', 'session_end')`;
-  sb.where.createdAt = `created_at >= ${sqlstring.escape(formatClickhouseDate(since, true))}`;
-
-  const res = await chQuery<{ count: number }>(getSql());
-  return res[0]?.count ?? 0;
+  // From the start of `since`'s UTC day, as before.
+  const row = await anQueryOne<{ count: number }>(sql`
+    SELECT count(*)::int AS count
+    FROM analytics.events
+    WHERE project_id = ANY(${projectIds}::text[])
+      AND name NOT IN ('session_start', 'session_end')
+      AND created_at >= (${since.toISOString().slice(0, 10)}::date::timestamp AT TIME ZONE 'UTC')
+  `);
+  return row?.count ?? 0;
 }
 
 export async function getOrganizationBillingEventsCountSerie(
@@ -298,19 +298,31 @@ export async function getOrganizationBillingEventsCountSerie(
     endDate: Date;
   }
 ) {
-  const interval = 'day';
-  const { sb, getSql } = createSqlBuilder();
-
-  sb.select.count = 'COUNT(*) AS count';
-  sb.select.day = `toDate(toStartOf${interval.slice(0, 1).toUpperCase() + interval.slice(1)}(created_at)) AS ${interval}`;
-  sb.groupBy.day = interval;
-  sb.orderBy.day = `${interval} WITH FILL FROM toDate(${sqlstring.escape(formatClickhouseDate(startDate, true))}) TO toDate(${sqlstring.escape(formatClickhouseDate(endDate, true))}) STEP INTERVAL 1 ${interval.toUpperCase()}`;
-  sb.where.projectIds = `project_id IN (${organization.projects.map((project) => sqlstring.escape(project.id)).join(',')})`;
-  sb.where.createdAt = `${interval} BETWEEN ${sqlstring.escape(formatClickhouseDate(startDate, true))} AND ${sqlstring.escape(formatClickhouseDate(endDate, true))}`;
-  sb.where.names = `name NOT IN ('session_start', 'session_end')`;
-
-  const res = await chQuery<{ count: number; day: string }>(getSql());
-  return res;
+  // UTC days from startDate's day through endDate's day. Empty days are
+  // filled up to, but not including, the end day (ClickHouse WITH FILL).
+  const startDay = startDate.toISOString().slice(0, 10);
+  const endDay = endDate.toISOString().slice(0, 10);
+  const rows = await anQuery<{ count: number; day: string }>(sql`
+    SELECT count(*)::int AS count, to_char(e.day, 'YYYY-MM-DD') AS day
+    FROM (
+      SELECT (created_at AT TIME ZONE 'UTC')::date AS day
+      FROM analytics.events
+      WHERE project_id = ANY(${organization.projects.map((project) => project.id)}::text[])
+        AND name NOT IN ('session_start', 'session_end')
+        AND created_at >= (${startDay}::date::timestamp AT TIME ZONE 'UTC')
+        AND created_at < ((${endDay}::date + 1)::timestamp AT TIME ZONE 'UTC')
+    ) e
+    GROUP BY e.day
+    ORDER BY e.day
+  `);
+  return gapFill(rows, {
+    key: 'day',
+    from: startDay,
+    to: endDay,
+    unit: 'day',
+    format: 'date',
+    fill: (day) => ({ count: 0, day }),
+  });
 }
 
 export const getOrganizationBillingEventsCountSerieCached = cacheable(

@@ -1,0 +1,1630 @@
+{
+  "group": "sankey",
+  "anchor": "2026-09-24T03:41:00.000Z",
+  "capturedWith": "ClickHouse 26.1.3.52",
+  "cases": {
+    "getSankey sthlm 30d after session_start 5": {
+      "output": {
+        "links": [
+          {
+            "source": "button_click::step3",
+            "target": "revenue::step4",
+            "value": 11
+          },
+          {
+            "source": "button_click::step3",
+            "target": "session_end::final",
+            "value": 46
+          },
+          {
+            "source": "button_click::step4",
+            "target": "session_end::final",
+            "value": 6
+          },
+          {
+            "source": "link_out::step3",
+            "target": "button_click::step4",
+            "value": 13
+          },
+          {
+            "source": "link_out::step3",
+            "target": "revenue::step4",
+            "value": 1
+          },
+          {
+            "source": "link_out::step3",
+            "target": "session_end::final",
+            "value": 7
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "button_click::step3",
+            "value": 136
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "link_out::step3",
+            "value": 40
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "session_end::final",
+            "value": 67
+          },
+          {
+            "source": "session_start::step1",
+            "target": "screen_view::step2",
+            "value": 263
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step3",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 51.71102661596958,
+            "step": 3,
+            "value": 136
+          },
+          {
+            "id": "button_click::step4",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 4.942965779467681,
+            "step": 4,
+            "value": 13
+          },
+          {
+            "id": "link_out::step3",
+            "label": "link_out",
+            "nodeColor": "#2563EB",
+            "percentage": 15.209125475285171,
+            "step": 3,
+            "value": 40
+          },
+          {
+            "id": "revenue::step4",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 4.562737642585551,
+            "step": 4,
+            "value": 12
+          },
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 2,
+            "value": 263
+          },
+          {
+            "id": "session_end::final",
+            "label": "session_end",
+            "nodeColor": "#2563EB",
+            "percentage": 47.90874524714829,
+            "step": 5,
+            "value": 126
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 263
+          }
+        ]
+      }
+    },
+    "getSankey ny 30d after session_start 5": {
+      "output": {
+        "links": [
+          {
+            "source": "button_click::step3",
+            "target": "revenue::step4",
+            "value": 13
+          },
+          {
+            "source": "button_click::step3",
+            "target": "session_end::final",
+            "value": 36
+          },
+          {
+            "source": "button_click::step4",
+            "target": "session_end::final",
+            "value": 2
+          },
+          {
+            "source": "link_out::step3",
+            "target": "button_click::step4",
+            "value": 10
+          },
+          {
+            "source": "link_out::step3",
+            "target": "revenue::step4",
+            "value": 2
+          },
+          {
+            "source": "link_out::step3",
+            "target": "session_end::final",
+            "value": 1
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "button_click::step3",
+            "value": 141
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "link_out::step3",
+            "value": 36
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "session_end::final",
+            "value": 64
+          },
+          {
+            "source": "session_start::step1",
+            "target": "screen_view::step2",
+            "value": 260
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step3",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 54.230769230769226,
+            "step": 3,
+            "value": 141
+          },
+          {
+            "id": "button_click::step4",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 3.8461538461538463,
+            "step": 4,
+            "value": 10
+          },
+          {
+            "id": "link_out::step3",
+            "label": "link_out",
+            "nodeColor": "#2563EB",
+            "percentage": 13.846153846153847,
+            "step": 3,
+            "value": 36
+          },
+          {
+            "id": "revenue::step4",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 5.769230769230769,
+            "step": 4,
+            "value": 15
+          },
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 2,
+            "value": 260
+          },
+          {
+            "id": "session_end::final",
+            "label": "session_end",
+            "nodeColor": "#2563EB",
+            "percentage": 39.61538461538461,
+            "step": 5,
+            "value": 103
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 260
+          }
+        ]
+      }
+    },
+    "getSankey ny 30d after session_start 2": {
+      "output": {
+        "links": [],
+        "nodes": [
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 260
+          }
+        ]
+      }
+    },
+    "getSankey sthlm 30d after screen_view 3 exclude session events": {
+      "output": {
+        "links": [
+          {
+            "source": "screen_view::step1",
+            "target": "button_click::step2",
+            "value": 136
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "link_out::step2",
+            "value": 40
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "revenue::step2",
+            "value": 18
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step2",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 69.74358974358974,
+            "step": 2,
+            "value": 136
+          },
+          {
+            "id": "link_out::step2",
+            "label": "link_out",
+            "nodeColor": "#2563EB",
+            "percentage": 20.51282051282051,
+            "step": 2,
+            "value": 40
+          },
+          {
+            "id": "revenue::step2",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 9.230769230769232,
+            "step": 2,
+            "value": 18
+          },
+          {
+            "id": "screen_view::step1",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 195
+          }
+        ]
+      }
+    },
+    "getSankey sthlm 30d after screen_view 10": {
+      "output": {
+        "links": [
+          {
+            "source": "button_click::step2",
+            "target": "revenue::step3",
+            "value": 11
+          },
+          {
+            "source": "button_click::step2",
+            "target": "session_end::final",
+            "value": 46
+          },
+          {
+            "source": "button_click::step3",
+            "target": "session_end::final",
+            "value": 6
+          },
+          {
+            "source": "link_out::step2",
+            "target": "button_click::step3",
+            "value": 13
+          },
+          {
+            "source": "link_out::step2",
+            "target": "revenue::step3",
+            "value": 1
+          },
+          {
+            "source": "link_out::step2",
+            "target": "session_end::final",
+            "value": 7
+          },
+          {
+            "source": "purchase::step4",
+            "target": "session_end::final",
+            "value": 4
+          },
+          {
+            "source": "revenue::step3",
+            "target": "purchase::step4",
+            "value": 12
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "button_click::step2",
+            "value": 136
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "link_out::step2",
+            "value": 40
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "session_end::final",
+            "value": 67
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step2",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 51.908396946564885,
+            "step": 2,
+            "value": 136
+          },
+          {
+            "id": "button_click::step3",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 4.961832061068702,
+            "step": 3,
+            "value": 13
+          },
+          {
+            "id": "link_out::step2",
+            "label": "link_out",
+            "nodeColor": "#2563EB",
+            "percentage": 15.267175572519085,
+            "step": 2,
+            "value": 40
+          },
+          {
+            "id": "purchase::step4",
+            "label": "purchase",
+            "nodeColor": "#2563EB",
+            "percentage": 4.580152671755725,
+            "step": 4,
+            "value": 12
+          },
+          {
+            "id": "revenue::step3",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 4.580152671755725,
+            "step": 3,
+            "value": 12
+          },
+          {
+            "id": "screen_view::step1",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 262
+          },
+          {
+            "id": "session_end::final",
+            "label": "session_end",
+            "nodeColor": "#2563EB",
+            "percentage": 49.61832061068702,
+            "step": 5,
+            "value": 130
+          }
+        ]
+      }
+    },
+    "getSankey sthlm 30d after pricing view (filtered start)": {
+      "output": {
+        "links": [
+          {
+            "source": "button_click::step2",
+            "target": "revenue::step3",
+            "value": 3
+          },
+          {
+            "source": "button_click::step2",
+            "target": "session_end::final",
+            "value": 8
+          },
+          {
+            "source": "button_click::step3",
+            "target": "session_end::final",
+            "value": 1
+          },
+          {
+            "source": "link_out::step2",
+            "target": "button_click::step3",
+            "value": 5
+          },
+          {
+            "source": "link_out::step2",
+            "target": "session_end::final",
+            "value": 1
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "button_click::step2",
+            "value": 50
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "link_out::step2",
+            "value": 17
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "session_end::final",
+            "value": 18
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step2",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 54.347826086956516,
+            "step": 2,
+            "value": 50
+          },
+          {
+            "id": "button_click::step3",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 5.434782608695652,
+            "step": 3,
+            "value": 5
+          },
+          {
+            "id": "link_out::step2",
+            "label": "link_out",
+            "nodeColor": "#2563EB",
+            "percentage": 18.478260869565215,
+            "step": 2,
+            "value": 17
+          },
+          {
+            "id": "revenue::step3",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 3.260869565217391,
+            "step": 3,
+            "value": 3
+          },
+          {
+            "id": "screen_view::step1",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 92
+          },
+          {
+            "id": "session_end::final",
+            "label": "session_end",
+            "nodeColor": "#2563EB",
+            "percentage": 30.434782608695656,
+            "step": 4,
+            "value": 28
+          }
+        ]
+      }
+    },
+    "getSankey sthlm 30d after session_start 4 desktop (filtered start)": {
+      "output": {
+        "links": [
+          {
+            "source": "button_click::step3",
+            "target": "session_end::final",
+            "value": 28
+          },
+          {
+            "source": "link_out::step3",
+            "target": "session_end::final",
+            "value": 4
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "button_click::step3",
+            "value": 84
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "link_out::step3",
+            "value": 22
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "session_end::final",
+            "value": 41
+          },
+          {
+            "source": "session_start::step1",
+            "target": "screen_view::step2",
+            "value": 160
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step3",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 52.5,
+            "step": 3,
+            "value": 84
+          },
+          {
+            "id": "link_out::step3",
+            "label": "link_out",
+            "nodeColor": "#2563EB",
+            "percentage": 13.750000000000002,
+            "step": 3,
+            "value": 22
+          },
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 2,
+            "value": 160
+          },
+          {
+            "id": "session_end::final",
+            "label": "session_end",
+            "nodeColor": "#2563EB",
+            "percentage": 45.625,
+            "step": 4,
+            "value": 73
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 160
+          }
+        ]
+      }
+    },
+    "getSankey sthlm 30d after missing event": {
+      "output": {
+        "links": [],
+        "nodes": []
+      }
+    },
+    "getSankey ny 30d before link_out 3": {
+      "output": {
+        "links": [
+          {
+            "source": "button_click::step1",
+            "target": "screen_view::step2",
+            "value": 25
+          },
+          {
+            "source": "purchase::step1",
+            "target": "screen_view::step2",
+            "value": 3
+          },
+          {
+            "source": "session_start::step1",
+            "target": "screen_view::step2",
+            "value": 36
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step1",
+            "label": "button_click",
+            "nodeColor": "#ff7557",
+            "percentage": 39.0625,
+            "step": 1,
+            "value": 25
+          },
+          {
+            "id": "purchase::step1",
+            "label": "purchase",
+            "nodeColor": "#7fe1d8",
+            "percentage": 4.6875,
+            "step": 1,
+            "value": 3
+          },
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 2,
+            "value": 64
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 56.25,
+            "step": 1,
+            "value": 36
+          }
+        ]
+      }
+    },
+    "getSankey sthlm 30d before session_end 4 include revenue,purchase": {
+      "output": {
+        "links": [
+          {
+            "source": "purchase::step1",
+            "target": "revenue::step2",
+            "value": 5
+          },
+          {
+            "source": "purchase::step2",
+            "target": "session_end::final",
+            "value": 38
+          },
+          {
+            "source": "purchase::step3",
+            "target": "session_end::final",
+            "value": 5
+          },
+          {
+            "source": "revenue::step1",
+            "target": "purchase::step2",
+            "value": 38
+          },
+          {
+            "source": "revenue::step2",
+            "target": "purchase::step3",
+            "value": 5
+          }
+        ],
+        "nodes": [
+          {
+            "id": "purchase::step1",
+            "label": "purchase",
+            "nodeColor": "#ff7557",
+            "percentage": 11.627906976744185,
+            "step": 1,
+            "value": 5
+          },
+          {
+            "id": "purchase::step2",
+            "label": "purchase",
+            "nodeColor": "#2563EB",
+            "percentage": 88.37209302325581,
+            "step": 2,
+            "value": 38
+          },
+          {
+            "id": "purchase::step3",
+            "label": "purchase",
+            "nodeColor": "#ff7557",
+            "percentage": 11.627906976744185,
+            "step": 3,
+            "value": 5
+          },
+          {
+            "id": "revenue::step1",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 88.37209302325581,
+            "step": 1,
+            "value": 38
+          },
+          {
+            "id": "revenue::step2",
+            "label": "revenue",
+            "nodeColor": "#ff7557",
+            "percentage": 11.627906976744185,
+            "step": 2,
+            "value": 5
+          },
+          {
+            "id": "session_end::final",
+            "label": "session_end",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 4,
+            "value": 43
+          }
+        ]
+      }
+    },
+    "getSankey utc 3m before session_end include revenue,purchase,signup": {
+      "output": {
+        "links": [
+          {
+            "source": "purchase::step2",
+            "target": "revenue::step3",
+            "value": 11
+          },
+          {
+            "source": "purchase::step2",
+            "target": "session_end::final",
+            "value": 72
+          },
+          {
+            "source": "purchase::step3",
+            "target": "session_end::final",
+            "value": 1
+          },
+          {
+            "source": "purchase::step4",
+            "target": "session_end::final",
+            "value": 11
+          },
+          {
+            "source": "revenue::step1",
+            "target": "purchase::step2",
+            "value": 83
+          },
+          {
+            "source": "revenue::step2",
+            "target": "purchase::step3",
+            "value": 1
+          },
+          {
+            "source": "revenue::step3",
+            "target": "purchase::step4",
+            "value": 11
+          },
+          {
+            "source": "signup::step1",
+            "target": "revenue::step2",
+            "value": 1
+          },
+          {
+            "source": "signup::step1",
+            "target": "session_end::final",
+            "value": 2
+          }
+        ],
+        "nodes": [
+          {
+            "id": "purchase::step2",
+            "label": "purchase",
+            "nodeColor": "#2563EB",
+            "percentage": 96.51162790697676,
+            "step": 2,
+            "value": 83
+          },
+          {
+            "id": "purchase::step3",
+            "label": "purchase",
+            "nodeColor": "#ff7557",
+            "percentage": 1.1627906976744187,
+            "step": 3,
+            "value": 1
+          },
+          {
+            "id": "purchase::step4",
+            "label": "purchase",
+            "nodeColor": "#2563EB",
+            "percentage": 12.790697674418606,
+            "step": 4,
+            "value": 11
+          },
+          {
+            "id": "revenue::step1",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 96.51162790697676,
+            "step": 1,
+            "value": 83
+          },
+          {
+            "id": "revenue::step2",
+            "label": "revenue",
+            "nodeColor": "#ff7557",
+            "percentage": 1.1627906976744187,
+            "step": 2,
+            "value": 1
+          },
+          {
+            "id": "revenue::step3",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 12.790697674418606,
+            "step": 3,
+            "value": 11
+          },
+          {
+            "id": "session_end::final",
+            "label": "session_end",
+            "nodeColor": "#ff7557",
+            "percentage": 100,
+            "step": 5,
+            "value": 86
+          },
+          {
+            "id": "signup::step1",
+            "label": "signup",
+            "nodeColor": "#ff7557",
+            "percentage": 3.488372093023256,
+            "step": 1,
+            "value": 3
+          }
+        ]
+      }
+    },
+    "getSankey sthlm 30d between session_start>purchase 6": {
+      "output": {
+        "links": [
+          {
+            "source": "button_click::step3",
+            "target": "revenue::step4",
+            "value": 11
+          },
+          {
+            "source": "link_out::step3",
+            "target": "revenue::step4",
+            "value": 1
+          },
+          {
+            "source": "revenue::step3",
+            "target": "purchase::final",
+            "value": 18
+          },
+          {
+            "source": "revenue::step4",
+            "target": "purchase::final",
+            "value": 12
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "button_click::step3",
+            "value": 11
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "link_out::step3",
+            "value": 1
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "revenue::step3",
+            "value": 18
+          },
+          {
+            "source": "session_start::step1",
+            "target": "screen_view::step2",
+            "value": 30
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step3",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 36.666666666666664,
+            "step": 3,
+            "value": 11
+          },
+          {
+            "id": "link_out::step3",
+            "label": "link_out",
+            "nodeColor": "#2563EB",
+            "percentage": 3.3333333333333335,
+            "step": 3,
+            "value": 1
+          },
+          {
+            "id": "purchase::final",
+            "label": "purchase",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 5,
+            "value": 30
+          },
+          {
+            "id": "revenue::step3",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 60,
+            "step": 3,
+            "value": 18
+          },
+          {
+            "id": "revenue::step4",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 40,
+            "step": 4,
+            "value": 12
+          },
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 2,
+            "value": 30
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 30
+          }
+        ]
+      }
+    },
+    "getSankey sthlm 30d between screen_view>revenue (start not first)": {
+      "output": {
+        "links": [],
+        "nodes": []
+      }
+    },
+    "getSankey sthlm 30d between screen_view>revenue exclude session_start": {
+      "output": {
+        "links": [
+          {
+            "source": "button_click::step2",
+            "target": "revenue::final",
+            "value": 11
+          },
+          {
+            "source": "link_out::step2",
+            "target": "revenue::final",
+            "value": 1
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "button_click::step2",
+            "value": 11
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "link_out::step2",
+            "value": 1
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "revenue::final",
+            "value": 18
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step2",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 36.666666666666664,
+            "step": 2,
+            "value": 11
+          },
+          {
+            "id": "link_out::step2",
+            "label": "link_out",
+            "nodeColor": "#2563EB",
+            "percentage": 3.3333333333333335,
+            "step": 2,
+            "value": 1
+          },
+          {
+            "id": "revenue::final",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 3,
+            "value": 30
+          },
+          {
+            "id": "screen_view::step1",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 30
+          }
+        ]
+      }
+    },
+    "getSankey ny 30d between session_start>big revenue (filtered end)": {
+      "output": {
+        "links": [
+          {
+            "source": "button_click::step3",
+            "target": "revenue::final",
+            "value": 10
+          },
+          {
+            "source": "button_click::step4",
+            "target": "revenue::final",
+            "value": 1
+          },
+          {
+            "source": "link_out::step3",
+            "target": "button_click::step4",
+            "value": 1
+          },
+          {
+            "source": "link_out::step3",
+            "target": "revenue::final",
+            "value": 1
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "button_click::step3",
+            "value": 10
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "link_out::step3",
+            "value": 2
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "revenue::final",
+            "value": 11
+          },
+          {
+            "source": "session_start::step1",
+            "target": "screen_view::step2",
+            "value": 23
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step3",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 43.47826086956522,
+            "step": 3,
+            "value": 10
+          },
+          {
+            "id": "button_click::step4",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 4.3478260869565215,
+            "step": 4,
+            "value": 1
+          },
+          {
+            "id": "link_out::step3",
+            "label": "link_out",
+            "nodeColor": "#2563EB",
+            "percentage": 8.695652173913043,
+            "step": 3,
+            "value": 2
+          },
+          {
+            "id": "revenue::final",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 5,
+            "value": 23
+          },
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 2,
+            "value": 23
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 23
+          }
+        ]
+      }
+    },
+    "getSankey sthlm 30d between without endEvent": {
+      "output": {
+        "links": [
+          {
+            "source": "session_start::step1",
+            "target": "screen_view::step2",
+            "value": 263
+          }
+        ],
+        "nodes": [
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 2,
+            "value": 263
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 263
+          }
+        ]
+      }
+    },
+    "getSankey sthlm DST weekend after session_start": {
+      "output": {
+        "links": [
+          {
+            "source": "session_start::step1",
+            "target": "screen_view::step2",
+            "value": 4
+          }
+        ],
+        "nodes": [
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 2,
+            "value": 4
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 4
+          }
+        ]
+      }
+    },
+    "getSankey ny DST weekend after session_start": {
+      "output": {
+        "links": [
+          {
+            "source": "button_click::step3",
+            "target": "revenue::step4",
+            "value": 1
+          },
+          {
+            "source": "button_click::step3",
+            "target": "session_end::final",
+            "value": 1
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "button_click::step3",
+            "value": 2
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "session_end::final",
+            "value": 2
+          },
+          {
+            "source": "session_start::step1",
+            "target": "screen_view::step2",
+            "value": 4
+          }
+        ],
+        "nodes": [
+          {
+            "id": "button_click::step3",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 50,
+            "step": 3,
+            "value": 2
+          },
+          {
+            "id": "revenue::step4",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 25,
+            "step": 4,
+            "value": 1
+          },
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 2,
+            "value": 4
+          },
+          {
+            "id": "session_end::final",
+            "label": "session_end",
+            "nodeColor": "#2563EB",
+            "percentage": 75,
+            "step": 4,
+            "value": 3
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 4
+          }
+        ]
+      }
+    },
+    "getUserFlowCore sthlm 30d after session_start": {
+      "output": {
+        "link_count": 10,
+        "links": [
+          {
+            "source": "button_click::step3",
+            "target": "revenue::step4",
+            "value": 11
+          },
+          {
+            "source": "button_click::step3",
+            "target": "session_end::final",
+            "value": 46
+          },
+          {
+            "source": "button_click::step4",
+            "target": "session_end::final",
+            "value": 6
+          },
+          {
+            "source": "link_out::step3",
+            "target": "button_click::step4",
+            "value": 13
+          },
+          {
+            "source": "link_out::step3",
+            "target": "revenue::step4",
+            "value": 1
+          },
+          {
+            "source": "link_out::step3",
+            "target": "session_end::final",
+            "value": 7
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "button_click::step3",
+            "value": 136
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "link_out::step3",
+            "value": 40
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "session_end::final",
+            "value": 67
+          },
+          {
+            "source": "session_start::step1",
+            "target": "screen_view::step2",
+            "value": 263
+          }
+        ],
+        "mode": "after",
+        "node_count": 7,
+        "nodes": [
+          {
+            "id": "button_click::step3",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 51.71102661596958,
+            "step": 3,
+            "value": 136
+          },
+          {
+            "id": "button_click::step4",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 4.942965779467681,
+            "step": 4,
+            "value": 13
+          },
+          {
+            "id": "link_out::step3",
+            "label": "link_out",
+            "nodeColor": "#2563EB",
+            "percentage": 15.209125475285171,
+            "step": 3,
+            "value": 40
+          },
+          {
+            "id": "revenue::step4",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 4.562737642585551,
+            "step": 4,
+            "value": 12
+          },
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 2,
+            "value": 263
+          },
+          {
+            "id": "session_end::final",
+            "label": "session_end",
+            "nodeColor": "#2563EB",
+            "percentage": 47.90874524714829,
+            "step": 5,
+            "value": 126
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 263
+          }
+        ],
+        "startEvent": "session_start"
+      }
+    },
+    "getUserFlowCore ny 3m between session_start>purchase include revenue,signup": {
+      "output": {
+        "endEvent": "purchase",
+        "link_count": 5,
+        "links": [
+          {
+            "source": "revenue::step2",
+            "target": "purchase::final",
+            "value": 96
+          },
+          {
+            "source": "revenue::step3",
+            "target": "purchase::final",
+            "value": 2
+          },
+          {
+            "source": "session_start::step1",
+            "target": "revenue::step2",
+            "value": 96
+          },
+          {
+            "source": "session_start::step1",
+            "target": "signup::step2",
+            "value": 2
+          },
+          {
+            "source": "signup::step2",
+            "target": "revenue::step3",
+            "value": 2
+          }
+        ],
+        "mode": "between",
+        "node_count": 5,
+        "nodes": [
+          {
+            "id": "purchase::final",
+            "label": "purchase",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 4,
+            "value": 98
+          },
+          {
+            "id": "revenue::step2",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 97.95918367346938,
+            "step": 2,
+            "value": 96
+          },
+          {
+            "id": "revenue::step3",
+            "label": "revenue",
+            "nodeColor": "#2563EB",
+            "percentage": 2.0408163265306123,
+            "step": 3,
+            "value": 2
+          },
+          {
+            "id": "session_start::step1",
+            "label": "session_start",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 1,
+            "value": 98
+          },
+          {
+            "id": "signup::step2",
+            "label": "signup",
+            "nodeColor": "#2563EB",
+            "percentage": 2.0408163265306123,
+            "step": 2,
+            "value": 2
+          }
+        ],
+        "startEvent": "session_start"
+      }
+    },
+    "getUserFlowCore utc 30d before session_end include": {
+      "output": {
+        "link_count": 16,
+        "links": [
+          {
+            "source": "button_click::step1",
+            "target": "purchase::step2",
+            "value": 3
+          },
+          {
+            "source": "button_click::step1",
+            "target": "screen_view::step2",
+            "value": 28
+          },
+          {
+            "source": "button_click::step2",
+            "target": "purchase::step3",
+            "value": 7
+          },
+          {
+            "source": "button_click::step2",
+            "target": "screen_view::step3",
+            "value": 38
+          },
+          {
+            "source": "button_click::step2",
+            "target": "session_end::final",
+            "value": 40
+          },
+          {
+            "source": "button_click::step3",
+            "target": "session_end::final",
+            "value": 35
+          },
+          {
+            "source": "purchase::step1",
+            "target": "screen_view::step2",
+            "value": 11
+          },
+          {
+            "source": "purchase::step2",
+            "target": "screen_view::step3",
+            "value": 6
+          },
+          {
+            "source": "purchase::step2",
+            "target": "session_end::final",
+            "value": 5
+          },
+          {
+            "source": "purchase::step3",
+            "target": "session_end::final",
+            "value": 11
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "button_click::step2",
+            "value": 85
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "purchase::step2",
+            "value": 8
+          },
+          {
+            "source": "screen_view::step1",
+            "target": "session_end::final",
+            "value": 72
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "button_click::step3",
+            "value": 35
+          },
+          {
+            "source": "screen_view::step2",
+            "target": "purchase::step3",
+            "value": 4
+          },
+          {
+            "source": "screen_view::step3",
+            "target": "session_end::final",
+            "value": 44
+          }
+        ],
+        "mode": "before",
+        "node_count": 10,
+        "nodes": [
+          {
+            "id": "button_click::step1",
+            "label": "button_click",
+            "nodeColor": "#ff7557",
+            "percentage": 14.975845410628018,
+            "step": 1,
+            "value": 31
+          },
+          {
+            "id": "button_click::step2",
+            "label": "button_click",
+            "nodeColor": "#2563EB",
+            "percentage": 41.06280193236715,
+            "step": 2,
+            "value": 85
+          },
+          {
+            "id": "button_click::step3",
+            "label": "button_click",
+            "nodeColor": "#ff7557",
+            "percentage": 16.908212560386474,
+            "step": 3,
+            "value": 35
+          },
+          {
+            "id": "purchase::step1",
+            "label": "purchase",
+            "nodeColor": "#7fe1d8",
+            "percentage": 5.314009661835748,
+            "step": 1,
+            "value": 11
+          },
+          {
+            "id": "purchase::step2",
+            "label": "purchase",
+            "nodeColor": "#2563EB",
+            "percentage": 5.314009661835748,
+            "step": 2,
+            "value": 11
+          },
+          {
+            "id": "purchase::step3",
+            "label": "purchase",
+            "nodeColor": "#2563EB",
+            "percentage": 5.314009661835748,
+            "step": 3,
+            "value": 11
+          },
+          {
+            "id": "screen_view::step1",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 79.71014492753623,
+            "step": 1,
+            "value": 165
+          },
+          {
+            "id": "screen_view::step2",
+            "label": "screen_view",
+            "nodeColor": "#ff7557",
+            "percentage": 18.84057971014493,
+            "step": 2,
+            "value": 39
+          },
+          {
+            "id": "screen_view::step3",
+            "label": "screen_view",
+            "nodeColor": "#2563EB",
+            "percentage": 21.256038647342994,
+            "step": 3,
+            "value": 44
+          },
+          {
+            "id": "session_end::final",
+            "label": "session_end",
+            "nodeColor": "#2563EB",
+            "percentage": 100,
+            "step": 4,
+            "value": 207
+          }
+        ],
+        "startEvent": "session_end"
+      }
+    },
+    "getUserFlowCore error between without endEvent": {
+      "error": "endEvent is required when mode is \"between\""
+    }
+  }
+}

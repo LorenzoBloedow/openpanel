@@ -1,0 +1,676 @@
+{
+  "group": "gsc",
+  "anchor": "2026-09-24T03:17:00.000Z",
+  "capturedWith": "ClickHouse 26.1.3.52",
+  "cases": {
+    "getGscOverview sthlm 30d day": {
+      "output": [
+        {
+          "clicks": 32,
+          "ctr": 0.15309999883174896,
+          "date": "2026-08-25",
+          "impressions": 209,
+          "position": 3.140000104904175
+        },
+        {
+          "clicks": 17,
+          "ctr": 0.049400001764297485,
+          "date": "2026-08-26",
+          "impressions": 344,
+          "position": 1.809999942779541
+        },
+        {
+          "clicks": 45,
+          "ctr": 0.13120000064373016,
+          "date": "2026-08-27",
+          "impressions": 343,
+          "position": 10.279999732971191
+        },
+        {
+          "clicks": 7,
+          "ctr": 0.04960000142455101,
+          "date": "2026-08-28",
+          "impressions": 141,
+          "position": 5.539999961853027
+        },
+        {
+          "clicks": 13,
+          "ctr": 0.05510000139474869,
+          "date": "2026-08-29",
+          "impressions": 236,
+          "position": 8.770000457763672
+        },
+        {
+          "clicks": 26,
+          "ctr": 0.1476999968290329,
+          "date": "2026-08-30",
+          "impressions": 176,
+          "position": 15.1899995803833
+        },
+        {
+          "clicks": 33,
+          "ctr": 0.11659999936819077,
+          "date": "2026-08-31",
+          "impressions": 283,
+          "position": 13.300000190734863
+        },
+        {
+          "clicks": 68,
+          "ctr": 0.18529999256134033,
+          "date": "2026-09-01",
+          "impressions": 367,
+          "position": 6.329999923706055
+        },
+        {
+          "clicks": 13,
+          "ctr": 0.07339999824762344,
+          "date": "2026-09-02",
+          "impressions": 177,
+          "position": 15.270000457763672
+        },
+        {
+          "clicks": 19,
+          "ctr": 0.17919999361038208,
+          "date": "2026-09-03",
+          "impressions": 106,
+          "position": 10.890000343322754
+        },
+        {
+          "clicks": 17,
+          "ctr": 0.125,
+          "date": "2026-09-04",
+          "impressions": 136,
+          "position": 18.850000381469727
+        },
+        {
+          "clicks": 7,
+          "ctr": 0.042399998754262924,
+          "date": "2026-09-05",
+          "impressions": 165,
+          "position": 17.440000534057617
+        },
+        {
+          "clicks": 2,
+          "ctr": 0.01269999984651804,
+          "date": "2026-09-06",
+          "impressions": 158,
+          "position": 1.3199999332427979
+        },
+        {
+          "clicks": 18,
+          "ctr": 0.07259999960660934,
+          "date": "2026-09-07",
+          "impressions": 248,
+          "position": 12.960000038146973
+        },
+        {
+          "clicks": 20,
+          "ctr": 0.08730000257492065,
+          "date": "2026-09-08",
+          "impressions": 229,
+          "position": 1.059999942779541
+        },
+        {
+          "clicks": 37,
+          "ctr": 0.14180000126361847,
+          "date": "2026-09-09",
+          "impressions": 261,
+          "position": 9.720000267028809
+        },
+        {
+          "clicks": 36,
+          "ctr": 0.094200000166893,
+          "date": "2026-09-10",
+          "impressions": 382,
+          "position": 7.21999979019165
+        },
+        {
+          "clicks": 40,
+          "ctr": 0.12080000340938568,
+          "date": "2026-09-11",
+          "impressions": 331,
+          "position": 5.769999980926514
+        },
+        {
+          "clicks": 11,
+          "ctr": 0.04349999874830246,
+          "date": "2026-09-12",
+          "impressions": 253,
+          "position": 1.2100000381469727
+        },
+        {
+          "clicks": 20,
+          "ctr": 0.0568000003695488,
+          "date": "2026-09-13",
+          "impressions": 352,
+          "position": 10.4399995803833
+        },
+        {
+          "clicks": 77,
+          "ctr": 0.19789999723434448,
+          "date": "2026-09-14",
+          "impressions": 389,
+          "position": 18.549999237060547
+        },
+        {
+          "clicks": 24,
+          "ctr": 0.062199998646974564,
+          "date": "2026-09-15",
+          "impressions": 386,
+          "position": 11.640000343322754
+        },
+        {
+          "clicks": 10,
+          "ctr": 0.03700000047683716,
+          "date": "2026-09-16",
+          "impressions": 270,
+          "position": 13.569999694824219
+        },
+        {
+          "clicks": 7,
+          "ctr": 0.08330000191926956,
+          "date": "2026-09-17",
+          "impressions": 84,
+          "position": 17.290000915527344
+        },
+        {
+          "clicks": 55,
+          "ctr": 0.15449999272823334,
+          "date": "2026-09-18",
+          "impressions": 356,
+          "position": 19.3799991607666
+        },
+        {
+          "clicks": 2,
+          "ctr": 0.005400000140070915,
+          "date": "2026-09-19",
+          "impressions": 369,
+          "position": 7.239999771118164
+        },
+        {
+          "clicks": 4,
+          "ctr": 0.0714000016450882,
+          "date": "2026-09-20",
+          "impressions": 56,
+          "position": 4.619999885559082
+        },
+        {
+          "clicks": 55,
+          "ctr": 0.14470000565052032,
+          "date": "2026-09-21",
+          "impressions": 380,
+          "position": 5.309999942779541
+        }
+      ]
+    },
+    "getGscOverview sthlm 30d week": {
+      "output": [
+        {
+          "clicks": 183,
+          "ctr": 0.1242285684815475,
+          "date": "2026-08-30",
+          "impressions": 1410,
+          "position": 13.895714487348284
+        },
+        {
+          "clicks": 164,
+          "ctr": 0.08184285794517823,
+          "date": "2026-09-06",
+          "impressions": 1862,
+          "position": 5.608571427209037
+        },
+        {
+          "clicks": 195,
+          "ctr": 0.08529999878789697,
+          "date": "2026-09-13",
+          "impressions": 2206,
+          "position": 14.01571410042899
+        },
+        {
+          "clicks": 59,
+          "ctr": 0.10805000364780426,
+          "date": "2026-09-20",
+          "impressions": 436,
+          "position": 4.9649999141693115
+        }
+      ]
+    },
+    "getGscOverview sthlm 3m month": {
+      "output": [
+        {
+          "clicks": 173,
+          "ctr": 0.10038571432232857,
+          "date": "2026-08-01",
+          "impressions": 1732,
+          "position": 8.289999995912824
+        },
+        {
+          "clicks": 542,
+          "ctr": 0.09482857083813065,
+          "date": "2026-09-01",
+          "impressions": 5455,
+          "position": 10.28952381724403
+        }
+      ]
+    },
+    "getGscOverview ny 7d default": {
+      "output": [
+        {
+          "clicks": 50,
+          "ctr": 0.15629999339580536,
+          "date": "2026-09-16",
+          "impressions": 320,
+          "position": 9.850000381469727
+        },
+        {
+          "clicks": 42,
+          "ctr": 0.16279999911785126,
+          "date": "2026-09-17",
+          "impressions": 258,
+          "position": 7.630000114440918
+        },
+        {
+          "clicks": 58,
+          "ctr": 0.1784999966621399,
+          "date": "2026-09-18",
+          "impressions": 325,
+          "position": 9.539999961853027
+        },
+        {
+          "clicks": 20,
+          "ctr": 0.056299999356269836,
+          "date": "2026-09-19",
+          "impressions": 355,
+          "position": 3.380000114440918
+        },
+        {
+          "clicks": 1,
+          "ctr": 0.004100000020116568,
+          "date": "2026-09-20",
+          "impressions": 245,
+          "position": 1.1699999570846558
+        },
+        {
+          "clicks": 9,
+          "ctr": 0.02329999953508377,
+          "date": "2026-09-21",
+          "impressions": 387,
+          "position": 1.059999942779541
+        }
+      ]
+    },
+    "getGscOverview utc days 20..10 ago day": {
+      "output": [
+        {
+          "clicks": 5,
+          "ctr": 0.015200000256299973,
+          "date": "2026-09-04",
+          "impressions": 329,
+          "position": 6.309999942779541
+        },
+        {
+          "clicks": 25,
+          "ctr": 0.09619999676942825,
+          "date": "2026-09-05",
+          "impressions": 260,
+          "position": 14.649999618530273
+        },
+        {
+          "clicks": 23,
+          "ctr": 0.10040000081062317,
+          "date": "2026-09-06",
+          "impressions": 229,
+          "position": 16.81999969482422
+        },
+        {
+          "clicks": 4,
+          "ctr": 0.017100000753998756,
+          "date": "2026-09-07",
+          "impressions": 234,
+          "position": 2.180000066757202
+        },
+        {
+          "clicks": 32,
+          "ctr": 0.08820000290870667,
+          "date": "2026-09-08",
+          "impressions": 363,
+          "position": 15.5600004196167
+        },
+        {
+          "clicks": 6,
+          "ctr": 0.021199999377131462,
+          "date": "2026-09-09",
+          "impressions": 283,
+          "position": 6.779999732971191
+        },
+        {
+          "clicks": 20,
+          "ctr": 0.13989999890327454,
+          "date": "2026-09-10",
+          "impressions": 143,
+          "position": 15.40999984741211
+        },
+        {
+          "clicks": 12,
+          "ctr": 0.16899999976158142,
+          "date": "2026-09-11",
+          "impressions": 71,
+          "position": 6.130000114440918
+        },
+        {
+          "clicks": 25,
+          "ctr": 0.14970000088214874,
+          "date": "2026-09-12",
+          "impressions": 167,
+          "position": 5.510000228881836
+        },
+        {
+          "clicks": 40,
+          "ctr": 0.1444000005722046,
+          "date": "2026-09-13",
+          "impressions": 277,
+          "position": 7.039999961853027
+        },
+        {
+          "clicks": 31,
+          "ctr": 0.10949999839067459,
+          "date": "2026-09-14",
+          "impressions": 283,
+          "position": 6.619999885559082
+        }
+      ]
+    },
+    "getGscOverview utc days 20..10 ago week": {
+      "output": [
+        {
+          "clicks": 122,
+          "ctr": 0.09792857191392354,
+          "date": "2026-09-06",
+          "impressions": 1490,
+          "position": 9.77000001498631
+        },
+        {
+          "clicks": 197,
+          "ctr": 0.12607142914618766,
+          "date": "2026-09-13",
+          "impressions": 1620,
+          "position": 9.3128570829119
+        }
+      ]
+    },
+    "getGscOverview utc days 60..40 ago (no data) day": {
+      "output": []
+    },
+    "getGscPages sthlm 30d": {
+      "output": [
+        {
+          "clicks": 686,
+          "ctr": 0.10300714274801846,
+          "impressions": 6424,
+          "page": "https://example.com/docs",
+          "position": 10.969642852033887
+        },
+        {
+          "clicks": 656,
+          "ctr": 0.10417142961107727,
+          "impressions": 6415,
+          "page": "https://example.com/",
+          "position": 12.876785721097674
+        },
+        {
+          "clicks": 625,
+          "ctr": 0.10661428536488009,
+          "impressions": 5738,
+          "page": "https://example.com/pricing",
+          "position": 9.524285682610103
+        }
+      ]
+    },
+    "getGscPages ny 7d": {
+      "output": [
+        {
+          "clicks": 155,
+          "ctr": 0.09265000039401154,
+          "impressions": 1520,
+          "page": "https://example.com/pricing",
+          "position": 8.440000096956888
+        },
+        {
+          "clicks": 70,
+          "ctr": 0.09870000183582306,
+          "impressions": 734,
+          "page": "https://example.com/docs",
+          "position": 9.418333252271017
+        },
+        {
+          "clicks": 63,
+          "ctr": 0.060683333004514374,
+          "impressions": 1118,
+          "page": "https://example.com/",
+          "position": 9.75000003973643
+        }
+      ]
+    },
+    "getGscPages utc days 20..10 ago limit 2": {
+      "output": [
+        {
+          "clicks": 240,
+          "ctr": 0.10640000077811154,
+          "impressions": 2557,
+          "page": "https://example.com/docs",
+          "position": 8.875454610044306
+        },
+        {
+          "clicks": 209,
+          "ctr": 0.07708181766793132,
+          "impressions": 2762,
+          "page": "https://example.com/pricing",
+          "position": 11.090909069234675
+        }
+      ]
+    },
+    "getGscQueries sthlm 30d": {
+      "output": [
+        {
+          "clicks": 751,
+          "ctr": 0.09951071500212752,
+          "impressions": 7152,
+          "position": 12.35321426817349,
+          "query": "mixpanel alternative"
+        },
+        {
+          "clicks": 678,
+          "ctr": 0.09540357174617904,
+          "impressions": 6687,
+          "position": 10.545714233602796,
+          "query": "open source analytics"
+        },
+        {
+          "clicks": 468,
+          "ctr": 0.08407857149307217,
+          "impressions": 5856,
+          "position": 12.211785665580205,
+          "query": "example pricing"
+        }
+      ]
+    },
+    "getGscQueries ny 3m": {
+      "output": [
+        {
+          "clicks": 719,
+          "ctr": 0.11600000048721475,
+          "impressions": 6096,
+          "position": 12.716428577899933,
+          "query": "mixpanel alternative"
+        },
+        {
+          "clicks": 627,
+          "ctr": 0.09283214370952919,
+          "impressions": 6847,
+          "position": 9.916071478809629,
+          "query": "example pricing"
+        },
+        {
+          "clicks": 502,
+          "ctr": 0.08449285730187382,
+          "impressions": 5924,
+          "position": 9.791428493601936,
+          "query": "open source analytics"
+        }
+      ]
+    },
+    "getGscQueries utc days 15..5 ago limit 2": {
+      "output": [
+        {
+          "clicks": 384,
+          "ctr": 0.12666363777084785,
+          "impressions": 3014,
+          "position": 12.830909100445835,
+          "query": "mixpanel alternative"
+        },
+        {
+          "clicks": 295,
+          "ctr": 0.1093000007623976,
+          "impressions": 2604,
+          "position": 10.82636360688643,
+          "query": "example pricing"
+        }
+      ]
+    },
+    "gscGetOverviewCore sthlm 30d week": {
+      "output": {
+        "data": [
+          {
+            "clicks": 183,
+            "ctr": 0.1242285684815475,
+            "date": "2026-08-30",
+            "impressions": 1410,
+            "position": 13.895714487348284
+          },
+          {
+            "clicks": 164,
+            "ctr": 0.08184285794517823,
+            "date": "2026-09-06",
+            "impressions": 1862,
+            "position": 5.608571427209037
+          },
+          {
+            "clicks": 195,
+            "ctr": 0.08529999878789697,
+            "date": "2026-09-13",
+            "impressions": 2206,
+            "position": 14.01571410042899
+          },
+          {
+            "clicks": 59,
+            "ctr": 0.10805000364780426,
+            "date": "2026-09-20",
+            "impressions": 436,
+            "position": 4.9649999141693115
+          }
+        ],
+        "summary": {
+          "avg_ctr": 9.99,
+          "avg_position": 9.6,
+          "total_clicks": 601,
+          "total_impressions": 5914
+        }
+      }
+    },
+    "gscGetTopPagesCore utc 30d": {
+      "output": [
+        {
+          "clicks": 676,
+          "ctr": 0.10936071524130446,
+          "impressions": 6360,
+          "page": "https://example.com/docs",
+          "position": 10.805357179471425
+        },
+        {
+          "clicks": 551,
+          "ctr": 0.08579285672333624,
+          "impressions": 5850,
+          "page": "https://example.com/",
+          "position": 11.291071457522255
+        },
+        {
+          "clicks": 523,
+          "ctr": 0.09139285728867565,
+          "impressions": 6196,
+          "page": "https://example.com/pricing",
+          "position": 11.016785800457
+        }
+      ]
+    },
+    "gscGetQueryOpportunitiesCore sthlm 30d min default": {
+      "output": {
+        "min_impressions": 50,
+        "opportunities": [
+          {
+            "clicks": 678,
+            "ctr": 9.54,
+            "impressions": 6687,
+            "opportunity_score": 634.1,
+            "position": 10.5,
+            "query": "open source analytics",
+            "reason": "Position 10.5 with 6687 impressions — push to page 1 for major gains"
+          },
+          {
+            "clicks": 751,
+            "ctr": 9.95,
+            "impressions": 7152,
+            "opportunity_score": 578.96,
+            "position": 12.4,
+            "query": "mixpanel alternative",
+            "reason": "Position 12.4 with 7152 impressions — push to page 1 for major gains"
+          },
+          {
+            "clicks": 468,
+            "ctr": 8.41,
+            "impressions": 5856,
+            "opportunity_score": 479.54,
+            "position": 12.2,
+            "query": "example pricing",
+            "reason": "Position 12.2 with 5856 impressions — push to page 1 for major gains"
+          }
+        ],
+        "total_analyzed": 3
+      }
+    },
+    "gscGetQueryOpportunitiesCore ny 30d min 2000": {
+      "output": {
+        "min_impressions": 2000,
+        "opportunities": [
+          {
+            "clicks": 627,
+            "ctr": 9.28,
+            "impressions": 6847,
+            "opportunity_score": 690.5,
+            "position": 9.9,
+            "query": "example pricing",
+            "reason": "Position 9.9 with 6847 impressions — push to page 1 for major gains"
+          },
+          {
+            "clicks": 502,
+            "ctr": 8.45,
+            "impressions": 5924,
+            "opportunity_score": 605.02,
+            "position": 9.8,
+            "query": "open source analytics",
+            "reason": "Position 9.8 with 5924 impressions — push to page 1 for major gains"
+          },
+          {
+            "clicks": 719,
+            "ctr": 11.6,
+            "impressions": 6096,
+            "opportunity_score": 479.38,
+            "position": 12.7,
+            "query": "mixpanel alternative",
+            "reason": "Position 12.7 with 6096 impressions — push to page 1 for major gains"
+          }
+        ],
+        "total_analyzed": 3
+      }
+    }
+  }
+}

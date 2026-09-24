@@ -132,12 +132,61 @@ export interface TestDatabase {
   drop(): Promise<void>;
 }
 
+/**
+ * A template derived from the migrated one — e.g. with fixtures loaded —
+ * built once per `fingerprint` (change it when the fixtures change). `build`
+ * gets the new database's URL and must close its connections before it
+ * returns: Postgres only copies a template nobody is connected to.
+ */
+export async function ensureDerivedTemplate(
+  name: string,
+  fingerprint: string,
+  build: (url: string) => Promise<void>,
+): Promise<string> {
+  await ensureTemplateDatabase();
+  const hash = createHash('sha256')
+    .update(migrationsHash(migrationFiles()))
+    .update(fingerprint)
+    .digest('hex');
+
+  await withAdminClient(async (admin) => {
+    await admin.query('SELECT pg_advisory_lock(hashtext($1))', [name]);
+    try {
+      const existing = await admin.query<{ comment: string | null }>(
+        `SELECT shobj_description(oid, 'pg_database') AS comment
+         FROM pg_database WHERE datname = $1`,
+        [name],
+      );
+      if (existing.rows[0]?.comment === hash) {
+        return;
+      }
+      await admin.query(`DROP DATABASE IF EXISTS ${quoteIdent(name)} WITH (FORCE)`);
+      await admin.query(
+        `CREATE DATABASE ${quoteIdent(name)} TEMPLATE ${quoteIdent(TEMPLATE_DATABASE)}`,
+      );
+      try {
+        await build(urlFor(name));
+      } catch (error) {
+        await admin.query(`DROP DATABASE IF EXISTS ${quoteIdent(name)} WITH (FORCE)`);
+        throw error;
+      }
+      await admin.query(`COMMENT ON DATABASE ${quoteIdent(name)} IS '${hash}'`);
+    } finally {
+      await admin.query('SELECT pg_advisory_unlock(hashtext($1))', [name]);
+    }
+  });
+  return name;
+}
+
 /** A fresh, fully migrated database cloned from the template. */
-export async function createTestDatabase(): Promise<TestDatabase> {
+export async function createTestDatabase(
+  options: { template?: string } = {},
+): Promise<TestDatabase> {
   const name = `op_test_${process.pid}_${randomBytes(4).toString('hex')}`;
+  const template = options.template ?? TEMPLATE_DATABASE;
   await withAdminClient(async (admin) => {
     await admin.query(
-      `CREATE DATABASE ${quoteIdent(name)} TEMPLATE ${quoteIdent(TEMPLATE_DATABASE)}`,
+      `CREATE DATABASE ${quoteIdent(name)} TEMPLATE ${quoteIdent(template)}`,
     );
   });
   return {

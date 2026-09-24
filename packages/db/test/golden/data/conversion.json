@@ -1,0 +1,4879 @@
+{
+  "group": "conversion",
+  "anchor": "2026-09-24T03:41:00.000Z",
+  "capturedWith": "ClickHouse 26.1.3.52",
+  "cases": {
+    "getConversion sthlm 30d until yesterday day start>checkout": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 4,
+              "date": "2026-08-25 00:00:00",
+              "index": 0,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787616000000,
+              "total": 12
+            },
+            {
+              "conversions": 5,
+              "date": "2026-08-26 00:00:00",
+              "index": 1,
+              "rate": 38.46,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787702400000,
+              "total": 13
+            },
+            {
+              "conversions": 2,
+              "date": "2026-08-27 00:00:00",
+              "index": 2,
+              "rate": 18.18,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787788800000,
+              "total": 11
+            },
+            {
+              "conversions": 4,
+              "date": "2026-08-28 00:00:00",
+              "index": 3,
+              "rate": 40,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787875200000,
+              "total": 10
+            },
+            {
+              "conversions": 0,
+              "date": "2026-08-29 00:00:00",
+              "index": 4,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787961600000,
+              "total": 5
+            },
+            {
+              "conversions": 1,
+              "date": "2026-08-30 00:00:00",
+              "index": 5,
+              "rate": 14.29,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 7
+            },
+            {
+              "conversions": 2,
+              "date": "2026-08-31 00:00:00",
+              "index": 6,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788134400000,
+              "total": 10
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-01 00:00:00",
+              "index": 7,
+              "rate": 40,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788220800000,
+              "total": 5
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-02 00:00:00",
+              "index": 8,
+              "rate": 16.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788307200000,
+              "total": 12
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-03 00:00:00",
+              "index": 9,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788393600000,
+              "total": 4
+            },
+            {
+              "conversions": 4,
+              "date": "2026-09-04 00:00:00",
+              "index": 10,
+              "rate": 36.36,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788480000000,
+              "total": 11
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-05 00:00:00",
+              "index": 11,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788566400000,
+              "total": 12
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-06 00:00:00",
+              "index": 12,
+              "rate": 16.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 6
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-07 00:00:00",
+              "index": 13,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788739200000,
+              "total": 3
+            },
+            {
+              "conversions": 5,
+              "date": "2026-09-08 00:00:00",
+              "index": 14,
+              "rate": 55.56,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788825600000,
+              "total": 9
+            },
+            {
+              "conversions": 5,
+              "date": "2026-09-09 00:00:00",
+              "index": 15,
+              "rate": 41.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788912000000,
+              "total": 12
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-10 00:00:00",
+              "index": 16,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788998400000,
+              "total": 5
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-11 00:00:00",
+              "index": 17,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789084800000,
+              "total": 9
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-12 00:00:00",
+              "index": 18,
+              "rate": 12.5,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789171200000,
+              "total": 8
+            },
+            {
+              "conversions": 0,
+              "date": "2026-09-13 00:00:00",
+              "index": 19,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 5
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-14 00:00:00",
+              "index": 20,
+              "rate": 11.11,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789344000000,
+              "total": 9
+            },
+            {
+              "conversions": 7,
+              "date": "2026-09-15 00:00:00",
+              "index": 21,
+              "rate": 63.64,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789430400000,
+              "total": 11
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-16 00:00:00",
+              "index": 22,
+              "rate": 28.57,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789516800000,
+              "total": 7
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-17 00:00:00",
+              "index": 23,
+              "rate": 30,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789603200000,
+              "total": 10
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-18 00:00:00",
+              "index": 24,
+              "rate": 16.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789689600000,
+              "total": 6
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-19 00:00:00",
+              "index": 25,
+              "rate": 30,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789776000000,
+              "total": 10
+            },
+            {
+              "conversions": 0,
+              "date": "2026-09-20 00:00:00",
+              "index": 26,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 7
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-21 00:00:00",
+              "index": 27,
+              "rate": 11.11,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789948800000,
+              "total": 9
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-22 00:00:00",
+              "index": 28,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1790035200000,
+              "total": 8
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-23 00:00:00",
+              "index": 29,
+              "rate": 18.18,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1790121600000,
+              "total": 11
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion sthlm 30d until yesterday week pricing>revenue": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 20
+            },
+            {
+              "conversions": 5,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 20.83,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 24
+            },
+            {
+              "conversions": 4,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 21.05,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 19
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 12.5,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 16
+            },
+            {
+              "conversions": 0,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 11
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion sthlm 3m until yesterday month start>purchase": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 13,
+              "date": "2026-07-01",
+              "index": 0,
+              "rate": 23.64,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1782864000000,
+              "total": 55
+            },
+            {
+              "conversions": 44,
+              "date": "2026-08-01",
+              "index": 1,
+              "rate": 16.99,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785542400000,
+              "total": 259
+            },
+            {
+              "conversions": 35,
+              "date": "2026-09-01",
+              "index": 2,
+              "rate": 18.52,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788220800000,
+              "total": 189
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion ny 30d until yesterday day start>checkout": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 4,
+              "date": "2026-08-24 00:00:00",
+              "index": 0,
+              "rate": 36.36,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787529600000,
+              "total": 11
+            },
+            {
+              "conversions": 4,
+              "date": "2026-08-25 00:00:00",
+              "index": 1,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787616000000,
+              "total": 6
+            },
+            {
+              "conversions": 2,
+              "date": "2026-08-26 00:00:00",
+              "index": 2,
+              "rate": 28.57,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787702400000,
+              "total": 7
+            },
+            {
+              "conversions": 2,
+              "date": "2026-08-27 00:00:00",
+              "index": 3,
+              "rate": 22.22,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787788800000,
+              "total": 9
+            },
+            {
+              "conversions": 3,
+              "date": "2026-08-28 00:00:00",
+              "index": 4,
+              "rate": 37.5,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787875200000,
+              "total": 8
+            },
+            {
+              "conversions": 3,
+              "date": "2026-08-29 00:00:00",
+              "index": 5,
+              "rate": 30,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787961600000,
+              "total": 10
+            },
+            {
+              "conversions": 3,
+              "date": "2026-08-30 00:00:00",
+              "index": 6,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 9
+            },
+            {
+              "conversions": 3,
+              "date": "2026-08-31 00:00:00",
+              "index": 7,
+              "rate": 27.27,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788134400000,
+              "total": 11
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-01 00:00:00",
+              "index": 8,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788220800000,
+              "total": 5
+            },
+            {
+              "conversions": 6,
+              "date": "2026-09-02 00:00:00",
+              "index": 9,
+              "rate": 60,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788307200000,
+              "total": 10
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-03 00:00:00",
+              "index": 10,
+              "rate": 27.27,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788393600000,
+              "total": 11
+            },
+            {
+              "conversions": 0,
+              "date": "2026-09-04 00:00:00",
+              "index": 11,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788480000000,
+              "total": 6
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-05 00:00:00",
+              "index": 12,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788566400000,
+              "total": 4
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-06 00:00:00",
+              "index": 13,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 6
+            },
+            {
+              "conversions": 4,
+              "date": "2026-09-07 00:00:00",
+              "index": 14,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788739200000,
+              "total": 6
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-08 00:00:00",
+              "index": 15,
+              "rate": 28.57,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788825600000,
+              "total": 7
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-09 00:00:00",
+              "index": 16,
+              "rate": 60,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788912000000,
+              "total": 5
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-10 00:00:00",
+              "index": 17,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788998400000,
+              "total": 10
+            },
+            {
+              "conversions": 5,
+              "date": "2026-09-11 00:00:00",
+              "index": 18,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789084800000,
+              "total": 10
+            },
+            {
+              "conversions": 4,
+              "date": "2026-09-12 00:00:00",
+              "index": 19,
+              "rate": 80,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789171200000,
+              "total": 5
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-13 00:00:00",
+              "index": 20,
+              "rate": 14.29,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 7
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-14 00:00:00",
+              "index": 21,
+              "rate": 40,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789344000000,
+              "total": 5
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-15 00:00:00",
+              "index": 22,
+              "rate": 18.18,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789430400000,
+              "total": 11
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-16 00:00:00",
+              "index": 23,
+              "rate": 8.33,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789516800000,
+              "total": 12
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-17 00:00:00",
+              "index": 24,
+              "rate": 22.22,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789603200000,
+              "total": 9
+            },
+            {
+              "conversions": 4,
+              "date": "2026-09-18 00:00:00",
+              "index": 25,
+              "rate": 36.36,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789689600000,
+              "total": 11
+            },
+            {
+              "conversions": 0,
+              "date": "2026-09-19 00:00:00",
+              "index": 26,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789776000000,
+              "total": 11
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-20 00:00:00",
+              "index": 27,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 6
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-21 00:00:00",
+              "index": 28,
+              "rate": 22.22,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789948800000,
+              "total": 9
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-22 00:00:00",
+              "index": 29,
+              "rate": 37.5,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1790035200000,
+              "total": 8
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion ny 3m until yesterday week view>signup": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 0,
+              "date": "2026-07-26",
+              "index": 0,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785024000000,
+              "total": 53
+            },
+            {
+              "conversions": 1,
+              "date": "2026-08-02",
+              "index": 1,
+              "rate": 1.82,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785628800000,
+              "total": 55
+            },
+            {
+              "conversions": 0,
+              "date": "2026-08-09",
+              "index": 2,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1786233600000,
+              "total": 52
+            },
+            {
+              "conversions": 1,
+              "date": "2026-08-16",
+              "index": 3,
+              "rate": 2.08,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1786838400000,
+              "total": 48
+            },
+            {
+              "conversions": 0,
+              "date": "2026-08-23",
+              "index": 4,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 58
+            },
+            {
+              "conversions": 1,
+              "date": "2026-08-30",
+              "index": 5,
+              "rate": 1.79,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 56
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-06",
+              "index": 6,
+              "rate": 2.04,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 49
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-13",
+              "index": 7,
+              "rate": 3.03,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 66
+            },
+            {
+              "conversions": 0,
+              "date": "2026-09-20",
+              "index": 8,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 23
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion sthlm 30d until yesterday day start>checkout by device": {
+      "output": [
+        {
+          "breakdowns": [
+            "desktop"
+          ],
+          "data": [
+            {
+              "conversions": 4,
+              "dataIndex": 0,
+              "date": "2026-08-25 00:00:00",
+              "index": 0,
+              "rate": 44.44,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787616000000,
+              "total": 9
+            },
+            {
+              "conversions": 5,
+              "dataIndex": 1,
+              "date": "2026-08-26 00:00:00",
+              "index": 1,
+              "rate": 38.46,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787702400000,
+              "total": 13
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 2,
+              "date": "2026-08-27 00:00:00",
+              "index": 2,
+              "rate": 16.67,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787788800000,
+              "total": 6
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 3,
+              "date": "2026-08-28 00:00:00",
+              "index": 3,
+              "rate": 28.57,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787875200000,
+              "total": 7
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 4,
+              "date": "2026-08-29 00:00:00",
+              "index": 4,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787961600000,
+              "total": 3
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 5,
+              "date": "2026-08-30 00:00:00",
+              "index": 5,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 3
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 6,
+              "date": "2026-08-31 00:00:00",
+              "index": 6,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788134400000,
+              "total": 8
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 7,
+              "date": "2026-09-01 00:00:00",
+              "index": 7,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788220800000,
+              "total": 3
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 8,
+              "date": "2026-09-02 00:00:00",
+              "index": 8,
+              "rate": 14.29,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788307200000,
+              "total": 7
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 9,
+              "date": "2026-09-03 00:00:00",
+              "index": 9,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788393600000,
+              "total": 3
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 10,
+              "date": "2026-09-04 00:00:00",
+              "index": 10,
+              "rate": 37.5,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788480000000,
+              "total": 8
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 11,
+              "date": "2026-09-05 00:00:00",
+              "index": 11,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788566400000,
+              "total": 9
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 12,
+              "date": "2026-09-06 00:00:00",
+              "index": 12,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 4
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 13,
+              "date": "2026-09-07 00:00:00",
+              "index": 13,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788739200000,
+              "total": 2
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 14,
+              "date": "2026-09-08 00:00:00",
+              "index": 14,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788825600000,
+              "total": 4
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 15,
+              "date": "2026-09-09 00:00:00",
+              "index": 15,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788912000000,
+              "total": 4
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 16,
+              "date": "2026-09-10 00:00:00",
+              "index": 16,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788998400000,
+              "total": 1
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 17,
+              "date": "2026-09-11 00:00:00",
+              "index": 17,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789084800000,
+              "total": 4
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 18,
+              "date": "2026-09-12 00:00:00",
+              "index": 18,
+              "rate": 14.29,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789171200000,
+              "total": 7
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 19,
+              "date": "2026-09-13 00:00:00",
+              "index": 19,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 2
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 20,
+              "date": "2026-09-14 00:00:00",
+              "index": 20,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789344000000,
+              "total": 4
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 21,
+              "date": "2026-09-15 00:00:00",
+              "index": 21,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789430400000,
+              "total": 6
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 22,
+              "date": "2026-09-16 00:00:00",
+              "index": 22,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789516800000,
+              "total": 4
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 23,
+              "date": "2026-09-17 00:00:00",
+              "index": 23,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789603200000,
+              "total": 6
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 24,
+              "date": "2026-09-18 00:00:00",
+              "index": 24,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789689600000,
+              "total": 5
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 25,
+              "date": "2026-09-19 00:00:00",
+              "index": 25,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789776000000,
+              "total": 6
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 26,
+              "date": "2026-09-20 00:00:00",
+              "index": 26,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 2
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 27,
+              "date": "2026-09-21 00:00:00",
+              "index": 27,
+              "rate": 12.5,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789948800000,
+              "total": 8
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 28,
+              "date": "2026-09-22 00:00:00",
+              "index": 28,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1790035200000,
+              "total": 4
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 29,
+              "date": "2026-09-23 00:00:00",
+              "index": 29,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1790121600000,
+              "total": 4
+            }
+          ],
+          "id": "desktop"
+        },
+        {
+          "breakdowns": [
+            "mobile"
+          ],
+          "data": [
+            {
+              "conversions": 0,
+              "dataIndex": 0,
+              "date": "2026-08-25 00:00:00",
+              "index": 0,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1787616000000,
+              "total": 2
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 1,
+              "date": "2026-08-27 00:00:00",
+              "index": 1,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1787788800000,
+              "total": 5
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 2,
+              "date": "2026-08-28 00:00:00",
+              "index": 2,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1787875200000,
+              "total": 3
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 3,
+              "date": "2026-08-29 00:00:00",
+              "index": 3,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1787961600000,
+              "total": 2
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 4,
+              "date": "2026-08-30 00:00:00",
+              "index": 4,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788048000000,
+              "total": 4
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 5,
+              "date": "2026-08-31 00:00:00",
+              "index": 5,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788134400000,
+              "total": 2
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 6,
+              "date": "2026-09-01 00:00:00",
+              "index": 6,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788220800000,
+              "total": 2
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 7,
+              "date": "2026-09-02 00:00:00",
+              "index": 7,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788307200000,
+              "total": 5
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 8,
+              "date": "2026-09-03 00:00:00",
+              "index": 8,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788393600000,
+              "total": 1
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 9,
+              "date": "2026-09-04 00:00:00",
+              "index": 9,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788480000000,
+              "total": 3
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 10,
+              "date": "2026-09-05 00:00:00",
+              "index": 10,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788566400000,
+              "total": 3
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 11,
+              "date": "2026-09-06 00:00:00",
+              "index": 11,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788652800000,
+              "total": 2
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 12,
+              "date": "2026-09-07 00:00:00",
+              "index": 12,
+              "rate": 100,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788739200000,
+              "total": 1
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 13,
+              "date": "2026-09-08 00:00:00",
+              "index": 13,
+              "rate": 60,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788825600000,
+              "total": 5
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 14,
+              "date": "2026-09-09 00:00:00",
+              "index": 14,
+              "rate": 37.5,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788912000000,
+              "total": 8
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 15,
+              "date": "2026-09-10 00:00:00",
+              "index": 15,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788998400000,
+              "total": 3
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 16,
+              "date": "2026-09-11 00:00:00",
+              "index": 16,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789084800000,
+              "total": 5
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 17,
+              "date": "2026-09-12 00:00:00",
+              "index": 17,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789171200000,
+              "total": 1
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 18,
+              "date": "2026-09-13 00:00:00",
+              "index": 18,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789257600000,
+              "total": 3
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 19,
+              "date": "2026-09-14 00:00:00",
+              "index": 19,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789344000000,
+              "total": 5
+            },
+            {
+              "conversions": 4,
+              "dataIndex": 20,
+              "date": "2026-09-15 00:00:00",
+              "index": 20,
+              "rate": 80,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789430400000,
+              "total": 5
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 21,
+              "date": "2026-09-16 00:00:00",
+              "index": 21,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789516800000,
+              "total": 3
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 22,
+              "date": "2026-09-17 00:00:00",
+              "index": 22,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789603200000,
+              "total": 3
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 23,
+              "date": "2026-09-18 00:00:00",
+              "index": 23,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789689600000,
+              "total": 1
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 24,
+              "date": "2026-09-19 00:00:00",
+              "index": 24,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789776000000,
+              "total": 2
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 25,
+              "date": "2026-09-20 00:00:00",
+              "index": 25,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789862400000,
+              "total": 5
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 26,
+              "date": "2026-09-21 00:00:00",
+              "index": 26,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789948800000,
+              "total": 1
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 27,
+              "date": "2026-09-22 00:00:00",
+              "index": 27,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1790035200000,
+              "total": 4
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 28,
+              "date": "2026-09-23 00:00:00",
+              "index": 28,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1790121600000,
+              "total": 7
+            }
+          ],
+          "id": "mobile"
+        },
+        {
+          "breakdowns": [
+            "tablet"
+          ],
+          "data": [
+            {
+              "conversions": 0,
+              "dataIndex": 0,
+              "date": "2026-08-25 00:00:00",
+              "index": 0,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "tablet"
+                ],
+                "id": "tablet"
+              },
+              "serieIndex": 2,
+              "timestamp": 1787616000000,
+              "total": 1
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 1,
+              "date": "2026-09-10 00:00:00",
+              "index": 1,
+              "rate": 100,
+              "serie": {
+                "breakdowns": [
+                  "tablet"
+                ],
+                "id": "tablet"
+              },
+              "serieIndex": 2,
+              "timestamp": 1788998400000,
+              "total": 1
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 2,
+              "date": "2026-09-17 00:00:00",
+              "index": 2,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "tablet"
+                ],
+                "id": "tablet"
+              },
+              "serieIndex": 2,
+              "timestamp": 1789603200000,
+              "total": 1
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 3,
+              "date": "2026-09-19 00:00:00",
+              "index": 3,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "tablet"
+                ],
+                "id": "tablet"
+              },
+              "serieIndex": 2,
+              "timestamp": 1789776000000,
+              "total": 2
+            }
+          ],
+          "id": "tablet"
+        }
+      ]
+    },
+    "getConversion ny 30d until yesterday week view>click by country (known countries)": {
+      "output": [
+        {
+          "breakdowns": [
+            "DE"
+          ],
+          "data": [
+            {
+              "conversions": 6,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 75,
+              "serie": {
+                "breakdowns": [
+                  "DE"
+                ],
+                "id": "DE"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 8
+            },
+            {
+              "conversions": 5,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 71.43,
+              "serie": {
+                "breakdowns": [
+                  "DE"
+                ],
+                "id": "DE"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 7
+            },
+            {
+              "conversions": 6,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 100,
+              "serie": {
+                "breakdowns": [
+                  "DE"
+                ],
+                "id": "DE"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 6
+            },
+            {
+              "conversions": 6,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 75,
+              "serie": {
+                "breakdowns": [
+                  "DE"
+                ],
+                "id": "DE"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 8
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "DE"
+                ],
+                "id": "DE"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 4
+            }
+          ],
+          "id": "DE"
+        },
+        {
+          "breakdowns": [
+            "GB"
+          ],
+          "data": [
+            {
+              "conversions": 3,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "GB"
+                ],
+                "id": "GB"
+              },
+              "serieIndex": 1,
+              "timestamp": 1787443200000,
+              "total": 6
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 75,
+              "serie": {
+                "breakdowns": [
+                  "GB"
+                ],
+                "id": "GB"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788048000000,
+              "total": 4
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 100,
+              "serie": {
+                "breakdowns": [
+                  "GB"
+                ],
+                "id": "GB"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788652800000,
+              "total": 3
+            },
+            {
+              "conversions": 5,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 62.5,
+              "serie": {
+                "breakdowns": [
+                  "GB"
+                ],
+                "id": "GB"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789257600000,
+              "total": 8
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "GB"
+                ],
+                "id": "GB"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789862400000,
+              "total": 1
+            }
+          ],
+          "id": "GB"
+        },
+        {
+          "breakdowns": [
+            "IN"
+          ],
+          "data": [
+            {
+              "conversions": 8,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 88.89,
+              "serie": {
+                "breakdowns": [
+                  "IN"
+                ],
+                "id": "IN"
+              },
+              "serieIndex": 2,
+              "timestamp": 1787443200000,
+              "total": 9
+            },
+            {
+              "conversions": 7,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 77.78,
+              "serie": {
+                "breakdowns": [
+                  "IN"
+                ],
+                "id": "IN"
+              },
+              "serieIndex": 2,
+              "timestamp": 1788048000000,
+              "total": 9
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "IN"
+                ],
+                "id": "IN"
+              },
+              "serieIndex": 2,
+              "timestamp": 1788652800000,
+              "total": 4
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 16.67,
+              "serie": {
+                "breakdowns": [
+                  "IN"
+                ],
+                "id": "IN"
+              },
+              "serieIndex": 2,
+              "timestamp": 1789257600000,
+              "total": 6
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "IN"
+                ],
+                "id": "IN"
+              },
+              "serieIndex": 2,
+              "timestamp": 1789862400000,
+              "total": 4
+            }
+          ],
+          "id": "IN"
+        },
+        {
+          "breakdowns": [
+            "SE"
+          ],
+          "data": [
+            {
+              "conversions": 11,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 84.62,
+              "serie": {
+                "breakdowns": [
+                  "SE"
+                ],
+                "id": "SE"
+              },
+              "serieIndex": 3,
+              "timestamp": 1787443200000,
+              "total": 13
+            },
+            {
+              "conversions": 14,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 73.68,
+              "serie": {
+                "breakdowns": [
+                  "SE"
+                ],
+                "id": "SE"
+              },
+              "serieIndex": 3,
+              "timestamp": 1788048000000,
+              "total": 19
+            },
+            {
+              "conversions": 16,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 76.19,
+              "serie": {
+                "breakdowns": [
+                  "SE"
+                ],
+                "id": "SE"
+              },
+              "serieIndex": 3,
+              "timestamp": 1788652800000,
+              "total": 21
+            },
+            {
+              "conversions": 9,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 45,
+              "serie": {
+                "breakdowns": [
+                  "SE"
+                ],
+                "id": "SE"
+              },
+              "serieIndex": 3,
+              "timestamp": 1789257600000,
+              "total": 20
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 28.57,
+              "serie": {
+                "breakdowns": [
+                  "SE"
+                ],
+                "id": "SE"
+              },
+              "serieIndex": 3,
+              "timestamp": 1789862400000,
+              "total": 7
+            }
+          ],
+          "id": "SE"
+        },
+        {
+          "breakdowns": [
+            "US"
+          ],
+          "data": [
+            {
+              "conversions": 10,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 83.33,
+              "serie": {
+                "breakdowns": [
+                  "US"
+                ],
+                "id": "US"
+              },
+              "serieIndex": 4,
+              "timestamp": 1787443200000,
+              "total": 12
+            },
+            {
+              "conversions": 8,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 53.33,
+              "serie": {
+                "breakdowns": [
+                  "US"
+                ],
+                "id": "US"
+              },
+              "serieIndex": 4,
+              "timestamp": 1788048000000,
+              "total": 15
+            },
+            {
+              "conversions": 8,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 61.54,
+              "serie": {
+                "breakdowns": [
+                  "US"
+                ],
+                "id": "US"
+              },
+              "serieIndex": 4,
+              "timestamp": 1788652800000,
+              "total": 13
+            },
+            {
+              "conversions": 14,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 63.64,
+              "serie": {
+                "breakdowns": [
+                  "US"
+                ],
+                "id": "US"
+              },
+              "serieIndex": 4,
+              "timestamp": 1789257600000,
+              "total": 22
+            },
+            {
+              "conversions": 5,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 71.43,
+              "serie": {
+                "breakdowns": [
+                  "US"
+                ],
+                "id": "US"
+              },
+              "serieIndex": 4,
+              "timestamp": 1789862400000,
+              "total": 7
+            }
+          ],
+          "id": "US"
+        }
+      ]
+    },
+    "getConversion sthlm 30d until yesterday week view>click by referrer_name limit 3": {
+      "output": [
+        {
+          "breakdowns": [
+            "(not set)"
+          ],
+          "data": [
+            {
+              "conversions": 7,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 58.33,
+              "serie": {
+                "breakdowns": [
+                  "(not set)"
+                ],
+                "id": "(not set)"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 12
+            }
+          ],
+          "id": "(not set)"
+        },
+        {
+          "breakdowns": [
+            "DuckDuckGo"
+          ],
+          "data": [
+            {
+              "conversions": 3,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 60,
+              "serie": {
+                "breakdowns": [
+                  "DuckDuckGo"
+                ],
+                "id": "DuckDuckGo"
+              },
+              "serieIndex": 1,
+              "timestamp": 1787443200000,
+              "total": 5
+            }
+          ],
+          "id": "DuckDuckGo"
+        },
+        {
+          "breakdowns": [
+            "GitHub"
+          ],
+          "data": [
+            {
+              "conversions": 6,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [
+                  "GitHub"
+                ],
+                "id": "GitHub"
+              },
+              "serieIndex": 2,
+              "timestamp": 1787443200000,
+              "total": 9
+            }
+          ],
+          "id": "GitHub"
+        }
+      ]
+    },
+    "getConversion sthlm 30d until yesterday week start>checkout by utm_source": {
+      "output": [
+        {
+          "breakdowns": [
+            "(not set)"
+          ],
+          "data": [
+            {
+              "conversions": 12,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 30.77,
+              "serie": {
+                "breakdowns": [
+                  "(not set)"
+                ],
+                "id": "(not set)"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 39
+            },
+            {
+              "conversions": 12,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 26.09,
+              "serie": {
+                "breakdowns": [
+                  "(not set)"
+                ],
+                "id": "(not set)"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 46
+            },
+            {
+              "conversions": 15,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 36.59,
+              "serie": {
+                "breakdowns": [
+                  "(not set)"
+                ],
+                "id": "(not set)"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 41
+            },
+            {
+              "conversions": 12,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 26.67,
+              "serie": {
+                "breakdowns": [
+                  "(not set)"
+                ],
+                "id": "(not set)"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 45
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 10,
+              "serie": {
+                "breakdowns": [
+                  "(not set)"
+                ],
+                "id": "(not set)"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 30
+            }
+          ],
+          "id": "(not set)"
+        },
+        {
+          "breakdowns": [
+            "newsletter"
+          ],
+          "data": [
+            {
+              "conversions": 2,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 28.57,
+              "serie": {
+                "breakdowns": [
+                  "newsletter"
+                ],
+                "id": "newsletter"
+              },
+              "serieIndex": 1,
+              "timestamp": 1787443200000,
+              "total": 7
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 14.29,
+              "serie": {
+                "breakdowns": [
+                  "newsletter"
+                ],
+                "id": "newsletter"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788048000000,
+              "total": 7
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 28.57,
+              "serie": {
+                "breakdowns": [
+                  "newsletter"
+                ],
+                "id": "newsletter"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788652800000,
+              "total": 7
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "newsletter"
+                ],
+                "id": "newsletter"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789257600000,
+              "total": 4
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "newsletter"
+                ],
+                "id": "newsletter"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789862400000,
+              "total": 4
+            }
+          ],
+          "id": "newsletter"
+        },
+        {
+          "breakdowns": [
+            "reddit"
+          ],
+          "data": [
+            {
+              "conversions": 1,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [
+                  "reddit"
+                ],
+                "id": "reddit"
+              },
+              "serieIndex": 2,
+              "timestamp": 1787443200000,
+              "total": 5
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "reddit"
+                ],
+                "id": "reddit"
+              },
+              "serieIndex": 2,
+              "timestamp": 1788048000000,
+              "total": 8
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "reddit"
+                ],
+                "id": "reddit"
+              },
+              "serieIndex": 2,
+              "timestamp": 1788652800000,
+              "total": 4
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "reddit"
+                ],
+                "id": "reddit"
+              },
+              "serieIndex": 2,
+              "timestamp": 1789257600000,
+              "total": 9
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "reddit"
+                ],
+                "id": "reddit"
+              },
+              "serieIndex": 2,
+              "timestamp": 1789862400000,
+              "total": 1
+            }
+          ],
+          "id": "reddit"
+        }
+      ]
+    },
+    "getConversion ny 30d until yesterday week start>purchase by device and browser": {
+      "output": [
+        {
+          "breakdowns": [
+            "desktop",
+            "Chrome"
+          ],
+          "data": [
+            {
+              "conversions": 3,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 15.79,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Chrome"
+                ],
+                "id": "desktop|Chrome"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 19
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 13.64,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Chrome"
+                ],
+                "id": "desktop|Chrome"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 22
+            },
+            {
+              "conversions": 9,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 40.91,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Chrome"
+                ],
+                "id": "desktop|Chrome"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 22
+            },
+            {
+              "conversions": 4,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 16.67,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Chrome"
+                ],
+                "id": "desktop|Chrome"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 24
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 16.67,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Chrome"
+                ],
+                "id": "desktop|Chrome"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 12
+            }
+          ],
+          "id": "desktop|Chrome"
+        },
+        {
+          "breakdowns": [
+            "desktop",
+            "Edge"
+          ],
+          "data": [
+            {
+              "conversions": 4,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 30.77,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Edge"
+                ],
+                "id": "desktop|Edge"
+              },
+              "serieIndex": 1,
+              "timestamp": 1787443200000,
+              "total": 13
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 16.67,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Edge"
+                ],
+                "id": "desktop|Edge"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788048000000,
+              "total": 12
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Edge"
+                ],
+                "id": "desktop|Edge"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788652800000,
+              "total": 12
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 16.67,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Edge"
+                ],
+                "id": "desktop|Edge"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789257600000,
+              "total": 12
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 42.86,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Edge"
+                ],
+                "id": "desktop|Edge"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789862400000,
+              "total": 7
+            }
+          ],
+          "id": "desktop|Edge"
+        },
+        {
+          "breakdowns": [
+            "desktop",
+            "Firefox"
+          ],
+          "data": [
+            {
+              "conversions": 1,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 12.5,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Firefox"
+                ],
+                "id": "desktop|Firefox"
+              },
+              "serieIndex": 2,
+              "timestamp": 1787443200000,
+              "total": 8
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Firefox"
+                ],
+                "id": "desktop|Firefox"
+              },
+              "serieIndex": 2,
+              "timestamp": 1788048000000,
+              "total": 4
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Firefox"
+                ],
+                "id": "desktop|Firefox"
+              },
+              "serieIndex": 2,
+              "timestamp": 1788652800000,
+              "total": 3
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 16.67,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Firefox"
+                ],
+                "id": "desktop|Firefox"
+              },
+              "serieIndex": 2,
+              "timestamp": 1789257600000,
+              "total": 6
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "desktop",
+                  "Firefox"
+                ],
+                "id": "desktop|Firefox"
+              },
+              "serieIndex": 2,
+              "timestamp": 1789862400000,
+              "total": 1
+            }
+          ],
+          "id": "desktop|Firefox"
+        },
+        {
+          "breakdowns": [
+            "mobile",
+            "Chrome Mobile"
+          ],
+          "data": [
+            {
+              "conversions": 1,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 20,
+              "serie": {
+                "breakdowns": [
+                  "mobile",
+                  "Chrome Mobile"
+                ],
+                "id": "mobile|Chrome Mobile"
+              },
+              "serieIndex": 3,
+              "timestamp": 1787443200000,
+              "total": 5
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "mobile",
+                  "Chrome Mobile"
+                ],
+                "id": "mobile|Chrome Mobile"
+              },
+              "serieIndex": 3,
+              "timestamp": 1788048000000,
+              "total": 8
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile",
+                  "Chrome Mobile"
+                ],
+                "id": "mobile|Chrome Mobile"
+              },
+              "serieIndex": 3,
+              "timestamp": 1788652800000,
+              "total": 7
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "mobile",
+                  "Chrome Mobile"
+                ],
+                "id": "mobile|Chrome Mobile"
+              },
+              "serieIndex": 3,
+              "timestamp": 1789257600000,
+              "total": 9
+            }
+          ],
+          "id": "mobile|Chrome Mobile"
+        },
+        {
+          "breakdowns": [
+            "mobile",
+            "Mobile Safari"
+          ],
+          "data": [
+            {
+              "conversions": 2,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "mobile",
+                  "Mobile Safari"
+                ],
+                "id": "mobile|Mobile Safari"
+              },
+              "serieIndex": 4,
+              "timestamp": 1787443200000,
+              "total": 4
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 14.29,
+              "serie": {
+                "breakdowns": [
+                  "mobile",
+                  "Mobile Safari"
+                ],
+                "id": "mobile|Mobile Safari"
+              },
+              "serieIndex": 4,
+              "timestamp": 1788048000000,
+              "total": 7
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "mobile",
+                  "Mobile Safari"
+                ],
+                "id": "mobile|Mobile Safari"
+              },
+              "serieIndex": 4,
+              "timestamp": 1788652800000,
+              "total": 3
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 14.29,
+              "serie": {
+                "breakdowns": [
+                  "mobile",
+                  "Mobile Safari"
+                ],
+                "id": "mobile|Mobile Safari"
+              },
+              "serieIndex": 4,
+              "timestamp": 1789257600000,
+              "total": 14
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 100,
+              "serie": {
+                "breakdowns": [
+                  "mobile",
+                  "Mobile Safari"
+                ],
+                "id": "mobile|Mobile Safari"
+              },
+              "serieIndex": 4,
+              "timestamp": 1789862400000,
+              "total": 1
+            }
+          ],
+          "id": "mobile|Mobile Safari"
+        },
+        {
+          "breakdowns": [
+            "tablet",
+            "Mobile Safari"
+          ],
+          "data": [
+            {
+              "conversions": 0,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "tablet",
+                  "Mobile Safari"
+                ],
+                "id": "tablet|Mobile Safari"
+              },
+              "serieIndex": 5,
+              "timestamp": 1787443200000,
+              "total": 2
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "tablet",
+                  "Mobile Safari"
+                ],
+                "id": "tablet|Mobile Safari"
+              },
+              "serieIndex": 5,
+              "timestamp": 1788048000000,
+              "total": 3
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "tablet",
+                  "Mobile Safari"
+                ],
+                "id": "tablet|Mobile Safari"
+              },
+              "serieIndex": 5,
+              "timestamp": 1788652800000,
+              "total": 2
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "tablet",
+                  "Mobile Safari"
+                ],
+                "id": "tablet|Mobile Safari"
+              },
+              "serieIndex": 5,
+              "timestamp": 1789257600000,
+              "total": 1
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "tablet",
+                  "Mobile Safari"
+                ],
+                "id": "tablet|Mobile Safari"
+              },
+              "serieIndex": 5,
+              "timestamp": 1789862400000,
+              "total": 2
+            }
+          ],
+          "id": "tablet|Mobile Safari"
+        }
+      ]
+    },
+    "getConversion sthlm 3m until yesterday month view>click by profile plan": {
+      "output": [
+        {
+          "breakdowns": [
+            "(not set)"
+          ],
+          "data": [
+            {
+              "conversions": 28,
+              "dataIndex": 0,
+              "date": "2026-07-01",
+              "index": 0,
+              "rate": 62.22,
+              "serie": {
+                "breakdowns": [
+                  "(not set)"
+                ],
+                "id": "(not set)"
+              },
+              "serieIndex": 0,
+              "timestamp": 1782864000000,
+              "total": 45
+            },
+            {
+              "conversions": 147,
+              "dataIndex": 1,
+              "date": "2026-08-01",
+              "index": 1,
+              "rate": 66.82,
+              "serie": {
+                "breakdowns": [
+                  "(not set)"
+                ],
+                "id": "(not set)"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785542400000,
+              "total": 220
+            },
+            {
+              "conversions": 107,
+              "dataIndex": 2,
+              "date": "2026-09-01",
+              "index": 2,
+              "rate": 67.3,
+              "serie": {
+                "breakdowns": [
+                  "(not set)"
+                ],
+                "id": "(not set)"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788220800000,
+              "total": 159
+            }
+          ],
+          "id": "(not set)"
+        },
+        {
+          "breakdowns": [
+            "enterprise"
+          ],
+          "data": [
+            {
+              "conversions": 1,
+              "dataIndex": 0,
+              "date": "2026-07-01",
+              "index": 0,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "enterprise"
+                ],
+                "id": "enterprise"
+              },
+              "serieIndex": 1,
+              "timestamp": 1782864000000,
+              "total": 3
+            },
+            {
+              "conversions": 10,
+              "dataIndex": 1,
+              "date": "2026-08-01",
+              "index": 1,
+              "rate": 90.91,
+              "serie": {
+                "breakdowns": [
+                  "enterprise"
+                ],
+                "id": "enterprise"
+              },
+              "serieIndex": 1,
+              "timestamp": 1785542400000,
+              "total": 11
+            },
+            {
+              "conversions": 4,
+              "dataIndex": 2,
+              "date": "2026-09-01",
+              "index": 2,
+              "rate": 44.44,
+              "serie": {
+                "breakdowns": [
+                  "enterprise"
+                ],
+                "id": "enterprise"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788220800000,
+              "total": 9
+            }
+          ],
+          "id": "enterprise"
+        },
+        {
+          "breakdowns": [
+            "free"
+          ],
+          "data": [
+            {
+              "conversions": 2,
+              "dataIndex": 0,
+              "date": "2026-07-01",
+              "index": 0,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "free"
+                ],
+                "id": "free"
+              },
+              "serieIndex": 2,
+              "timestamp": 1782864000000,
+              "total": 4
+            },
+            {
+              "conversions": 15,
+              "dataIndex": 1,
+              "date": "2026-08-01",
+              "index": 1,
+              "rate": 68.18,
+              "serie": {
+                "breakdowns": [
+                  "free"
+                ],
+                "id": "free"
+              },
+              "serieIndex": 2,
+              "timestamp": 1785542400000,
+              "total": 22
+            },
+            {
+              "conversions": 7,
+              "dataIndex": 2,
+              "date": "2026-09-01",
+              "index": 2,
+              "rate": 63.64,
+              "serie": {
+                "breakdowns": [
+                  "free"
+                ],
+                "id": "free"
+              },
+              "serieIndex": 2,
+              "timestamp": 1788220800000,
+              "total": 11
+            }
+          ],
+          "id": "free"
+        },
+        {
+          "breakdowns": [
+            "pro"
+          ],
+          "data": [
+            {
+              "conversions": 3,
+              "dataIndex": 0,
+              "date": "2026-07-01",
+              "index": 0,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "pro"
+                ],
+                "id": "pro"
+              },
+              "serieIndex": 3,
+              "timestamp": 1782864000000,
+              "total": 6
+            },
+            {
+              "conversions": 11,
+              "dataIndex": 1,
+              "date": "2026-08-01",
+              "index": 1,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "pro"
+                ],
+                "id": "pro"
+              },
+              "serieIndex": 3,
+              "timestamp": 1785542400000,
+              "total": 22
+            },
+            {
+              "conversions": 11,
+              "dataIndex": 2,
+              "date": "2026-09-01",
+              "index": 2,
+              "rate": 57.89,
+              "serie": {
+                "breakdowns": [
+                  "pro"
+                ],
+                "id": "pro"
+              },
+              "serieIndex": 3,
+              "timestamp": 1788220800000,
+              "total": 19
+            }
+          ],
+          "id": "pro"
+        }
+      ]
+    },
+    "getConversion sthlm 3m until yesterday month view>click by group name": {
+      "output": [
+        {
+          "breakdowns": [
+            "Acme Inc"
+          ],
+          "data": [
+            {
+              "conversions": 3,
+              "dataIndex": 0,
+              "date": "2026-07-01",
+              "index": 0,
+              "rate": 42.86,
+              "serie": {
+                "breakdowns": [
+                  "Acme Inc"
+                ],
+                "id": "Acme Inc"
+              },
+              "serieIndex": 0,
+              "timestamp": 1782864000000,
+              "total": 7
+            },
+            {
+              "conversions": 13,
+              "dataIndex": 1,
+              "date": "2026-08-01",
+              "index": 1,
+              "rate": 61.9,
+              "serie": {
+                "breakdowns": [
+                  "Acme Inc"
+                ],
+                "id": "Acme Inc"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785542400000,
+              "total": 21
+            },
+            {
+              "conversions": 5,
+              "dataIndex": 2,
+              "date": "2026-09-01",
+              "index": 2,
+              "rate": 41.67,
+              "serie": {
+                "breakdowns": [
+                  "Acme Inc"
+                ],
+                "id": "Acme Inc"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788220800000,
+              "total": 12
+            }
+          ],
+          "id": "Acme Inc"
+        },
+        {
+          "breakdowns": [
+            "Globex Corporation"
+          ],
+          "data": [
+            {
+              "conversions": 1,
+              "dataIndex": 0,
+              "date": "2026-07-01",
+              "index": 0,
+              "rate": 100,
+              "serie": {
+                "breakdowns": [
+                  "Globex Corporation"
+                ],
+                "id": "Globex Corporation"
+              },
+              "serieIndex": 1,
+              "timestamp": 1782864000000,
+              "total": 1
+            },
+            {
+              "conversions": 6,
+              "dataIndex": 1,
+              "date": "2026-08-01",
+              "index": 1,
+              "rate": 60,
+              "serie": {
+                "breakdowns": [
+                  "Globex Corporation"
+                ],
+                "id": "Globex Corporation"
+              },
+              "serieIndex": 1,
+              "timestamp": 1785542400000,
+              "total": 10
+            },
+            {
+              "conversions": 5,
+              "dataIndex": 2,
+              "date": "2026-09-01",
+              "index": 2,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "Globex Corporation"
+                ],
+                "id": "Globex Corporation"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788220800000,
+              "total": 10
+            }
+          ],
+          "id": "Globex Corporation"
+        },
+        {
+          "breakdowns": [
+            "Initech"
+          ],
+          "data": [
+            {
+              "conversions": 1,
+              "dataIndex": 0,
+              "date": "2026-07-01",
+              "index": 0,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "Initech"
+                ],
+                "id": "Initech"
+              },
+              "serieIndex": 2,
+              "timestamp": 1782864000000,
+              "total": 3
+            },
+            {
+              "conversions": 13,
+              "dataIndex": 1,
+              "date": "2026-08-01",
+              "index": 1,
+              "rate": 68.42,
+              "serie": {
+                "breakdowns": [
+                  "Initech"
+                ],
+                "id": "Initech"
+              },
+              "serieIndex": 2,
+              "timestamp": 1785542400000,
+              "total": 19
+            },
+            {
+              "conversions": 10,
+              "dataIndex": 2,
+              "date": "2026-09-01",
+              "index": 2,
+              "rate": 71.43,
+              "serie": {
+                "breakdowns": [
+                  "Initech"
+                ],
+                "id": "Initech"
+              },
+              "serieIndex": 2,
+              "timestamp": 1788220800000,
+              "total": 14
+            }
+          ],
+          "id": "Initech"
+        }
+      ]
+    },
+    "getConversion sthlm 3m until yesterday week view>click by cohort power users": {
+      "output": [
+        {
+          "breakdowns": [
+            "Not Power users"
+          ],
+          "data": [
+            {
+              "conversions": 35,
+              "dataIndex": 0,
+              "date": "2026-07-26",
+              "index": 0,
+              "rate": 60.34,
+              "serie": {
+                "breakdowns": [
+                  "Not Power users"
+                ],
+                "id": "Not Power users"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785024000000,
+              "total": 58
+            },
+            {
+              "conversions": 39,
+              "dataIndex": 1,
+              "date": "2026-08-02",
+              "index": 1,
+              "rate": 69.64,
+              "serie": {
+                "breakdowns": [
+                  "Not Power users"
+                ],
+                "id": "Not Power users"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785628800000,
+              "total": 56
+            },
+            {
+              "conversions": 32,
+              "dataIndex": 2,
+              "date": "2026-08-09",
+              "index": 2,
+              "rate": 65.31,
+              "serie": {
+                "breakdowns": [
+                  "Not Power users"
+                ],
+                "id": "Not Power users"
+              },
+              "serieIndex": 0,
+              "timestamp": 1786233600000,
+              "total": 49
+            },
+            {
+              "conversions": 43,
+              "dataIndex": 3,
+              "date": "2026-08-16",
+              "index": 3,
+              "rate": 75.44,
+              "serie": {
+                "breakdowns": [
+                  "Not Power users"
+                ],
+                "id": "Not Power users"
+              },
+              "serieIndex": 0,
+              "timestamp": 1786838400000,
+              "total": 57
+            },
+            {
+              "conversions": 40,
+              "dataIndex": 4,
+              "date": "2026-08-23",
+              "index": 4,
+              "rate": 65.57,
+              "serie": {
+                "breakdowns": [
+                  "Not Power users"
+                ],
+                "id": "Not Power users"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 61
+            },
+            {
+              "conversions": 40,
+              "dataIndex": 5,
+              "date": "2026-08-30",
+              "index": 5,
+              "rate": 68.97,
+              "serie": {
+                "breakdowns": [
+                  "Not Power users"
+                ],
+                "id": "Not Power users"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 58
+            },
+            {
+              "conversions": 36,
+              "dataIndex": 6,
+              "date": "2026-09-06",
+              "index": 6,
+              "rate": 73.47,
+              "serie": {
+                "breakdowns": [
+                  "Not Power users"
+                ],
+                "id": "Not Power users"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 49
+            },
+            {
+              "conversions": 32,
+              "dataIndex": 7,
+              "date": "2026-09-13",
+              "index": 7,
+              "rate": 57.14,
+              "serie": {
+                "breakdowns": [
+                  "Not Power users"
+                ],
+                "id": "Not Power users"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 56
+            },
+            {
+              "conversions": 21,
+              "dataIndex": 8,
+              "date": "2026-09-20",
+              "index": 8,
+              "rate": 67.74,
+              "serie": {
+                "breakdowns": [
+                  "Not Power users"
+                ],
+                "id": "Not Power users"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 31
+            }
+          ],
+          "id": "Not Power users"
+        },
+        {
+          "breakdowns": [
+            "Power users"
+          ],
+          "data": [
+            {
+              "conversions": 3,
+              "dataIndex": 0,
+              "date": "2026-07-26",
+              "index": 0,
+              "rate": 42.86,
+              "serie": {
+                "breakdowns": [
+                  "Power users"
+                ],
+                "id": "Power users"
+              },
+              "serieIndex": 1,
+              "timestamp": 1785024000000,
+              "total": 7
+            },
+            {
+              "conversions": 5,
+              "dataIndex": 1,
+              "date": "2026-08-02",
+              "index": 1,
+              "rate": 62.5,
+              "serie": {
+                "breakdowns": [
+                  "Power users"
+                ],
+                "id": "Power users"
+              },
+              "serieIndex": 1,
+              "timestamp": 1785628800000,
+              "total": 8
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 2,
+              "date": "2026-08-09",
+              "index": 2,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [
+                  "Power users"
+                ],
+                "id": "Power users"
+              },
+              "serieIndex": 1,
+              "timestamp": 1786233600000,
+              "total": 2
+            },
+            {
+              "conversions": 4,
+              "dataIndex": 3,
+              "date": "2026-08-16",
+              "index": 3,
+              "rate": 57.14,
+              "serie": {
+                "breakdowns": [
+                  "Power users"
+                ],
+                "id": "Power users"
+              },
+              "serieIndex": 1,
+              "timestamp": 1786838400000,
+              "total": 7
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 4,
+              "date": "2026-08-23",
+              "index": 4,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [
+                  "Power users"
+                ],
+                "id": "Power users"
+              },
+              "serieIndex": 1,
+              "timestamp": 1787443200000,
+              "total": 3
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 5,
+              "date": "2026-08-30",
+              "index": 5,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "Power users"
+                ],
+                "id": "Power users"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788048000000,
+              "total": 4
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 6,
+              "date": "2026-09-06",
+              "index": 6,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [
+                  "Power users"
+                ],
+                "id": "Power users"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788652800000,
+              "total": 3
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 7,
+              "date": "2026-09-13",
+              "index": 7,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "Power users"
+                ],
+                "id": "Power users"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789257600000,
+              "total": 2
+            },
+            {
+              "conversions": 3,
+              "dataIndex": 8,
+              "date": "2026-09-20",
+              "index": 8,
+              "rate": 75,
+              "serie": {
+                "breakdowns": [
+                  "Power users"
+                ],
+                "id": "Power users"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789862400000,
+              "total": 4
+            }
+          ],
+          "id": "Power users"
+        }
+      ]
+    },
+    "getConversion ny 30d until yesterday week pricing>revenue by has_profile": {
+      "output": [
+        {
+          "breakdowns": [
+            "false"
+          ],
+          "data": [
+            {
+              "conversions": 0,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "false"
+                ],
+                "id": "false"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 12
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 7.69,
+              "serie": {
+                "breakdowns": [
+                  "false"
+                ],
+                "id": "false"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 13
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "false"
+                ],
+                "id": "false"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 12
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "false"
+                ],
+                "id": "false"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 19
+            },
+            {
+              "conversions": 2,
+              "dataIndex": 4,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 28.57,
+              "serie": {
+                "breakdowns": [
+                  "false"
+                ],
+                "id": "false"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 7
+            }
+          ],
+          "id": "false"
+        },
+        {
+          "breakdowns": [
+            "true"
+          ],
+          "data": [
+            {
+              "conversions": 0,
+              "dataIndex": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "true"
+                ],
+                "id": "true"
+              },
+              "serieIndex": 1,
+              "timestamp": 1787443200000,
+              "total": 2
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 1,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 33.33,
+              "serie": {
+                "breakdowns": [
+                  "true"
+                ],
+                "id": "true"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788048000000,
+              "total": 3
+            },
+            {
+              "conversions": 1,
+              "dataIndex": 2,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [
+                  "true"
+                ],
+                "id": "true"
+              },
+              "serieIndex": 1,
+              "timestamp": 1788652800000,
+              "total": 4
+            },
+            {
+              "conversions": 0,
+              "dataIndex": 3,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "true"
+                ],
+                "id": "true"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789257600000,
+              "total": 2
+            }
+          ],
+          "id": "true"
+        }
+      ]
+    },
+    "getConversion sthlm today day profile view>click": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 3,
+              "date": "2026-09-24 00:00:00",
+              "index": 0,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1790208000000,
+              "total": 6
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion ny yesterday day profile start>checkout": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 3,
+              "date": "2026-09-22 00:00:00",
+              "index": 0,
+              "rate": 37.5,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1790035200000,
+              "total": 8
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion sthlm last month month profile start>purchase": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 27,
+              "date": "2026-08-01",
+              "index": 0,
+              "rate": 56.25,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785542400000,
+              "total": 48
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion utc last week week profile pricing>revenue by device": {
+      "output": [
+        {
+          "breakdowns": [
+            "desktop"
+          ],
+          "data": [
+            {
+              "conversions": 0,
+              "dataIndex": 0,
+              "date": "2026-09-13",
+              "index": 0,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [
+                  "desktop"
+                ],
+                "id": "desktop"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 4
+            }
+          ],
+          "id": "desktop"
+        },
+        {
+          "breakdowns": [
+            "mobile"
+          ],
+          "data": [
+            {
+              "conversions": 3,
+              "dataIndex": 0,
+              "date": "2026-09-13",
+              "index": 0,
+              "rate": 42.86,
+              "serie": {
+                "breakdowns": [
+                  "mobile"
+                ],
+                "id": "mobile"
+              },
+              "serieIndex": 1,
+              "timestamp": 1789257600000,
+              "total": 7
+            }
+          ],
+          "id": "mobile"
+        }
+      ]
+    },
+    "getConversion sthlm 30d until yesterday week window 36s start>click": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 9,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 17.65,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 51
+            },
+            {
+              "conversions": 17,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 27.87,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 61
+            },
+            {
+              "conversions": 12,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 23.08,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 52
+            },
+            {
+              "conversions": 13,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 22.41,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 58
+            },
+            {
+              "conversions": 11,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 31.43,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 35
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion sthlm 30d until yesterday week start>checkout global countrySE": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 0,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 5
+            },
+            {
+              "conversions": 7,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 53.85,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 13
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 27.27,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 11
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 10,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 10
+            },
+            {
+              "conversions": 0,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 8
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion ny 3m until yesterday month checkout>big revenue": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 6,
+              "date": "2026-07-01",
+              "index": 0,
+              "rate": 46.15,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1782864000000,
+              "total": 13
+            },
+            {
+              "conversions": 39,
+              "date": "2026-08-01",
+              "index": 1,
+              "rate": 49.37,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785542400000,
+              "total": 79
+            },
+            {
+              "conversions": 26,
+              "date": "2026-09-01",
+              "index": 2,
+              "rate": 48.15,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788220800000,
+              "total": 54
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion sthlm 30d until yesterday week same event home>pricing": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 5,
+              "date": "2026-08-23",
+              "index": 0,
+              "rate": 38.46,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 13
+            },
+            {
+              "conversions": 4,
+              "date": "2026-08-30",
+              "index": 1,
+              "rate": 26.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 15
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-06",
+              "index": 2,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 6
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-13",
+              "index": 3,
+              "rate": 7.14,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 14
+            },
+            {
+              "conversions": 1,
+              "date": "2026-09-20",
+              "index": 4,
+              "rate": 6.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 15
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion sthlm 3m until yesterday week inCohort power users view>click": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 3,
+              "date": "2026-07-26",
+              "index": 0,
+              "rate": 42.86,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785024000000,
+              "total": 7
+            },
+            {
+              "conversions": 5,
+              "date": "2026-08-02",
+              "index": 1,
+              "rate": 62.5,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1785628800000,
+              "total": 8
+            },
+            {
+              "conversions": 1,
+              "date": "2026-08-09",
+              "index": 2,
+              "rate": 50,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1786233600000,
+              "total": 2
+            },
+            {
+              "conversions": 4,
+              "date": "2026-08-16",
+              "index": 3,
+              "rate": 57.14,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1786838400000,
+              "total": 7
+            },
+            {
+              "conversions": 2,
+              "date": "2026-08-23",
+              "index": 4,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1787443200000,
+              "total": 3
+            },
+            {
+              "conversions": 1,
+              "date": "2026-08-30",
+              "index": 5,
+              "rate": 25,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788048000000,
+              "total": 4
+            },
+            {
+              "conversions": 2,
+              "date": "2026-09-06",
+              "index": 6,
+              "rate": 66.67,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1788652800000,
+              "total": 3
+            },
+            {
+              "conversions": 0,
+              "date": "2026-09-13",
+              "index": 7,
+              "rate": 0,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789257600000,
+              "total": 2
+            },
+            {
+              "conversions": 3,
+              "date": "2026-09-20",
+              "index": 8,
+              "rate": 75,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1789862400000,
+              "total": 4
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion sthlm DST weekend day start>view": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 4,
+              "date": "2026-03-29 00:00:00",
+              "index": 0,
+              "rate": 100,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1774742400000,
+              "total": 4
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion ny DST weekend day start>view": {
+      "output": [
+        {
+          "breakdowns": [],
+          "data": [
+            {
+              "conversions": 4,
+              "date": "2026-03-08 00:00:00",
+              "index": 0,
+              "rate": 100,
+              "serie": {
+                "breakdowns": [],
+                "id": "conversion"
+              },
+              "serieIndex": 0,
+              "timestamp": 1772928000000,
+              "total": 4
+            }
+          ],
+          "id": "conversion"
+        }
+      ]
+    },
+    "getConversion error with one event": {
+      "error": "events must be an array of two events"
+    },
+    "getConversion error without dates": {
+      "error": "startDate and endDate are required"
+    }
+  }
+}

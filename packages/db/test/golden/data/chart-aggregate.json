@@ -1,0 +1,2466 @@
+{
+  "group": "chart-aggregate",
+  "anchor": "2026-09-24T03:15:00.000Z",
+  "capturedWith": "ClickHouse 26.1.3.52",
+  "cases": {
+    "bar sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 767,
+          "max": 767,
+          "min": 767,
+          "sum": 767
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 767,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 767,
+              "max": 767,
+              "min": 767,
+              "sum": 767
+            },
+            "names": [
+              "screen_view"
+            ]
+          }
+        ]
+      }
+    },
+    "pie ny 30d all events": {
+      "output": {
+        "metrics": {
+          "average": 1774,
+          "max": 1774,
+          "min": 1774,
+          "sum": 1774
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 1774,
+                "date": "2026-08-24 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "*"
+            },
+            "id": "0",
+            "metrics": {
+              "average": 1774,
+              "max": 1774,
+              "min": 1774,
+              "sum": 1774
+            },
+            "names": [
+              "*"
+            ]
+          }
+        ]
+      }
+    },
+    "bar utc 7d three series": {
+      "output": {
+        "metrics": {
+          "average": 107.67,
+          "max": 185,
+          "min": 66,
+          "sum": 323
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 185,
+                "date": "2026-09-17 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 185,
+              "max": 185,
+              "min": 185,
+              "sum": 185
+            },
+            "names": [
+              "(A) screen_view"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 66,
+                "date": "2026-09-17 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "C",
+              "name": "session_start"
+            },
+            "id": "sessionstart-sessionstart-2",
+            "metrics": {
+              "average": 66,
+              "max": 66,
+              "min": 66,
+              "sum": 66
+            },
+            "names": [
+              "(C) session_start"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 72,
+                "date": "2026-09-17 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "B",
+              "name": "button_click"
+            },
+            "id": "buttonclick-buttonclick-1",
+            "metrics": {
+              "average": 72,
+              "max": 72,
+              "min": 72,
+              "sum": 72
+            },
+            "names": [
+              "(B) Clicks"
+            ]
+          }
+        ]
+      }
+    },
+    "bar sthlm 30min all events": {
+      "output": {
+        "metrics": {
+          "average": 21,
+          "max": 21,
+          "min": 21,
+          "sum": 21
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 21,
+                "date": "2026-09-24 04:45:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "*"
+            },
+            "id": "0",
+            "metrics": {
+              "average": 21,
+              "max": 21,
+              "min": 21,
+              "sum": 21
+            },
+            "names": [
+              "*"
+            ]
+          }
+        ]
+      }
+    },
+    "metric utc 12m screen_view users": {
+      "output": {
+        "metrics": {
+          "average": 48,
+          "max": 48,
+          "min": 48,
+          "sum": 48
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 48,
+                "date": "2025-09-01 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 48,
+              "max": 48,
+              "min": 48,
+              "sum": 48
+            },
+            "names": [
+              "screen_view"
+            ]
+          }
+        ]
+      }
+    },
+    "segment user sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 48,
+          "max": 48,
+          "min": 48,
+          "sum": 48
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 48,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 48,
+              "max": 48,
+              "min": 48,
+              "sum": 48
+            },
+            "names": [
+              "screen_view"
+            ]
+          }
+        ]
+      }
+    },
+    "segment session sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 263,
+          "max": 263,
+          "min": 263,
+          "sum": 263
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 263,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 263,
+              "max": 263,
+              "min": 263,
+              "sum": 263
+            },
+            "names": [
+              "screen_view"
+            ]
+          }
+        ]
+      }
+    },
+    "segment group sthlm 30d *": {
+      "output": {
+        "metrics": {
+          "average": 3,
+          "max": 3,
+          "min": 3,
+          "sum": 3
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 3,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "*"
+            },
+            "id": "0",
+            "metrics": {
+              "average": 3,
+              "max": 3,
+              "min": 3,
+              "sum": 3
+            },
+            "names": [
+              "*"
+            ]
+          }
+        ]
+      }
+    },
+    "segment user_average sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 15.98,
+          "max": 15.979166666666666,
+          "min": 15.979166666666666,
+          "sum": 15.98
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 15.979166666666666,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 15.98,
+              "max": 15.979166666666666,
+              "min": 15.979166666666666,
+              "sum": 15.98
+            },
+            "names": [
+              "screen_view"
+            ]
+          }
+        ]
+      }
+    },
+    "segment one_event_per_user sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 48,
+          "max": 48,
+          "min": 48,
+          "sum": 48
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 48,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 48,
+              "max": 48,
+              "min": 48,
+              "sum": 48
+            },
+            "names": [
+              "screen_view"
+            ]
+          }
+        ]
+      }
+    },
+    "segment one_event_per_user with group and profile filters sthlm 30d *": {
+      "output": {
+        "metrics": {
+          "average": 3,
+          "max": 3,
+          "min": 3,
+          "sum": 3
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 3,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "*"
+            },
+            "id": "0",
+            "metrics": {
+              "average": 3,
+              "max": 3,
+              "min": 3,
+              "sum": 3
+            },
+            "names": [
+              "*"
+            ]
+          }
+        ]
+      }
+    },
+    "segment property_min revenue sthlm 30d revenue": {
+      "output": {
+        "metrics": {
+          "average": 999,
+          "max": 999,
+          "min": 999,
+          "sum": 999
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 999,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "revenue"
+            },
+            "id": "revenue-revenue-0",
+            "metrics": {
+              "average": 999,
+              "max": 999,
+              "min": 999,
+              "sum": 999
+            },
+            "names": [
+              "revenue"
+            ]
+          }
+        ]
+      }
+    },
+    "segment property_average properties.price sthlm 30d button_click": {
+      "output": {
+        "metrics": {
+          "average": 9.71,
+          "max": 9.705633802816902,
+          "min": 9.705633802816902,
+          "sum": 9.71
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 9.705633802816902,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "button_click"
+            },
+            "id": "buttonclick-buttonclick-0",
+            "metrics": {
+              "average": 9.71,
+              "max": 9.705633802816902,
+              "min": 9.705633802816902,
+              "sum": 9.71
+            },
+            "names": [
+              "button_click"
+            ]
+          }
+        ]
+      }
+    },
+    "segment property_max duration sthlm 30d session_end": {
+      "output": {
+        "metrics": {
+          "average": 946000,
+          "max": 946000,
+          "min": 946000,
+          "sum": 946000
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 946000,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "session_end"
+            },
+            "id": "sessionend-sessionend-0",
+            "metrics": {
+              "average": 946000,
+              "max": 946000,
+              "min": 946000,
+              "sum": 946000
+            },
+            "names": [
+              "session_end"
+            ]
+          }
+        ]
+      }
+    },
+    "segment property_sum profile.properties.age sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 4052,
+          "max": 4052,
+          "min": 4052,
+          "sum": 4052
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 4052,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 4052,
+              "max": 4052,
+              "min": 4052,
+              "sum": 4052
+            },
+            "names": [
+              "screen_view"
+            ]
+          }
+        ]
+      }
+    },
+    "segment property_average group.properties.seats sthlm 30d *": {
+      "output": {
+        "metrics": {
+          "average": 20.15,
+          "max": 20.15,
+          "min": 20.15,
+          "sum": 20.15
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 20.15,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "*"
+            },
+            "id": "0",
+            "metrics": {
+              "average": 20.15,
+              "max": 20.15,
+              "min": 20.15,
+              "sum": 20.15
+            },
+            "names": [
+              "*"
+            ]
+          }
+        ]
+      }
+    },
+    "breakdown device sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 255.67,
+          "max": 497,
+          "min": 24,
+          "sum": 767
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 24,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "tablet"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-tablet-0",
+            "metrics": {
+              "average": 24,
+              "max": 24,
+              "min": 24,
+              "sum": 24
+            },
+            "names": [
+              "screen_view",
+              "tablet"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 246,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "mobile"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-mobile-0",
+            "metrics": {
+              "average": 246,
+              "max": 246,
+              "min": 246,
+              "sum": 246
+            },
+            "names": [
+              "screen_view",
+              "mobile"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 497,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "desktop"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-desktop-0",
+            "metrics": {
+              "average": 497,
+              "max": 497,
+              "min": 497,
+              "sum": 497
+            },
+            "names": [
+              "screen_view",
+              "desktop"
+            ]
+          }
+        ]
+      }
+    },
+    "breakdown referrer_name (empty value unlabeled) ny 30d session_start": {
+      "output": {
+        "metrics": {
+          "average": 37.14,
+          "max": 62,
+          "min": 22,
+          "sum": 260
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 22,
+                "date": "2026-08-24 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "referrer_name": "Reddit"
+              },
+              "id": "A",
+              "name": "session_start"
+            },
+            "id": "sessionstart-sessionstart-reddit-0",
+            "metrics": {
+              "average": 22,
+              "max": 22,
+              "min": 22,
+              "sum": 22
+            },
+            "names": [
+              "session_start",
+              "Reddit"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 27,
+                "date": "2026-08-24 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "referrer_name": "Twitter"
+              },
+              "id": "A",
+              "name": "session_start"
+            },
+            "id": "sessionstart-sessionstart-twitter-0",
+            "metrics": {
+              "average": 27,
+              "max": 27,
+              "min": 27,
+              "sum": 27
+            },
+            "names": [
+              "session_start",
+              "Twitter"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 30,
+                "date": "2026-08-24 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "referrer_name": "Newsletter"
+              },
+              "id": "A",
+              "name": "session_start"
+            },
+            "id": "sessionstart-sessionstart-newsletter-0",
+            "metrics": {
+              "average": 30,
+              "max": 30,
+              "min": 30,
+              "sum": 30
+            },
+            "names": [
+              "session_start",
+              "Newsletter"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 33,
+                "date": "2026-08-24 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "referrer_name": "GitHub"
+              },
+              "id": "A",
+              "name": "session_start"
+            },
+            "id": "sessionstart-sessionstart-github-0",
+            "metrics": {
+              "average": 33,
+              "max": 33,
+              "min": 33,
+              "sum": 33
+            },
+            "names": [
+              "session_start",
+              "GitHub"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 39,
+                "date": "2026-08-24 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "referrer_name": "DuckDuckGo"
+              },
+              "id": "A",
+              "name": "session_start"
+            },
+            "id": "sessionstart-sessionstart-duckduckgo-0",
+            "metrics": {
+              "average": 39,
+              "max": 39,
+              "min": 39,
+              "sum": 39
+            },
+            "names": [
+              "session_start",
+              "DuckDuckGo"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 47,
+                "date": "2026-08-24 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "session_start"
+            },
+            "id": "sessionstart-sessionstart-0",
+            "metrics": {
+              "average": 47,
+              "max": 47,
+              "min": 47,
+              "sum": 47
+            },
+            "names": [
+              "session_start"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 62,
+                "date": "2026-08-24 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "referrer_name": "Google"
+              },
+              "id": "A",
+              "name": "session_start"
+            },
+            "id": "sessionstart-sessionstart-google-0",
+            "metrics": {
+              "average": 62,
+              "max": 62,
+              "min": 62,
+              "sum": 62
+            },
+            "names": [
+              "session_start",
+              "Google"
+            ]
+          }
+        ]
+      }
+    },
+    "breakdown country+device (country isNotNull) sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 66.27,
+          "max": 121,
+          "min": 17,
+          "sum": 729
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 112,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "DE",
+                "device": "desktop"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-de-desktop-0",
+            "metrics": {
+              "average": 112,
+              "max": 112,
+              "min": 112,
+              "sum": 112
+            },
+            "names": [
+              "screen_view",
+              "DE",
+              "desktop"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 120,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "GB",
+                "device": "desktop"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-gb-desktop-0",
+            "metrics": {
+              "average": 120,
+              "max": 120,
+              "min": 120,
+              "sum": 120
+            },
+            "names": [
+              "screen_view",
+              "GB",
+              "desktop"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 121,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "IN",
+                "device": "desktop"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-in-desktop-0",
+            "metrics": {
+              "average": 121,
+              "max": 121,
+              "min": 121,
+              "sum": 121
+            },
+            "names": [
+              "screen_view",
+              "IN",
+              "desktop"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 17,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "GB",
+                "device": "mobile"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-gb-mobile-0",
+            "metrics": {
+              "average": 17,
+              "max": 17,
+              "min": 17,
+              "sum": 17
+            },
+            "names": [
+              "screen_view",
+              "GB",
+              "mobile"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 24,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "US",
+                "device": "tablet"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-us-tablet-0",
+            "metrics": {
+              "average": 24,
+              "max": 24,
+              "min": 24,
+              "sum": 24
+            },
+            "names": [
+              "screen_view",
+              "US",
+              "tablet"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 28,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "US",
+                "device": "mobile"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-us-mobile-0",
+            "metrics": {
+              "average": 28,
+              "max": 28,
+              "min": 28,
+              "sum": 28
+            },
+            "names": [
+              "screen_view",
+              "US",
+              "mobile"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 42,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "IN",
+                "device": "mobile"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-in-mobile-0",
+            "metrics": {
+              "average": 42,
+              "max": 42,
+              "min": 42,
+              "sum": 42
+            },
+            "names": [
+              "screen_view",
+              "IN",
+              "mobile"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 60,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "SE",
+                "device": "desktop"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-se-desktop-0",
+            "metrics": {
+              "average": 60,
+              "max": 60,
+              "min": 60,
+              "sum": 60
+            },
+            "names": [
+              "screen_view",
+              "SE",
+              "desktop"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 60,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "SE",
+                "device": "mobile"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-se-mobile-0",
+            "metrics": {
+              "average": 60,
+              "max": 60,
+              "min": 60,
+              "sum": 60
+            },
+            "names": [
+              "screen_view",
+              "SE",
+              "mobile"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 64,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "US",
+                "device": "desktop"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-us-desktop-0",
+            "metrics": {
+              "average": 64,
+              "max": 64,
+              "min": 64,
+              "sum": 64
+            },
+            "names": [
+              "screen_view",
+              "US",
+              "desktop"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 81,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "country": "DE",
+                "device": "mobile"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-de-mobile-0",
+            "metrics": {
+              "average": 81,
+              "max": 81,
+              "min": 81,
+              "sum": 81
+            },
+            "names": [
+              "screen_view",
+              "DE",
+              "mobile"
+            ]
+          }
+        ]
+      }
+    },
+    "breakdown profile.properties.plan with a profile.properties.age filter sthlm 30d screen_view users": {
+      "output": {
+        "metrics": {
+          "average": 1.67,
+          "max": 3,
+          "min": 1,
+          "sum": 5
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 1,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "profile.properties.plan": "enterprise"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-enterprise-0",
+            "metrics": {
+              "average": 1,
+              "max": 1,
+              "min": 1,
+              "sum": 1
+            },
+            "names": [
+              "screen_view",
+              "enterprise"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 1,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "profile.properties.plan": "free"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-free-0",
+            "metrics": {
+              "average": 1,
+              "max": 1,
+              "min": 1,
+              "sum": 1
+            },
+            "names": [
+              "screen_view",
+              "free"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 3,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "profile.properties.plan": "pro"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-pro-0",
+            "metrics": {
+              "average": 3,
+              "max": 3,
+              "min": 3,
+              "sum": 3
+            },
+            "names": [
+              "screen_view",
+              "pro"
+            ]
+          }
+        ]
+      }
+    },
+    "breakdown group.name sthlm 30d screen_view sessions": {
+      "output": {
+        "metrics": {
+          "average": 14,
+          "max": 17,
+          "min": 11,
+          "sum": 42
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 11,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "group.name": "Globex Corporation"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-globex-corporation-0",
+            "metrics": {
+              "average": 11,
+              "max": 11,
+              "min": 11,
+              "sum": 11
+            },
+            "names": [
+              "screen_view",
+              "Globex Corporation"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 14,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "group.name": "Acme Inc"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-acme-inc-0",
+            "metrics": {
+              "average": 14,
+              "max": 14,
+              "min": 14,
+              "sum": 14
+            },
+            "names": [
+              "screen_view",
+              "Acme Inc"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 17,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "group.name": "Initech"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-initech-0",
+            "metrics": {
+              "average": 17,
+              "max": 17,
+              "min": 17,
+              "sum": 17
+            },
+            "names": [
+              "screen_view",
+              "Initech"
+            ]
+          }
+        ]
+      }
+    },
+    "breakdown cohort:power users sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 383.5,
+          "max": 733,
+          "min": 34,
+          "sum": 767
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 34,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "cohort:0b4c6f1e-2f0a-4f4e-9d8a-6e2f7c1a9b01": "Power users"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-power-users-0",
+            "metrics": {
+              "average": 34,
+              "max": 34,
+              "min": 34,
+              "sum": 34
+            },
+            "names": [
+              "screen_view",
+              "Power users"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 733,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "cohort:0b4c6f1e-2f0a-4f4e-9d8a-6e2f7c1a9b01": "Not Power users"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-not-power-users-0",
+            "metrics": {
+              "average": 733,
+              "max": 733,
+              "min": 733,
+              "sum": 733
+            },
+            "names": [
+              "screen_view",
+              "Not Power users"
+            ]
+          }
+        ]
+      }
+    },
+    "breakdown all cohorts sthlm 30d screen_view users": {
+      "output": {
+        "metrics": {
+          "average": 3,
+          "max": 3,
+          "min": 3,
+          "sum": 6
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 3,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "cohort": "Free plan"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-free-plan-0",
+            "metrics": {
+              "average": 3,
+              "max": 3,
+              "min": 3,
+              "sum": 3
+            },
+            "names": [
+              "screen_view",
+              "Free plan"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 3,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "cohort": "Power users"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-power-users-0",
+            "metrics": {
+              "average": 3,
+              "max": 3,
+              "min": 3,
+              "sum": 3
+            },
+            "names": [
+              "screen_view",
+              "Power users"
+            ]
+          }
+        ]
+      }
+    },
+    "breakdown all cohorts with only anonymous events (fallback) sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 645,
+          "max": 645,
+          "min": 645,
+          "sum": 645
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 645,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 645,
+              "max": 645,
+              "min": 645,
+              "sum": 645
+            },
+            "names": [
+              "screen_view"
+            ]
+          }
+        ]
+      }
+    },
+    "breakdown device limit 2 sthlm 30d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 371.5,
+          "max": 497,
+          "min": 246,
+          "sum": 743
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 246,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "mobile"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-mobile-0",
+            "metrics": {
+              "average": 246,
+              "max": 246,
+              "min": 246,
+              "sum": 246
+            },
+            "names": [
+              "screen_view",
+              "mobile"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 497,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "desktop"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-desktop-0",
+            "metrics": {
+              "average": 497,
+              "max": 497,
+              "min": 497,
+              "sum": 497
+            },
+            "names": [
+              "screen_view",
+              "desktop"
+            ]
+          }
+        ]
+      }
+    },
+    "breakdown device of an event that never happened sthlm 30d": {
+      "output": {
+        "metrics": {
+          "average": 0,
+          "max": 0,
+          "min": 0,
+          "sum": 0
+        },
+        "series": []
+      }
+    },
+    "breakdown name dst sthlm 2026-03-29 all events": {
+      "output": {
+        "metrics": {
+          "average": 5,
+          "max": 12,
+          "min": 2,
+          "sum": 25
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 12,
+                "date": "2026-03-29 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "name": "screen_view"
+              },
+              "id": "A",
+              "name": "*"
+            },
+            "id": "screenview-0",
+            "metrics": {
+              "average": 12,
+              "max": 12,
+              "min": 12,
+              "sum": 12
+            },
+            "names": [
+              "*",
+              "screen_view"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 2,
+                "date": "2026-03-29 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "name": "link_out"
+              },
+              "id": "A",
+              "name": "*"
+            },
+            "id": "linkout-0",
+            "metrics": {
+              "average": 2,
+              "max": 2,
+              "min": 2,
+              "sum": 2
+            },
+            "names": [
+              "*",
+              "link_out"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 3,
+                "date": "2026-03-29 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "name": "button_click"
+              },
+              "id": "A",
+              "name": "*"
+            },
+            "id": "buttonclick-0",
+            "metrics": {
+              "average": 3,
+              "max": 3,
+              "min": 3,
+              "sum": 3
+            },
+            "names": [
+              "*",
+              "button_click"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 4,
+                "date": "2026-03-29 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "name": "session_end"
+              },
+              "id": "A",
+              "name": "*"
+            },
+            "id": "sessionend-0",
+            "metrics": {
+              "average": 4,
+              "max": 4,
+              "min": 4,
+              "sum": 4
+            },
+            "names": [
+              "*",
+              "session_end"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 4,
+                "date": "2026-03-29 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "name": "session_start"
+              },
+              "id": "A",
+              "name": "*"
+            },
+            "id": "sessionstart-0",
+            "metrics": {
+              "average": 4,
+              "max": 4,
+              "min": 4,
+              "sum": 4
+            },
+            "names": [
+              "*",
+              "session_start"
+            ]
+          }
+        ]
+      }
+    },
+    "filter group.properties.plan and profile.properties.age sthlm 30d all events": {
+      "output": {
+        "metrics": {
+          "average": 135,
+          "max": 135,
+          "min": 135,
+          "sum": 135
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 135,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "*"
+            },
+            "id": "0",
+            "metrics": {
+              "average": 135,
+              "max": 135,
+              "min": 135,
+              "sum": 135
+            },
+            "names": [
+              "*"
+            ]
+          }
+        ]
+      }
+    },
+    "filter globalFilters device is mobile over two series ny 30d": {
+      "output": {
+        "metrics": {
+          "average": 121,
+          "max": 181,
+          "min": 61,
+          "sum": 242
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 181,
+                "date": "2026-08-24 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 181,
+              "max": 181,
+              "min": 181,
+              "sum": 181
+            },
+            "names": [
+              "(A) screen_view"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 61,
+                "date": "2026-08-24 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "B",
+              "name": "session_start"
+            },
+            "id": "sessionstart-sessionstart-1",
+            "metrics": {
+              "average": 61,
+              "max": 61,
+              "min": 61,
+              "sum": 61
+            },
+            "names": [
+              "(B) session_start"
+            ]
+          }
+        ]
+      }
+    },
+    "filter path contains docs window 14..8 days before the anchor": {
+      "output": {
+        "metrics": {
+          "average": 22,
+          "max": 22,
+          "min": 22,
+          "sum": 22
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 22,
+                "date": "2026-09-10 00:00:00"
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 22,
+              "max": 22,
+              "min": 22,
+              "sum": 22
+            },
+            "names": [
+              "screen_view"
+            ]
+          }
+        ]
+      }
+    },
+    "previous ny 7d screen_view": {
+      "output": {
+        "metrics": {
+          "average": 212,
+          "max": 212,
+          "min": 212,
+          "sum": 212
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 212,
+                "date": "2026-09-16 00:00:00",
+                "previous": {
+                  "diff": 17.8,
+                  "state": "positive",
+                  "value": 180
+                }
+              }
+            ],
+            "event": {
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-0",
+            "metrics": {
+              "average": 212,
+              "max": 212,
+              "min": 212,
+              "previous": {
+                "average": {
+                  "diff": 17.8,
+                  "state": "positive",
+                  "value": 180
+                },
+                "max": {
+                  "diff": 17.8,
+                  "state": "positive",
+                  "value": 180
+                },
+                "min": {
+                  "diff": 17.8,
+                  "state": "positive",
+                  "value": 180
+                },
+                "sum": {
+                  "diff": 17.8,
+                  "state": "positive",
+                  "value": 180
+                }
+              },
+              "sum": 212
+            },
+            "names": [
+              "screen_view"
+            ]
+          }
+        ]
+      }
+    },
+    "previous sthlm 30d screen_view by device": {
+      "output": {
+        "metrics": {
+          "average": 255.67,
+          "max": 497,
+          "min": 24,
+          "sum": 767
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 24,
+                "date": "2026-08-25 00:00:00",
+                "previous": {
+                  "diff": 33.3,
+                  "state": "positive",
+                  "value": 18
+                }
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "tablet"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-tablet-0",
+            "metrics": {
+              "average": 24,
+              "max": 24,
+              "min": 24,
+              "previous": {
+                "average": {
+                  "diff": 33.3,
+                  "state": "positive",
+                  "value": 18
+                },
+                "max": {
+                  "diff": 33.3,
+                  "state": "positive",
+                  "value": 18
+                },
+                "min": {
+                  "diff": 33.3,
+                  "state": "positive",
+                  "value": 18
+                },
+                "sum": {
+                  "diff": 33.3,
+                  "state": "positive",
+                  "value": 18
+                }
+              },
+              "sum": 24
+            },
+            "names": [
+              "screen_view",
+              "tablet"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 246,
+                "date": "2026-08-25 00:00:00",
+                "previous": {
+                  "diff": 17.5,
+                  "state": "negative",
+                  "value": 289
+                }
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "mobile"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-mobile-0",
+            "metrics": {
+              "average": 246,
+              "max": 246,
+              "min": 246,
+              "previous": {
+                "average": {
+                  "diff": 17.5,
+                  "state": "negative",
+                  "value": 289
+                },
+                "max": {
+                  "diff": 17.5,
+                  "state": "negative",
+                  "value": 289
+                },
+                "min": {
+                  "diff": 17.5,
+                  "state": "negative",
+                  "value": 289
+                },
+                "sum": {
+                  "diff": 17.5,
+                  "state": "negative",
+                  "value": 289
+                }
+              },
+              "sum": 246
+            },
+            "names": [
+              "screen_view",
+              "mobile"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 497,
+                "date": "2026-08-25 00:00:00",
+                "previous": {
+                  "diff": 5.3,
+                  "state": "positive",
+                  "value": 472
+                }
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "desktop"
+              },
+              "id": "A",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-desktop-0",
+            "metrics": {
+              "average": 497,
+              "max": 497,
+              "min": 497,
+              "previous": {
+                "average": {
+                  "diff": 5.3,
+                  "state": "positive",
+                  "value": 472
+                },
+                "max": {
+                  "diff": 5.3,
+                  "state": "positive",
+                  "value": 472
+                },
+                "min": {
+                  "diff": 5.3,
+                  "state": "positive",
+                  "value": 472
+                },
+                "sum": {
+                  "diff": 5.3,
+                  "state": "positive",
+                  "value": 472
+                }
+              },
+              "sum": 497
+            },
+            "names": [
+              "screen_view",
+              "desktop"
+            ]
+          }
+        ]
+      }
+    },
+    "formula A/B by device sthlm 30d": {
+      "output": {
+        "metrics": {
+          "average": 115.69,
+          "max": 497,
+          "min": 0.35,
+          "sum": 1041.18
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 0.35,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "desktop"
+              },
+              "id": "C",
+              "name": "A/B"
+            },
+            "id": "formula-c-desktop",
+            "metrics": {
+              "average": 0.35,
+              "max": 0.35,
+              "min": 0.35,
+              "sum": 0.35
+            },
+            "names": [
+              "(C) A/B",
+              "desktop"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 0.37,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "mobile"
+              },
+              "id": "C",
+              "name": "A/B"
+            },
+            "id": "formula-c-mobile",
+            "metrics": {
+              "average": 0.37,
+              "max": 0.37,
+              "min": 0.37,
+              "sum": 0.37
+            },
+            "names": [
+              "(C) A/B",
+              "mobile"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 0.46,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "tablet"
+              },
+              "id": "C",
+              "name": "A/B"
+            },
+            "id": "formula-c-tablet",
+            "metrics": {
+              "average": 0.46,
+              "max": 0.46,
+              "min": 0.46,
+              "sum": 0.46
+            },
+            "names": [
+              "(C) A/B",
+              "tablet"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 11,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "tablet"
+              },
+              "id": "A",
+              "name": "button_click"
+            },
+            "id": "buttonclick-buttonclick-tablet-0",
+            "metrics": {
+              "average": 11,
+              "max": 11,
+              "min": 11,
+              "sum": 11
+            },
+            "names": [
+              "(A) button_click",
+              "tablet"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 172,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "desktop"
+              },
+              "id": "A",
+              "name": "button_click"
+            },
+            "id": "buttonclick-buttonclick-desktop-0",
+            "metrics": {
+              "average": 172,
+              "max": 172,
+              "min": 172,
+              "sum": 172
+            },
+            "names": [
+              "(A) button_click",
+              "desktop"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 24,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "tablet"
+              },
+              "id": "B",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-tablet-1",
+            "metrics": {
+              "average": 24,
+              "max": 24,
+              "min": 24,
+              "sum": 24
+            },
+            "names": [
+              "(B) screen_view",
+              "tablet"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 246,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "mobile"
+              },
+              "id": "B",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-mobile-1",
+            "metrics": {
+              "average": 246,
+              "max": 246,
+              "min": 246,
+              "sum": 246
+            },
+            "names": [
+              "(B) screen_view",
+              "mobile"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 497,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "desktop"
+              },
+              "id": "B",
+              "name": "screen_view"
+            },
+            "id": "screenview-screenview-desktop-1",
+            "metrics": {
+              "average": 497,
+              "max": 497,
+              "min": 497,
+              "sum": 497
+            },
+            "names": [
+              "(B) screen_view",
+              "desktop"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 90,
+                "date": "2026-08-25 00:00:00"
+              }
+            ],
+            "event": {
+              "breakdowns": {
+                "device": "mobile"
+              },
+              "id": "A",
+              "name": "button_click"
+            },
+            "id": "buttonclick-buttonclick-mobile-0",
+            "metrics": {
+              "average": 90,
+              "max": 90,
+              "min": 90,
+              "sum": 90
+            },
+            "names": [
+              "(A) button_click",
+              "mobile"
+            ]
+          }
+        ]
+      }
+    },
+    "formula displayName hideSeries with previous ny 30d": {
+      "output": {
+        "metrics": {
+          "average": 133.01,
+          "max": 260,
+          "min": 6.03,
+          "sum": 266.03
+        },
+        "series": [
+          {
+            "data": [
+              {
+                "count": 260,
+                "date": "2026-08-24 00:00:00",
+                "previous": {
+                  "diff": 20.9,
+                  "state": "positive",
+                  "value": 215
+                }
+              }
+            ],
+            "event": {
+              "id": "B",
+              "name": "session_start"
+            },
+            "id": "sessionstart-sessionstart-1",
+            "metrics": {
+              "average": 260,
+              "max": 260,
+              "min": 260,
+              "previous": {
+                "average": {
+                  "diff": 20.9,
+                  "state": "positive",
+                  "value": 215
+                },
+                "max": {
+                  "diff": 20.9,
+                  "state": "positive",
+                  "value": 215
+                },
+                "min": {
+                  "diff": 20.9,
+                  "state": "positive",
+                  "value": 215
+                },
+                "sum": {
+                  "diff": 20.9,
+                  "state": "positive",
+                  "value": 215
+                }
+              },
+              "sum": 260
+            },
+            "names": [
+              "(B) session_start"
+            ]
+          },
+          {
+            "data": [
+              {
+                "count": 6.03,
+                "date": "2026-08-24 00:00:00",
+                "previous": {
+                  "diff": 0.2,
+                  "state": "positive",
+                  "value": 6.02
+                }
+              }
+            ],
+            "event": {
+              "id": "C",
+              "name": "Revenue per session"
+            },
+            "id": "formula-c-default",
+            "metrics": {
+              "average": 6.03,
+              "max": 6.03,
+              "min": 6.03,
+              "previous": {
+                "average": {
+                  "diff": 0.2,
+                  "state": "positive",
+                  "value": 6.02
+                },
+                "max": {
+                  "diff": 0.2,
+                  "state": "positive",
+                  "value": 6.02
+                },
+                "min": {
+                  "diff": 0.2,
+                  "state": "positive",
+                  "value": 6.02
+                },
+                "sum": {
+                  "diff": 0.2,
+                  "state": "positive",
+                  "value": 6.02
+                }
+              },
+              "sum": 6.03
+            },
+            "names": [
+              "(C) Revenue per session"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
