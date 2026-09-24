@@ -54,6 +54,15 @@ overrides:
   rolldown: 1.0.0-beta.43
   esm-env: npm:esm-env-runtime@^0.1.0
 
+  # The rolldown pin above is for tsdown (apps/api, apps/worker). Vite 8 - which
+  # apps/public builds with, through vinext - is itself built on rolldown and
+  # declares `rolldown: ~1.2.x`. Forced down to 1.0.0-beta.43 it cannot even be
+  # imported (rolldown/plugins is not exported yet), which already fails
+  # `pnpm install` in apps/public's postinstall. Exempt it the same way
+  # @nuxt/vite-builder is exempted from the seroval pin below, and keep this
+  # range in step with the one vite declares.
+  "vite@8>rolldown": ~1.2.6
+
   # seroval 1.4.0 dropped createEffectfulFunction from the serializer context
   # class, which seroval-plugins <=1.3.3 calls from its plugin serialize(). The
   # two are simply not compatible, and seroval shipped it as a minor - so any

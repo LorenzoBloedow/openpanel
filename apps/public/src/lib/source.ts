@@ -1,6 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   articleCollection,
   docs,
@@ -11,9 +8,8 @@ import { type InferPageType, loader } from 'fumadocs-core/source';
 import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
 import { toFumadocsSource } from 'fumadocs-mdx/runtime/server';
 import { OPENPANEL_BASE_URL } from './openpanel-brand';
-import type { CompareData } from './compare';
-import type { FeatureData } from './features';
-import { loadFeatureSourceSync } from './features';
+import { type CompareData, getAllCompareData } from './compare';
+import { type FeatureData, loadFeatureSourceSync } from './features';
 
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader({
@@ -59,43 +55,6 @@ URL: ${canonical}
 ${processed}`;
 }
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const contentDir = path.join(__dirname, '../../content/compare');
-
-function loadCompareSource(): CompareData[] {
-  try {
-    // Check if directory exists before trying to read it
-    if (!fs.existsSync(contentDir)) {
-      return [];
-    }
-
-    const files = fs
-      .readdirSync(contentDir)
-      .filter((file) => file.endsWith('.json'));
-
-    return files
-      .map((file) => {
-        const filePath = path.join(contentDir, file);
-        const fileContents = fs.readFileSync(filePath, 'utf8');
-        try {
-          return JSON.parse(fileContents) as CompareData;
-        } catch (error) {
-          console.error(`Error parsing compare data for ${file}:`, error);
-          return null;
-        }
-      })
-      .flatMap((item) => (item ? [item] : []))
-      .map((item) => ({
-        ...item,
-        url: `/compare/${item.slug}`,
-      }));
-  } catch (error) {
-    console.error('Error loading compare source:', error);
-    return [];
-  }
-}
-
-export const compareSource: CompareData[] = loadCompareSource();
+export const compareSource: CompareData[] = getAllCompareData();
 
 export const featureSource: FeatureData[] = loadFeatureSourceSync();

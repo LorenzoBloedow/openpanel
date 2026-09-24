@@ -1,5 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { collectBySlug } from './content-json';
 
 export interface FeatureSeo {
   title: string;
@@ -100,63 +99,29 @@ export interface FeatureData {
   cta: FeatureCta;
 }
 
-const contentDir = join(process.cwd(), 'content', 'features');
+const featureBySlug: Map<string, FeatureData> = collectBySlug(
+  import.meta.glob<Omit<FeatureData, 'url'>>('/content/features/*.json', {
+    eager: true,
+    import: 'default',
+  }),
+  '/features',
+);
 
 export async function getFeatureData(
   slug: string,
 ): Promise<FeatureData | null> {
-  try {
-    const filePath = join(contentDir, `${slug}.json`);
-    const fileContents = readFileSync(filePath, 'utf8');
-    const data = JSON.parse(fileContents) as Omit<FeatureData, 'url'>;
-    return {
-      ...data,
-      url: `/features/${slug}`,
-    };
-  } catch (error) {
-    console.error(`Error loading feature data for ${slug}:`, error);
-    return null;
-  }
+  return featureBySlug.get(slug) ?? null;
 }
 
 export async function getAllFeatureSlugs(): Promise<string[]> {
-  try {
-    const files = readdirSync(contentDir);
-    return files
-      .filter((file) => file.endsWith('.json'))
-      .map((file) => file.replace('.json', ''));
-  } catch (error) {
-    console.error('Error reading features directory:', error);
-    return [];
-  }
+  return [...featureBySlug.keys()];
 }
 
 export async function loadFeatureSource(): Promise<FeatureData[]> {
-  const slugs = await getAllFeatureSlugs();
-  const results: FeatureData[] = [];
-  for (const slug of slugs) {
-    const data = await getFeatureData(slug);
-    if (data) results.push(data);
-  }
-  return results;
+  return loadFeatureSourceSync();
 }
 
 /** Sync loader for use in source.ts (same pattern as compareSource). */
 export function loadFeatureSourceSync(): FeatureData[] {
-  try {
-    const files = readdirSync(contentDir);
-    return files
-      .filter((file) => file.endsWith('.json'))
-      .map((file) => {
-        const slug = file.replace('.json', '');
-        const filePath = join(contentDir, file);
-        const fileContents = readFileSync(filePath, 'utf8');
-        const data = JSON.parse(fileContents) as Omit<FeatureData, 'url'>;
-        return { ...data, url: `/features/${slug}` };
-      });
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
-    console.error('Error loading feature source:', error);
-    return [];
-  }
+  return [...featureBySlug.values()];
 }
