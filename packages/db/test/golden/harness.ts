@@ -1,15 +1,16 @@
 /**
- * Golden comparison between the ClickHouse services and their Postgres
- * ports.
+ * Golden comparison between the original ClickHouse services and their
+ * Postgres ports.
  *
  * Case definitions (test/golden/cases/*.ts) call service functions through
- * their normal import paths. The capture run (vitest.golden.config.ts, local
- * ClickHouse 26.1, the original code) records their output into
- * test/golden/data/<group>.json. After a service is ported, its
+ * their normal import paths. Their outputs were captured once from the
+ * original ClickHouse code (local ClickHouse 26.1) into
+ * test/golden/data/<group>.json; the capture tooling left the repository
+ * with ClickHouse, and the JSON is the frozen spec. Each
  * <group>.golden.test.ts runs the same cases against Postgres, loaded with
  * the same deterministic dataset at the same anchor time, and compares.
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, it, vi } from 'vitest';
@@ -243,7 +244,7 @@ export function findDifference(
     : `${path}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`;
 }
 
-// --- capture and compare ---------------------------------------------------------
+// --- compare ---------------------------------------------------------------------
 
 export interface GoldenFile {
   group: string;
@@ -266,27 +267,6 @@ async function runCase(testCase: GoldenCase, ctx: GoldenContext) {
   } catch (error) {
     return { error: error instanceof Error ? error.message : String(error) };
   }
-}
-
-/** Record every case's output (capture run, original ClickHouse code). */
-export async function captureGroup(
-  group: string,
-  cases: GoldenCase[],
-  ctx: GoldenContext,
-  capturedWith: string,
-) {
-  const file: GoldenFile = {
-    group,
-    anchor: ctx.anchor.toISOString(),
-    capturedWith,
-    cases: {},
-  };
-  for (const testCase of cases) {
-    file.cases[testCase.name] = await runCase(testCase, ctx);
-  }
-  mkdirSync(join(GOLDEN_DIR, 'data'), { recursive: true });
-  writeFileSync(goldenDataPath(group), `${JSON.stringify(file, null, 2)}\n`);
-  return file;
 }
 
 export function readGoldenFile(group: string): GoldenFile {

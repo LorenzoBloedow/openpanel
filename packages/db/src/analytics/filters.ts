@@ -1,7 +1,7 @@
 /**
  * Report filters and property expressions on Postgres: the successor of the
- * ClickHouse string builders in services/chart.service.ts (helper section)
- * and services/filter-where.service.ts. Everything returns `Sql` fragments;
+ * ClickHouse string builders that lived in services/chart.service.ts and
+ * services/filter-where.service.ts. Everything returns `Sql` fragments;
  * filter values, property keys, cohort ids and project ids are always bind
  * parameters, and the only identifiers spliced in are allowlisted columns
  * and validated aliases.

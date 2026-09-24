@@ -14,15 +14,6 @@ export function printBoxMessage(title: string, lines: (string | unknown)[]) {
   console.log('└──┘');
 }
 
-export function getIsCluster() {
-  const args = process.argv;
-  return (
-    args.includes('--cluster') ||
-    process.env.CLICKHOUSE_CLUSTER === 'true' ||
-    process.env.CLICKHOUSE_CLUSTER === '1'
-  );
-}
-
 export function getIsSelfHosting() {
   return process.env.SELF_HOSTED === 'true' || !!process.env.SELF_HOSTED;
 }

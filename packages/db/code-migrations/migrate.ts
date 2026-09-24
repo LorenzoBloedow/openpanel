@@ -7,7 +7,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import { db } from '../index';
 import {
-  getIsCluster,
   getIsDry,
   getIsSelfHosting,
   getShouldIgnoreRecord,
@@ -18,8 +17,7 @@ const CREDENTIAL_QUERY_PARAMS = new Set(['password', 'sslpassword', 'user']);
 
 /**
  * Connection URLs carry credentials; the startup banner must not put them in
- * container and CI logs. Keeps scheme, host, port and database, drops the
- * rest. ClickHouse accepts a comma-separated list, so each URL is handled.
+ * CI and deploy logs. Keeps scheme, host, port and database, drops the rest.
  */
 function redactConnectionUrls(value: string | undefined): string {
   if (!value) {
@@ -84,14 +82,10 @@ async function migrate() {
       .map((migration) => `\t- ${migration}`),
   ]);
 
-  printBoxMessage('🤝 Config', [
-    `isClustered:   ${getIsCluster()}`,
-    `isSelfHosting: ${getIsSelfHosting()}`,
-  ]);
+  printBoxMessage('🤝 Config', [`isSelfHosting: ${getIsSelfHosting()}`]);
 
   printBoxMessage('🌍 Environment', [
-    `POSTGRES:   ${redactConnectionUrls(process.env.DATABASE_URL)}`,
-    `CLICKHOUSE: ${redactConnectionUrls(process.env.CLICKHOUSE_URL)}`,
+    `POSTGRES: ${redactConnectionUrls(process.env.DATABASE_URL)}`,
   ]);
 
   if (!getIsSelfHosting()) {

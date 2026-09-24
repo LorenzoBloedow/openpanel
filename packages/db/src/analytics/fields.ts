@@ -1,11 +1,8 @@
 /**
  * Field names of report filters, breakdowns and metrics — the part of the
- * ClickHouse chart/filter helpers that has nothing to do with SQL. The
- * Postgres SQL built from these names lives in ./filters.ts.
- *
- * Same names and behaviour as the ClickHouse helpers in
- * services/chart.service.ts and services/filter-where.service.ts, which stay
- * until the last ClickHouse service is ported.
+ * former ClickHouse chart/filter helpers that has nothing to do with SQL,
+ * with the same names and behaviour. The Postgres SQL built from these names
+ * lives in ./filters.ts.
  */
 
 /**

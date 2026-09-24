@@ -24,8 +24,9 @@ import { SlidersHorizontal, Trash } from 'lucide-react';
 import { changeEvent } from '../../reportSlice';
 
 // Client-side sanity check: can this raw value possibly match the chosen cast
-// type? Mirrors the SQL casts in packages/db filter-cast.ts. Returns an error
-// message to show inline, or undefined when valid (or empty / untyped).
+// type? Mirrors the typed casts in packages/db/src/analytics/filters.ts.
+// Returns an error message to show inline, or undefined when valid (or empty
+// / untyped).
 function validateFilterValue(
   value: string,
   type: IChartFilterValueType | undefined,

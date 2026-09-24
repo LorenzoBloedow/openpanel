@@ -29,9 +29,14 @@ Postgres database holding all of its data.
 2. Copy both connection strings from the project's **Connect** dialog:
    - **Direct** (host without `-pooler`): Hyperdrive's origin, migrations and the backup/restore scripts. This is `DATABASE_URL_DIRECT`.
    - **Pooled** (host with `-pooler`): the Workers' background connection, stored as the `DATABASE_URL` secret. Background work opens a short connection per invocation, and PgBouncer absorbs that.
-3. Cap statement run time for the app's role. Hyperdrive stops queries at 60 s anyway:
+3. Set limits and planner settings for the app's role. Hyperdrive stops queries at 60 s anyway:
    ```sql
    ALTER ROLE neondb_owner SET statement_timeout = '30s';
+   -- JIT compiling a dashboard query takes 0.1–0.8 s, more than it saves.
+   ALTER ROLE neondb_owner SET jit = off;
+   -- Funnel, conversion and retention queries sort once per step; at the
+   -- 4 MB default those sorts spill to disk.
+   ALTER ROLE neondb_owner SET work_mem = '32MB';
    ```
 4. For production, turn off scale-to-zero, or set a minimum compute, so the first request after a quiet period doesn't wait for the database to wake up. Size the compute for your event volume. Analytics queries run on Postgres, so start at 1–2 CU and watch the query times.
 5. Neon's history retention (point-in-time restore) is your first line of defense. The R2 backups cover losing the account and give you a portable copy.

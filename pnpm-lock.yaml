@@ -745,9 +745,6 @@ importers:
       sonner:
         specifier: ^1.4.0
         version: 1.4.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      sqlstring:
-        specifier: ^2.3.3
-        version: 2.3.3
       superjson:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1096,9 +1093,6 @@ importers:
 
   packages/db:
     dependencies:
-      '@clickhouse/client':
-        specifier: ^1.18.5
-        version: 1.18.5
       '@noble/hashes':
         specifier: ^2.4.0
         version: 2.4.0
@@ -1153,9 +1147,6 @@ importers:
       ramda:
         specifier: ^0.29.1
         version: 0.29.1
-      sqlstring:
-        specifier: ^2.3.3
-        version: 2.3.3
       superjson:
         specifier: ^1.13.3
         version: 1.13.3
@@ -1178,9 +1169,6 @@ importers:
       '@types/ramda':
         specifier: ^0.29.6
         version: 0.29.10
-      '@types/sqlstring':
-        specifier: ^2.3.2
-        version: 2.3.2
       '@types/uuid':
         specifier: ^9.0.8
         version: 9.0.8
@@ -1782,9 +1770,6 @@ importers:
       short-unique-id:
         specifier: ^5.0.3
         version: 5.0.3
-      sqlstring:
-        specifier: ^2.3.3
-        version: 2.3.3
       superjson:
         specifier: ^1.13.3
         version: 1.13.3
@@ -1804,9 +1789,6 @@ importers:
       '@types/ramda':
         specifier: ^0.29.6
         version: 0.29.10
-      '@types/sqlstring':
-        specifier: ^2.3.2
-        version: 2.3.2
       prisma:
         specifier: ^5.1.1
         version: 5.9.1
@@ -3308,14 +3290,6 @@ packages:
   '@clack/prompts@1.5.0':
     resolution: {integrity: sha512-wKh+wTjmrUoUdkZg8KpJO5X+p9PWV+KE9mePseq9UYWkukgTKsGS47RRL2HstwVcvDQH+PenrPJWII8+MfiiyA==}
     engines: {node: '>= 20.12.0'}
-
-  '@clickhouse/client-common@1.18.5':
-    resolution: {integrity: sha512-g9LwcS1dvkatKDsIjT1PwUHldsiYzwdKAB0nXfd9APLd+t4PrNJa+my+dXcqJdmcWyhWjKLP/2/ztBwgxp+sbQ==}
-    deprecated: 'Deprecated: import from @clickhouse/client or @clickhouse/client-web instead.'
-
-  '@clickhouse/client@1.18.5':
-    resolution: {integrity: sha512-4FfoyMkFWhsdNMuXsoEL6l3c12svA63BBJBtDo9SrxRZ14RdmN6jLr/rF3f84BK8cFoxETZCSeKlsbk6NNYebw==}
-    engines: {node: '>=16'}
 
   '@cloudflare/kv-asset-handler@0.4.2':
     resolution: {integrity: sha512-SIOD2DxrRRwQ+jgzlXCqoEFiKOFqaPjhnNTGKXSRLvp1HiOvapLaFG2kEr9dYQTYe8rKrd9uvDUzmAITeNyaHQ==}
@@ -9357,9 +9331,6 @@ packages:
 
   '@types/source-list-map@0.1.6':
     resolution: {integrity: sha512-5JcVt1u5HDmlXkwOD2nslZVllBBc7HDuOICfiZah2Z0is8M8g+ddAEawbmd3VjedfDHBzxCaXLs07QEmb7y54g==}
-
-  '@types/sqlstring@2.3.2':
-    resolution: {integrity: sha512-lVRe4Iz9UNgiHelKVo8QlC8fb5nfY8+p+jNQNE+UVsuuVlQnWhyWmQ/wF5pE8Ys6TdjfVpqTG9O9i2vi6E0+Sg==}
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
@@ -16849,10 +16820,6 @@ packages:
   sprintf-js@1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
 
-  sqlstring@2.3.3:
-    resolution: {integrity: sha512-qC9iz2FlN7DQl3+wjwn3802RTyjCx7sDvfQEXchwa6CWOx07/WVfh91gBmQ9fahw8snwGEWU3xGzOt4tFyHLxg==}
-    engines: {node: '>= 0.6'}
-
   srvx@0.12.8:
     resolution: {integrity: sha512-7k9HoDhluTlD7UJ+F+OopZoPZXB2J8f/5nW2VMLaB8KsSlZlRQxyyoX0hWEQCxB+F+3ZvB5QX3LqB6xSBRfxQQ==}
     engines: {node: '>=20.16.0'}
@@ -21702,12 +21669,6 @@ snapshots:
       fast-string-width: 3.0.2
       fast-wrap-ansi: 0.2.2
       sisteransi: 1.0.5
-
-  '@clickhouse/client-common@1.18.5': {}
-
-  '@clickhouse/client@1.18.5':
-    dependencies:
-      '@clickhouse/client-common': 1.18.5
 
   '@cloudflare/kv-asset-handler@0.4.2': {}
 
@@ -28615,8 +28576,6 @@ snapshots:
   '@types/shimmer@1.2.0': {}
 
   '@types/source-list-map@0.1.6': {}
-
-  '@types/sqlstring@2.3.2': {}
 
   '@types/stack-utils@2.0.3': {}
 
@@ -38506,8 +38465,6 @@ snapshots:
   split2@4.2.0: {}
 
   sprintf-js@1.0.3: {}
-
-  sqlstring@2.3.3: {}
 
   srvx@0.12.8: {}
 

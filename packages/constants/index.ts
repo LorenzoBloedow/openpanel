@@ -131,9 +131,9 @@ export const operatorsShort: Record<keyof typeof operators, string> = {
 
 // Cast type a filter value/column should be coerced to before comparing.
 // `string` (the default) keeps raw text comparison; the others wrap both sides
-// of the comparison in the matching ClickHouse cast (see packages/db
-// filter-cast.ts) so e.g. a date property compares as a date instead of
-// crashing `toFloat64('2019-01-01')`.
+// of the comparison in the matching cast (see the typed casts in
+// packages/db/src/analytics/filters.ts) so e.g. a date property compares as
+// a date instead of as text.
 export const filterValueTypes = {
   string: 'Text',
   number: 'Number',

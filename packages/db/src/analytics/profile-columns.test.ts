@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isProfileColumn,
   profileJoinColumns,
-} from './filter-where.service';
+} from './fields';
 
 describe('profileJoinColumns (GHSA-pc3q-gw7f-p2x2)', () => {
   it('maps filter names to allowlisted columns and always includes id', () => {
