@@ -12,6 +12,7 @@
   "scripts": {
     "codegen": "pnpm with-env prisma generate && jiti prisma/prisma-json-types.ts",
     "migrate": "pnpm with-env prisma migrate dev",
+    "migrate:analytics": "pnpm with-env jiti ./scripts/migrate-analytics.ts",
     "migrate:deploy:code": "pnpm with-env jiti ./code-migrations/migrate.ts",
     "migrate:deploy:db": "pnpm with-env prisma migrate deploy",
     "migrate:deploy:analytics": "pnpm with-env jiti ./scripts/migrate-analytics.ts",

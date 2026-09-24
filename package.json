@@ -18,6 +18,7 @@
     "db:codegen": "pnpm -r --filter db run codegen",
     "codegen": "pnpm -r --filter db run codegen",
     "migrate": "pnpm -r --filter db run migrate",
+    "migrate:analytics": "pnpm -r --filter db run migrate:analytics",
     "migrate:deploy": "pnpm -r --filter db run migrate:deploy",
     "dev": "pnpm -r --parallel testing",
     "dev:public": "pnpm -r --filter public dev",

@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { listAnalyticsMigrations, migrateAnalytics } from '../analytics/migrate';
 
 /**
  * Throwaway Postgres databases for tests (Node only).
@@ -17,17 +18,14 @@ const DEFAULT_URL = 'postgresql://postgres:postgres@localhost:5432/postgres';
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
-/** Migration directories, applied in order. Phase 3 adds the analytics set. */
-const MIGRATION_SETS = [
-  {
-    dir: join(packageRoot, 'prisma/migrations'),
-    files: (dir: string) =>
-      readdirSync(dir, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => join(dir, entry.name, 'migration.sql'))
-        .sort(),
-  },
-];
+/** Prisma's migrations (the `public` schema), applied in order. */
+function prismaMigrationFiles(): string[] {
+  const dir = join(packageRoot, 'prisma/migrations');
+  return readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => join(dir, entry.name, 'migration.sql'))
+    .sort();
+}
 
 function baseUrl(): string {
   return process.env.TEST_DATABASE_URL ?? DEFAULT_URL;
@@ -41,7 +39,10 @@ function urlFor(database: string): string {
 }
 
 function migrationFiles(): string[] {
-  return MIGRATION_SETS.flatMap((set) => set.files(set.dir));
+  return [
+    ...prismaMigrationFiles(),
+    ...listAnalyticsMigrations().map((migration) => migration.path),
+  ];
 }
 
 function migrationsHash(files: string[]): string {
@@ -98,7 +99,7 @@ export async function ensureTemplateDatabase(): Promise<void> {
       });
       await template.connect();
       try {
-        for (const file of files) {
+        for (const file of prismaMigrationFiles()) {
           try {
             // One simple-protocol script per file, as `prisma migrate` does.
             await template.query(readFileSync(file, 'utf8'));
@@ -108,6 +109,8 @@ export async function ensureTemplateDatabase(): Promise<void> {
             );
           }
         }
+        // The same runner `pnpm migrate:deploy:analytics` uses.
+        await migrateAnalytics(template);
       } finally {
         await template.end();
       }
