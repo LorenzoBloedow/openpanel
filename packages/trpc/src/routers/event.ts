@@ -225,7 +225,8 @@ export const eventRouter = createTRPCRouter({
         projectId: input.projectId,
         startDate: input.startDate ?? undefined,
         endDate: input.endDate ?? undefined,
-        events: input.events ?? undefined,
+        // The conversion events, already narrowed to input.events above.
+        events: filteredConversions.map((event) => event.name),
         take: 50,
         cursor: input.cursor ? new Date(input.cursor) : undefined,
         select: {
@@ -235,9 +236,6 @@ export const eventRouter = createTRPCRouter({
           duration: columnVisibility?.name ?? true,
           projectId: false,
           revenue: true,
-        },
-        custom: (sb) => {
-          sb.where.name = `name IN (${filteredConversions.map((event) => sqlstring.escape(event.name)).join(',')})`;
         },
       });
 

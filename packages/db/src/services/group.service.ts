@@ -1,11 +1,8 @@
 import { toDots } from '@openpanel/common';
-import sqlstring from 'sqlstring';
-import {
-  ch,
-  chQuery,
-  formatClickhouseDate,
-  TABLE_NAMES,
-} from '../clickhouse/client';
+import { anQuery, anQueryOne } from '../analytics/client';
+import { formatClickhouseDate } from '../analytics/dates';
+import { type Sql, and, or, sql } from '../analytics/sql';
+import { upsertGroups } from '../analytics/writers';
 import type { IServiceProfile } from './profile.service';
 import { getProfiles } from './profile.service';
 
@@ -37,6 +34,13 @@ type IClickhouseGroup = {
   version: string;
 };
 
+/**
+ * Groups are one row per (project, id): an upsert with a newer `version`
+ * (the write time in ms, read back as updatedAt) replaces the row, and a
+ * deleted group is a deleted row.
+ */
+const GROUP_COLUMNS = sql`project_id, id, type, name, properties, created_at, version`;
+
 function transformGroup(row: IClickhouseGroup): IServiceGroup {
   return {
     id: row.id,
@@ -49,38 +53,30 @@ function transformGroup(row: IClickhouseGroup): IServiceGroup {
   };
 }
 
-async function writeGroupToCh(
-  group: {
-    id: string;
-    projectId: string;
-    type: string;
-    name: string;
-    properties: Record<string, string>;
-    createdAt?: Date;
-  },
-  deleted = 0
-) {
-  await ch.insert({
-    format: 'JSONEachRow',
-    table: TABLE_NAMES.groups,
-    values: [
-      {
-        project_id: group.projectId,
-        id: group.id,
-        type: group.type,
-        name: group.name,
-        properties: group.properties,
-        created_at: formatClickhouseDate(group.createdAt ?? new Date()),
-        version: Date.now(),
-        deleted,
-      },
-    ],
-  });
+async function writeGroup(group: {
+  id: string;
+  projectId: string;
+  type: string;
+  name: string;
+  properties: Record<string, string>;
+  createdAt?: Date;
+}) {
+  await upsertGroups([
+    {
+      project_id: group.projectId,
+      id: group.id,
+      type: group.type,
+      name: group.name,
+      properties: group.properties,
+      created_at: formatClickhouseDate(group.createdAt ?? new Date()),
+      version: Date.now(),
+    },
+  ]);
 }
 
 export async function upsertGroup(input: IServiceUpsertGroup) {
   const existing = await getGroupById(input.id, input.projectId);
-  await writeGroupToCh({
+  await writeGroup({
     id: input.id,
     projectId: input.projectId,
     type: input.type,
@@ -95,16 +91,32 @@ export async function upsertGroup(input: IServiceUpsertGroup) {
 
 export async function getGroupById(
   id: string,
-  projectId: string
+  projectId: string,
 ): Promise<IServiceGroup | null> {
-  const rows = await chQuery<IClickhouseGroup>(`
-    SELECT project_id, id, type, name, properties, created_at, version
-    FROM ${TABLE_NAMES.groups} FINAL
-    WHERE project_id = ${sqlstring.escape(projectId)}
-      AND id = ${sqlstring.escape(id)}
-      AND deleted = 0
+  const row = await anQueryOne<IClickhouseGroup>(sql`
+    SELECT ${GROUP_COLUMNS}
+    FROM analytics.groups
+    WHERE project_id = ${projectId} AND id = ${id}
   `);
-  return rows[0] ? transformGroup(rows[0]) : null;
+  return row ? transformGroup(row) : null;
+}
+
+/** Type and name/id search (a LIKE pattern as typed) of the group list. */
+function groupListWhere({
+  projectId,
+  type,
+  search,
+}: {
+  projectId: string;
+  type?: string;
+  search?: string;
+}): Sql {
+  const like = sql`${`%${search}%`}::text`;
+  return and([
+    sql`project_id = ${projectId}`,
+    type ? sql`type = ${type}::text` : null,
+    search ? or([sql`name ILIKE ${like}`, sql`id ILIKE ${like}`]) : null,
+  ]);
 }
 
 export async function getGroupList({
@@ -120,21 +132,10 @@ export async function getGroupList({
   search?: string;
   type?: string;
 }): Promise<IServiceGroup[]> {
-  const conditions = [
-    `project_id = ${sqlstring.escape(projectId)}`,
-    'deleted = 0',
-    ...(type ? [`type = ${sqlstring.escape(type)}`] : []),
-    ...(search
-      ? [
-          `(name ILIKE ${sqlstring.escape(`%${search}%`)} OR id ILIKE ${sqlstring.escape(`%${search}%`)})`,
-        ]
-      : []),
-  ];
-
-  const rows = await chQuery<IClickhouseGroup>(`
-    SELECT project_id, id, type, name, properties, created_at, version
-    FROM ${TABLE_NAMES.groups} FINAL
-    WHERE ${conditions.join(' AND ')}
+  const rows = await anQuery<IClickhouseGroup>(sql`
+    SELECT ${GROUP_COLUMNS}
+    FROM analytics.groups
+    WHERE ${groupListWhere({ projectId, type, search })}
     ORDER BY created_at DESC
     LIMIT ${take}
     OFFSET ${Math.max(0, (cursor ?? 0) * take)}
@@ -151,31 +152,19 @@ export async function getGroupListCount({
   type?: string;
   search?: string;
 }): Promise<number> {
-  const conditions = [
-    `project_id = ${sqlstring.escape(projectId)}`,
-    'deleted = 0',
-    ...(type ? [`type = ${sqlstring.escape(type)}`] : []),
-    ...(search
-      ? [
-          `(name ILIKE ${sqlstring.escape(`%${search}%`)} OR id ILIKE ${sqlstring.escape(`%${search}%`)})`,
-        ]
-      : []),
-  ];
-
-  const rows = await chQuery<{ count: number }>(`
-    SELECT count() as count
-    FROM ${TABLE_NAMES.groups} FINAL
-    WHERE ${conditions.join(' AND ')}
+  const row = await anQueryOne<{ count: number }>(sql`
+    SELECT count(*) AS count
+    FROM analytics.groups
+    WHERE ${groupListWhere({ projectId, type, search })}
   `);
-  return rows[0]?.count ?? 0;
+  return row?.count ?? 0;
 }
 
 export async function getGroupTypes(projectId: string): Promise<string[]> {
-  const rows = await chQuery<{ type: string }>(`
+  const rows = await anQuery<{ type: string }>(sql`
     SELECT DISTINCT type
-    FROM ${TABLE_NAMES.groups} FINAL
-    WHERE project_id = ${sqlstring.escape(projectId)}
-      AND deleted = 0
+    FROM analytics.groups
+    WHERE project_id = ${projectId}
   `);
   return rows.map((r) => r.type);
 }
@@ -188,7 +177,7 @@ export async function createGroup(input: IServiceUpsertGroup) {
 export async function updateGroup(
   id: string,
   projectId: string,
-  data: { type?: string; name?: string; properties?: Record<string, unknown> }
+  data: { type?: string; name?: string; properties?: Record<string, unknown> },
 ) {
   const existing = await getGroupById(id, projectId);
   if (!existing) {
@@ -199,7 +188,7 @@ export async function updateGroup(
     ...(data.properties ?? {}),
   };
   const normalizedProperties = toDots(
-    mergedProperties as Record<string, unknown>
+    mergedProperties as Record<string, unknown>,
   );
   const updated = {
     id,
@@ -209,7 +198,7 @@ export async function updateGroup(
     properties: normalizedProperties,
     createdAt: existing.createdAt,
   };
-  await writeGroupToCh(updated);
+  await writeGroup(updated);
   return { ...existing, ...updated };
 }
 
@@ -218,28 +207,20 @@ export async function deleteGroup(id: string, projectId: string) {
   if (!existing) {
     throw new Error(`Group ${id} not found`);
   }
-  await writeGroupToCh(
-    {
-      id,
-      projectId,
-      type: existing.type,
-      name: existing.name,
-      properties: existing.properties as Record<string, string>,
-      createdAt: existing.createdAt,
-    },
-    1
-  );
+  await anQuery(sql`
+    DELETE FROM analytics.groups
+    WHERE project_id = ${projectId} AND id = ${id}
+  `);
   return existing;
 }
 
 export async function getGroupPropertyKeys(
-  projectId: string
+  projectId: string,
 ): Promise<string[]> {
-  const rows = await chQuery<{ key: string }>(`
-    SELECT DISTINCT arrayJoin(mapKeys(properties)) as key
-    FROM ${TABLE_NAMES.groups} FINAL
-    WHERE project_id = ${sqlstring.escape(projectId)}
-      AND deleted = 0
+  const rows = await anQuery<{ key: string }>(sql`
+    SELECT DISTINCT jsonb_object_keys(properties) AS key
+    FROM analytics.groups
+    WHERE project_id = ${projectId}
   `);
   return rows.map((r) => r.key).sort();
 }
@@ -250,28 +231,33 @@ export type IServiceGroupStats = {
   lastActiveAt: Date | null;
 };
 
+/**
+ * Identified members (distinct profiles) and the last event of each group,
+ * from the events that carry the group.
+ */
 export async function getGroupStats(
   projectId: string,
-  groupIds: string[]
+  groupIds: string[],
 ): Promise<Map<string, IServiceGroupStats>> {
   if (groupIds.length === 0) {
     return new Map();
   }
 
-  const rows = await chQuery<{
+  const rows = await anQuery<{
     group_id: string;
     member_count: number;
     last_active_at: string;
-  }>(`
+  }>(sql`
     SELECT
       g AS group_id,
-      uniqExact(profile_id) AS member_count,
-      max(created_at) AS last_active_at
-    FROM ${TABLE_NAMES.events}
-    ARRAY JOIN groups AS g
-    WHERE project_id = ${sqlstring.escape(projectId)}
-      AND g IN (${groupIds.map((id) => sqlstring.escape(id)).join(',')})
-      AND profile_id != device_id
+      count(DISTINCT e.profile_id) AS member_count,
+      max(e.created_at) AS last_active_at
+    FROM analytics.events e
+    CROSS JOIN LATERAL unnest(e.groups) AS g
+    WHERE e.project_id = ${projectId}
+      AND e.groups && ${groupIds}::text[]
+      AND g = ANY(${groupIds}::text[])
+      AND e.profile_id <> e.device_id
     GROUP BY g
   `);
 
@@ -283,24 +269,22 @@ export async function getGroupStats(
         memberCount: r.member_count,
         lastActiveAt: r.last_active_at ? new Date(r.last_active_at) : null,
       },
-    ])
+    ]),
   );
 }
 
 export async function getGroupsByIds(
   projectId: string,
-  ids: string[]
+  ids: string[],
 ): Promise<IServiceGroup[]> {
   if (ids.length === 0) {
     return [];
   }
 
-  const rows = await chQuery<IClickhouseGroup>(`
-    SELECT project_id, id, type, name, properties, created_at, version
-    FROM ${TABLE_NAMES.groups} FINAL
-    WHERE project_id = ${sqlstring.escape(projectId)}
-      AND id IN (${ids.map((id) => sqlstring.escape(id)).join(',')})
-      AND deleted = 0
+  const rows = await anQuery<IClickhouseGroup>(sql`
+    SELECT ${GROUP_COLUMNS}
+    FROM analytics.groups
+    WHERE project_id = ${projectId} AND id = ANY(${ids}::text[])
   `);
   return rows.map(transformGroup);
 }
@@ -319,18 +303,25 @@ export async function getGroupMemberProfiles({
   search?: string;
 }): Promise<{ data: IServiceProfile[]; count: number }> {
   const offset = Math.max(0, (cursor ?? 0) * take);
-  const searchCondition = search?.trim()
-    ? `AND (email ILIKE ${sqlstring.escape(`%${search.trim()}%`)} OR first_name ILIKE ${sqlstring.escape(`%${search.trim()}%`)} OR last_name ILIKE ${sqlstring.escape(`%${search.trim()}%`)})`
-    : '';
+  const term = search?.trim();
+  const like = sql`${`%${term}%`}::text`;
+  const searchCondition = term
+    ? or([
+        sql`email ILIKE ${like}`,
+        sql`first_name ILIKE ${like}`,
+        sql`last_name ILIKE ${like}`,
+      ])
+    : null;
 
-  const rows = await chQuery<{ id: string; total_count: number }>(`
-    SELECT
-      id,
-      count() OVER () AS total_count
-    FROM ${TABLE_NAMES.profiles} FINAL
-    WHERE project_id = ${sqlstring.escape(projectId)}
-      AND has(groups, ${sqlstring.escape(groupId)})
-      ${searchCondition}
+  // The count is a window over the page's rows: past the last page it is 0.
+  const rows = await anQuery<{ id: string; total_count: number }>(sql`
+    SELECT id, count(*) OVER () AS total_count
+    FROM analytics.profiles
+    WHERE ${and([
+      sql`project_id = ${projectId}`,
+      sql`${groupId}::text = ANY(groups)`,
+      searchCondition,
+    ])}
     ORDER BY created_at DESC
     LIMIT ${take}
     OFFSET ${offset}

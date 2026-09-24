@@ -77,6 +77,35 @@ export function formatDate(wallClock: Sql): Sql {
   return sql`to_char(${wallClock}, 'YYYY-MM-DD')`;
 }
 
+/** Unix seconds: parseDateTimeBestEffort reads a 9–10 digit number as one. */
+const UNIX_SECONDS = '^[0-9]{9,10}$';
+/** A time of day followed by an explicit zone (Z, UTC, GMT, ±hh[:mm]). */
+const EXPLICIT_ZONE =
+  '[T ][0-9]{1,2}:[0-9]{2}(:[0-9]{2}([.,][0-9]+)?)? ?([zZ]|UTC|GMT|[+-][0-9]{1,2}(:?[0-9]{2})?)$';
+/** DD/MM/YYYY, which the best-effort parser reads day first. */
+const DAY_MONTH_YEAR = '^([0-9]{1,2})/([0-9]{1,2})/([0-9]{4})';
+const YEAR_MONTH_DAY = '\\3-\\2-\\1';
+
+/**
+ * Text → `timestamptz`, or NULL when it isn't a date — ClickHouse's
+ * `parseDateTimeBestEffortOrNull` under `session_timezone`: text with an
+ * explicit zone is that instant, text without one is wall-clock time in the
+ * project zone, 9–10 digits are unix seconds, DD/MM/YYYY is day first.
+ * Never raises on bad input.
+ */
+export function parseTimestamp(text: Sql, ctx: TimeCtx): Sql {
+  return sql`(SELECT CASE
+    WHEN _ts.v ~ ${UNIX_SECONDS} THEN to_timestamp(_ts.v::double precision)
+    WHEN _ts.v ~ ${EXPLICIT_ZONE} THEN analytics.to_ts_or_null(_ts.v)
+    WHEN pg_input_is_valid(_ts.v, 'timestamp') THEN _ts.v::timestamp AT TIME ZONE ${ctx.timezone}::text
+  END FROM (SELECT regexp_replace(btrim((${text})::text), ${DAY_MONTH_YEAR}, ${YEAR_MONTH_DAY}) AS v) AS _ts)`;
+}
+
+/** The project-zone calendar date of an instant (ClickHouse `toDate`). */
+export function toLocalDate(instant: Sql, ctx: TimeCtx): Sql {
+  return sql`(${toLocal(instant, ctx)})::date`;
+}
+
 /** A Postgres interval literal for `count` units, e.g. `interval '1 day'`. */
 export function interval(count: number, value: TimeUnit): Sql {
   if (!Number.isInteger(count)) {
