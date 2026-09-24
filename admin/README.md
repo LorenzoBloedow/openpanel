@@ -13,16 +13,11 @@ pnpm install
 
 ## Usage
 
-Run the CLI from the admin directory:
+Run it from the repository root (it reads `DATABASE_URL` from `.env` or
+`admin/.env`; in production, Neon's direct connection string):
 
 ```bash
-pnpm start
-```
-
-Or use the convenient shell script from anywhere:
-
-```bash
-./admin/cli
+pnpm admin
 ```
 
 ## Features
@@ -69,24 +64,6 @@ Search for a member by email address.
 
 ---
 
-### 🗑️ Clear Cache
-
-Clear cache for an organization and all its projects.
-
-- Fuzzy search to find the organization
-- Shows organization details and all projects
-- Confirms before clearing cache
-- Provides organization ID and all project IDs for cache clearing logic
-
-**Use when:**
-- You need to invalidate cache after data changes
-- Troubleshooting caching issues
-- After manual database updates
-
-**Note:** The cache clearing logic needs to be implemented. The command provides the organization and project data structure for you to add your cache clearing calls.
-
----
-
 ### 🔴 Delete Organization
 
 Permanently delete an organization and all its data.
@@ -97,7 +74,9 @@ Permanently delete an organization and all its data.
   1. Initial confirmation
   2. Type organization name to confirm
   3. Final warning confirmation
-- Deletes from both PostgreSQL and ClickHouse
+- Schedules the deletion: the worker's hourly cron hands the organization to
+  the ProjectDelete workflow, which removes the analytics data in chunks,
+  then the projects and the organization
 
 **Use when:**
 - Removing organizations that are no longer needed
@@ -110,7 +89,7 @@ Permanently delete an organization and all its data.
 - Organization record
 - All projects and their settings
 - All clients and credentials
-- All events and analytics data (from ClickHouse)
+- All events and analytics data (the `analytics` schema)
 - All member associations
 - All dashboards and reports
 
@@ -147,8 +126,7 @@ Permanently delete a user account and remove them from all organizations.
 ## Environment Variables
 
 Make sure you have the proper environment variables set up:
-- `DATABASE_URL` - PostgreSQL connection string
-- `DATABASE_URL_REPLICA` (optional) - Read replica connection string
+- `DATABASE_URL` - PostgreSQL connection string (Neon's direct URL in production)
 
 ## Development
 

@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "dotenv -e .env -c -- jiti src/cli.ts",
+    "start": "dotenv -e .env -e ../.env -c -- jiti src/cli.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

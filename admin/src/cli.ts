@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import inquirer from 'inquirer';
-import { clearCache } from './commands/clear-cache';
 import { deleteOrganization } from './commands/delete-organization';
 import { deleteUser } from './commands/delete-user';
 import { lookupByClient } from './commands/lookup-client';
@@ -20,22 +19,18 @@ const secureEnv = (url: string) => {
 async function main() {
   console.log('\n🔧 OpenPanel Admin CLI\n');
 
+  // Everything lives in Postgres (Neon's direct URL in production).
   const DATABASE_URL = process.env.DATABASE_URL;
-  const CLICKHOUSE_URL = process.env.CLICKHOUSE_URL;
-  const REDIS_URL = process.env.REDIS_URL;
 
-  if (!DATABASE_URL || !CLICKHOUSE_URL || !REDIS_URL) {
-    console.error('Environment variables are not set');
+  if (!DATABASE_URL) {
+    console.error('Set DATABASE_URL');
     process.exit(1);
   }
 
   // Log environment variables for debugging
   console.log('Environment:', {
     NODE_ENV: process.env.NODE_ENV,
-    SELF_HOSTED: process.env.SELF_HOSTED ? 'Yes' : 'No',
     DATABASE_URL: secureEnv(DATABASE_URL),
-    CLICKHOUSE_URL: secureEnv(CLICKHOUSE_URL),
-    REDIS_URL: secureEnv(REDIS_URL),
   });
   console.log('');
 
@@ -61,10 +56,6 @@ async function main() {
         {
           name: '📧 Lookup by Email',
           value: 'lookup-email',
-        },
-        {
-          name: '🗑️  Clear Cache',
-          value: 'clear-cache',
         },
         { name: '─────────────────────', value: 'separator', disabled: true },
         {
@@ -93,9 +84,6 @@ async function main() {
       break;
     case 'lookup-email':
       await lookupByEmail();
-      break;
-    case 'clear-cache':
-      await clearCache();
       break;
     case 'delete-org':
       await deleteOrganization();

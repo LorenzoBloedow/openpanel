@@ -18,6 +18,7 @@
     "migrate": "pnpm -r --filter db run migrate",
     "migrate:analytics": "pnpm -r --filter db run migrate:analytics",
     "migrate:deploy": "pnpm -r --filter db run migrate:deploy",
+    "admin": "pnpm --filter @openpanel/admin start",
     "cf:backup": "pnpm --filter @openpanel/cloudflare exec dotenv -e ../../.env -c -- tsx src/backup.ts",
     "cf:restore": "pnpm --filter @openpanel/cloudflare exec dotenv -e ../../.env -c -- tsx src/restore.ts",
     "cf:setup": "pnpm --filter @openpanel/cloudflare exec dotenv -e ../../.env -c -- tsx src/setup.ts",
