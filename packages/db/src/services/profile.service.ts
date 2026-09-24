@@ -2,7 +2,6 @@ import { toObject } from '@openpanel/common';
 import { cacheable } from '@openpanel/redis';
 import type { IChartEventFilter } from '@openpanel/validation';
 import { uniq } from 'ramda';
-import sqlstring from 'sqlstring';
 import { anQuery, anQueryOne } from '../analytics/client';
 import {
   convertClickhouseDateToJs,
@@ -189,22 +188,6 @@ export function profileSearchWhere(
       ]);
     }),
   );
-}
-
-/**
- * @deprecated ClickHouse text for cohort.service.ts until it is ported; the
- * Postgres queries use {@link profileSearchWhere}.
- */
-export function profileSearchSql(search: string | null | undefined): string | null {
-  const tokens = searchTokens(search);
-  if (tokens.length === 0) {
-    return null;
-  }
-  const perToken = tokens.map((token) => {
-    const like = sqlstring.escape(`%${token}%`);
-    return `(id ILIKE ${like} OR email ILIKE ${like} OR first_name ILIKE ${like} OR last_name ILIKE ${like} OR concat(first_name, ' ', last_name) ILIKE ${like})`;
-  });
-  return `(${perToken.join(' AND ')})`;
 }
 
 export async function getProfiles(ids: string[], projectId: string) {
