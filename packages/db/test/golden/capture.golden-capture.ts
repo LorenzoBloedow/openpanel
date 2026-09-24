@@ -5,7 +5,8 @@
  *
  *   pnpm vitest run --config vitest.golden.config.ts [GOLDEN_GROUPS=a,b]
  */
-import { beforeAll, it, vi } from 'vitest';
+import pg from 'pg';
+import { afterAll, beforeAll, it, vi } from 'vitest';
 
 // The buffers construct Redis-backed singletons at import; the read paths
 // only touch these methods.
@@ -34,22 +35,32 @@ import {
   seedGoldenConfig,
 } from './harness';
 
-const anchor = new Date(Math.floor(Date.now() / 60_000) * 60_000);
-const ctx: GoldenContext = {
-  anchor,
-  projects: GOLDEN_PROJECTS,
-  datasets: buildDatasets(anchor),
-};
+let ctx: GoldenContext;
 
 const selected = process.env.GOLDEN_GROUPS?.split(',').filter(Boolean);
 
+// Captures share one ClickHouse database and reload the datasets, so runs
+// are serialized: a session advisory lock on the local Postgres, held for
+// the whole run.
+const lock = new pg.Client({ connectionString: process.env.DATABASE_URL });
+
 beforeAll(async () => {
+  await lock.connect();
+  await lock.query('SELECT pg_advisory_lock(hashtext($1))', ['golden-capture']);
+  // Anchored after the lock, so ClickHouse's now() stays close to it.
+  const anchor = new Date(Math.floor(Date.now() / 60_000) * 60_000);
+  ctx = { anchor, projects: GOLDEN_PROJECTS, datasets: buildDatasets(anchor) };
   await seedGoldenConfig();
   for (const dataset of Object.values(ctx.datasets)) {
     await loadDatasetIntoClickhouse(dataset);
   }
   freezeTime(anchor);
-}, 600_000);
+}, 3_600_000);
+
+afterAll(async () => {
+  await lock.query('SELECT pg_advisory_unlock(hashtext($1))', ['golden-capture']);
+  await lock.end();
+});
 
 for (const [group, cases] of Object.entries(GOLDEN_GROUPS)) {
   if (selected && !selected.includes(group)) {
