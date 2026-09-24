@@ -1,17 +1,13 @@
 import {
-  ch,
-  chQuery,
-  clix,
   convertClickhouseDateToJs,
-  formatClickhouseDate,
   getProfiles,
   type IClickhouseEvent,
-  TABLE_NAMES,
   transformEvent,
 } from '@openpanel/db';
-import { subMinutes } from 'date-fns';
-import sqlstring from 'sqlstring';
+import { anQuery } from '@openpanel/db/src/analytics/client';
+import { type Sql, raw, sql } from '@openpanel/db/src/analytics/sql';
 import { z } from 'zod';
+import { createdSince, liveWindowStart } from '../analytics-time';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 const realtimeLocationSchema = z.object({
@@ -21,6 +17,8 @@ const realtimeLocationSchema = z.object({
   long: z.number().optional(),
 });
 
+type RealtimeLocation = z.infer<typeof realtimeLocationSchema>;
+
 const realtimeBadgeDetailScopeSchema = z.enum([
   'country',
   'city',
@@ -28,69 +26,76 @@ const realtimeBadgeDetailScopeSchema = z.enum([
   'merged',
 ]);
 
-function buildRealtimeLocationFilter(
-  locations: z.infer<typeof realtimeLocationSchema>[]
-) {
-  const tuples = locations
-    .filter(
-      (
-        location
-      ): location is z.infer<typeof realtimeLocationSchema> & {
-        lat: number;
-        long: number;
-      } => typeof location.lat === 'number' && typeof location.long === 'number'
-    )
-    .map(
-      (location) =>
-        `(${sqlstring.escape(location.country ?? '')}, ${sqlstring.escape(
-          location.city ?? ''
-        )}, toDecimal64(${location.long.toFixed(4)}, 4), toDecimal64(${location.lat.toFixed(4)}, 4))`
-    );
+/** Events of the last 30 minutes. */
+const inRealtimeWindow = (): Sql => createdSince(liveWindowStart());
 
-  if (tuples.length === 0) {
+/**
+ * ClickHouse's `toDecimal64(<literal>, 4)` scaled by 10^4: the literal is a
+ * Float64, multiplied by 10^4 in double precision and truncated toward zero.
+ */
+function literalDecimal4(value: number): number {
+  return Math.trunc(Number(value.toFixed(4)) * 10_000);
+}
+
+/**
+ * `toDecimal64(<Float32 column>, 4)` scaled by 10^4: ClickHouse multiplies a
+ * Float32 in single precision before truncating, so a stored 77.5946
+ * (77.594597f) reads as 77.5945 and no longer matches the 77.5946 the map
+ * sends. Postgres' real * real is single precision too.
+ */
+function columnDecimal4(column: Sql): Sql {
+  return sql`trunc((${column} * 10000::real)::double precision)`;
+}
+
+function buildRealtimeLocationFilter(locations: RealtimeLocation[]): Sql {
+  const points = locations.filter(
+    (
+      location
+    ): location is RealtimeLocation & {
+      lat: number;
+      long: number;
+    } => typeof location.lat === 'number' && typeof location.long === 'number'
+  );
+
+  if (points.length === 0) {
     return buildRealtimeCityFilter(locations);
   }
 
-  return `(coalesce(country, ''), coalesce(city, ''), toDecimal64(longitude, 4), toDecimal64(latitude, 4)) IN (${tuples.join(', ')})`;
+  return sql`(country, city, ${columnDecimal4(raw('longitude'))}, ${columnDecimal4(raw('latitude'))}) IN (
+    SELECT * FROM unnest(
+      ${points.map((point) => point.country ?? '')}::text[],
+      ${points.map((point) => point.city ?? '')}::text[],
+      ${points.map((point) => literalDecimal4(point.long))}::double precision[],
+      ${points.map((point) => literalDecimal4(point.lat))}::double precision[]
+    )
+  )`;
 }
 
-function buildRealtimeCountryFilter(
-  locations: z.infer<typeof realtimeLocationSchema>[]
-) {
+function buildRealtimeCountryFilter(locations: RealtimeLocation[]): Sql {
   const countries = [
     ...new Set(locations.map((location) => location.country ?? '')),
   ];
 
-  return `coalesce(country, '') IN (${countries
-    .map((country) => sqlstring.escape(country))
-    .join(', ')})`;
+  return sql`country = ANY(${countries}::text[])`;
 }
 
-function buildRealtimeCityFilter(
-  locations: z.infer<typeof realtimeLocationSchema>[]
-) {
-  const tuples = [
-    ...new Set(
-      locations.map(
-        (location) =>
-          `(${sqlstring.escape(location.country ?? '')}, ${sqlstring.escape(
-            location.city ?? ''
-          )})`
-      )
-    ),
-  ];
-
-  if (tuples.length === 0) {
+function buildRealtimeCityFilter(locations: RealtimeLocation[]): Sql {
+  if (locations.length === 0) {
     return buildRealtimeCountryFilter(locations);
   }
 
-  return `(coalesce(country, ''), coalesce(city, '')) IN (${tuples.join(', ')})`;
+  return sql`(country, city) IN (
+    SELECT * FROM unnest(
+      ${locations.map((location) => location.country ?? '')}::text[],
+      ${locations.map((location) => location.city ?? '')}::text[]
+    )
+  )`;
 }
 
 function buildRealtimeBadgeDetailsFilter(input: {
   detailScope: z.infer<typeof realtimeBadgeDetailScopeSchema>;
-  locations: z.infer<typeof realtimeLocationSchema>[];
-}) {
+  locations: RealtimeLocation[];
+}): Sql {
   if (input.detailScope === 'country') {
     return buildRealtimeCountryFilter(input.locations);
   }
@@ -105,6 +110,13 @@ function buildRealtimeBadgeDetailsFilter(input: {
 
   return buildRealtimeLocationFilter(input.locations);
 }
+
+/**
+ * `round(avg(duration) / 1000, 2)`: a Float64 average in seconds, rounded
+ * the way ClickHouse rounds floats (nearbyint of the scaled value, ties to
+ * even — Postgres' round(float8)).
+ */
+const AVG_DURATION_SECONDS = sql`round(avg(duration::double precision) / 1000 * 100) / 100`;
 
 interface CoordinatePoint {
   country: string;
@@ -176,22 +188,22 @@ export const realtimeRouter = createTRPCRouter({
   coordinates: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input }) => {
-      const res = await chQuery<CoordinatePoint>(
-        `SELECT
+      const res = await anQuery<CoordinatePoint>(sql`
+        SELECT
           country,
           city,
-          longitude as long,
-          latitude as lat,
-          COUNT(DISTINCT session_id) as count
-        FROM ${TABLE_NAMES.events}
-        WHERE project_id = ${sqlstring.escape(input.projectId)}
-          AND created_at >= now() - INTERVAL 30 MINUTE
+          longitude AS long,
+          latitude AS lat,
+          COUNT(DISTINCT session_id) AS count
+        FROM analytics.events
+        WHERE project_id = ${input.projectId}
+          AND ${inRealtimeWindow()}
           AND longitude IS NOT NULL
           AND latitude IS NOT NULL
         GROUP BY country, city, longitude, latitude
         ORDER BY count DESC
-        LIMIT 5000`
-      );
+        LIMIT 5000
+      `);
 
       return adaptiveCluster(res, 500);
     }),
@@ -204,76 +216,60 @@ export const realtimeRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      const since = formatClickhouseDate(subMinutes(new Date(), 30));
-      const locationFilter = buildRealtimeBadgeDetailsFilter(input);
-
-      const summaryQuery = clix(ch)
-        .select<{
-          total_sessions: number;
-          total_profiles: number;
-        }>([
-          'COUNT(DISTINCT session_id) as total_sessions',
-          "COUNT(DISTINCT nullIf(profile_id, '')) as total_profiles",
-        ])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where('created_at', '>=', since)
-        .rawWhere(locationFilter);
-
-      const topReferrersQuery = clix(ch)
-        .select<{
-          referrer_name: string;
-          count: number;
-        }>(['referrer_name', 'COUNT(DISTINCT session_id) as count'])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where('created_at', '>=', since)
-        .where('referrer_name', '!=', '')
-        .rawWhere(locationFilter)
-        .groupBy(['referrer_name'])
-        .orderBy('count', 'DESC')
-        .limit(3);
-
-      const topPathsQuery = clix(ch)
-        .select<{
-          origin: string;
-          path: string;
-          count: number;
-        }>(['origin', 'path', 'COUNT(DISTINCT session_id) as count'])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where('created_at', '>=', since)
-        .where('path', '!=', '')
-        .rawWhere(locationFilter)
-        .groupBy(['origin', 'path'])
-        .orderBy('count', 'DESC')
-        .limit(3);
-
-      const topEventsQuery = clix(ch)
-        .select<{
-          name: string;
-          count: number;
-        }>(['name', 'COUNT(DISTINCT session_id) as count'])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where('created_at', '>=', since)
-        .where('name', 'NOT IN', [
-          'screen_view',
-          'session_start',
-          'session_end',
-        ])
-        .rawWhere(locationFilter)
-        .groupBy(['name'])
-        .orderBy('count', 'DESC')
-        .limit(3);
+      const matching = sql`project_id = ${input.projectId}
+        AND ${inRealtimeWindow()}
+        AND ${buildRealtimeBadgeDetailsFilter(input)}`;
 
       const [summary, topReferrers, topPaths, topEvents, recentSessions] =
         await Promise.all([
-          summaryQuery.execute(),
-          topReferrersQuery.execute(),
-          topPathsQuery.execute(),
-          topEventsQuery.execute(),
-          chQuery<{
+          anQuery<{
+            total_sessions: number;
+            total_profiles: number;
+          }>(sql`
+            SELECT
+              COUNT(DISTINCT session_id) AS total_sessions,
+              COUNT(DISTINCT NULLIF(profile_id, '')) AS total_profiles
+            FROM analytics.events
+            WHERE ${matching}
+          `),
+          anQuery<{
+            referrer_name: string;
+            count: number;
+          }>(sql`
+            SELECT referrer_name, COUNT(DISTINCT session_id) AS count
+            FROM analytics.events
+            WHERE ${matching}
+              AND referrer_name <> ''
+            GROUP BY referrer_name
+            ORDER BY count DESC
+            LIMIT 3
+          `),
+          anQuery<{
+            origin: string;
+            path: string;
+            count: number;
+          }>(sql`
+            SELECT origin, path, COUNT(DISTINCT session_id) AS count
+            FROM analytics.events
+            WHERE ${matching}
+              AND path <> ''
+            GROUP BY origin, path
+            ORDER BY count DESC
+            LIMIT 3
+          `),
+          anQuery<{
+            name: string;
+            count: number;
+          }>(sql`
+            SELECT name, COUNT(DISTINCT session_id) AS count
+            FROM analytics.events
+            WHERE ${matching}
+              AND name NOT IN ('screen_view', 'session_start', 'session_end')
+            GROUP BY name
+            ORDER BY count DESC
+            LIMIT 3
+          `),
+          anQuery<{
             profile_id: string;
             session_id: string;
             created_at: string;
@@ -281,8 +277,8 @@ export const realtimeRouter = createTRPCRouter({
             name: string;
             country: string;
             city: string;
-          }>(
-            `SELECT
+          }>(sql`
+            SELECT
               session_id,
               profile_id,
               created_at,
@@ -302,15 +298,13 @@ export const realtimeRouter = createTRPCRouter({
                 row_number() OVER (
                   PARTITION BY session_id ORDER BY created_at DESC
                 ) AS rn
-              FROM ${TABLE_NAMES.events}
-              WHERE project_id = ${sqlstring.escape(input.projectId)}
-                AND created_at >= ${sqlstring.escape(since)}
-                AND (${locationFilter})
+              FROM analytics.events
+              WHERE ${matching}
             ) AS latest_event_per_session
             WHERE rn = 1
             ORDER BY created_at DESC
-            LIMIT 8`
-          ),
+            LIMIT 8
+          `),
         ]);
 
       const profiles = await getProfiles(
@@ -365,109 +359,93 @@ export const realtimeRouter = createTRPCRouter({
   activeSessions: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input }) => {
-      const rows = await chQuery<IClickhouseEvent>(
-        `SELECT
+      const rows = await anQuery<IClickhouseEvent>(sql`
+        SELECT
           name, session_id, created_at, path, origin, referrer, referrer_name,
           country, city, region, os, os_version, browser, browser_version,
           device
-        FROM ${TABLE_NAMES.events}
-        WHERE project_id = ${sqlstring.escape(input.projectId)}
-          AND created_at >= '${formatClickhouseDate(subMinutes(new Date(), 30))}'
+        FROM analytics.events
+        WHERE project_id = ${input.projectId}
+          AND ${inRealtimeWindow()}
         ORDER BY created_at DESC
-        LIMIT 50`
-      );
+        LIMIT 50
+      `);
       return rows.map(transformEvent);
     }),
   paths: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input }) => {
-      const res = await clix(ch)
-        .select<{
-          origin: string;
-          path: string;
-          count: number;
-          avg_duration: number;
-          unique_sessions: number;
-        }>([
-          'origin',
-          'path',
-          'COUNT(*) as count',
-          'COUNT(DISTINCT session_id) as unique_sessions',
-          'round(avg(duration)/1000, 2) as avg_duration',
-        ])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where('path', '!=', '')
-        .where(
-          'created_at',
-          '>=',
-          formatClickhouseDate(subMinutes(new Date(), 30))
-        )
-        .groupBy(['path', 'origin'])
-        .orderBy('count', 'DESC')
-        .limit(50)
-        .execute();
+      const res = await anQuery<{
+        origin: string;
+        path: string;
+        count: number;
+        avg_duration: number;
+        unique_sessions: number;
+      }>(sql`
+        SELECT
+          origin,
+          path,
+          COUNT(*) AS count,
+          COUNT(DISTINCT session_id) AS unique_sessions,
+          ${AVG_DURATION_SECONDS} AS avg_duration
+        FROM analytics.events
+        WHERE project_id = ${input.projectId}
+          AND path <> ''
+          AND ${inRealtimeWindow()}
+        GROUP BY path, origin
+        ORDER BY count DESC
+        LIMIT 50
+      `);
 
       return res;
     }),
   referrals: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input }) => {
-      const res = await clix(ch)
-        .select<{
-          referrer_name: string;
-          count: number;
-          avg_duration: number;
-          unique_sessions: number;
-        }>([
-          'referrer_name',
-          'COUNT(*) as count',
-          'COUNT(DISTINCT session_id) as unique_sessions',
-          'round(avg(duration)/1000, 2) as avg_duration',
-        ])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where('referrer_name', 'IS NOT NULL')
-        .where(
-          'created_at',
-          '>=',
-          formatClickhouseDate(subMinutes(new Date(), 30))
-        )
-        .groupBy(['referrer_name'])
-        .orderBy('count', 'DESC')
-        .limit(50)
-        .execute();
+      const res = await anQuery<{
+        referrer_name: string;
+        count: number;
+        avg_duration: number;
+        unique_sessions: number;
+      }>(sql`
+        SELECT
+          referrer_name,
+          COUNT(*) AS count,
+          COUNT(DISTINCT session_id) AS unique_sessions,
+          ${AVG_DURATION_SECONDS} AS avg_duration
+        FROM analytics.events
+        WHERE project_id = ${input.projectId}
+          AND ${inRealtimeWindow()}
+        GROUP BY referrer_name
+        ORDER BY count DESC
+        LIMIT 50
+      `);
 
       return res;
     }),
   geo: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input }) => {
-      const res = await clix(ch)
-        .select<{
-          country: string;
-          city: string;
-          count: number;
-          avg_duration: number;
-          unique_sessions: number;
-        }>([
-          'country',
-          'city',
-          'COUNT(*) as count',
-          'COUNT(DISTINCT session_id) as unique_sessions',
-          'round(avg(duration)/1000, 2) as avg_duration',
-        ])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where(
-          'created_at',
-          '>=',
-          formatClickhouseDate(subMinutes(new Date(), 30))
-        )
-        .groupBy(['country', 'city'])
-        .orderBy('count', 'DESC')
-        .limit(50)
-        .execute();
+      const res = await anQuery<{
+        country: string;
+        city: string;
+        count: number;
+        avg_duration: number;
+        unique_sessions: number;
+      }>(sql`
+        SELECT
+          country,
+          city,
+          COUNT(*) AS count,
+          COUNT(DISTINCT session_id) AS unique_sessions,
+          ${AVG_DURATION_SECONDS} AS avg_duration
+        FROM analytics.events
+        WHERE project_id = ${input.projectId}
+          AND ${inRealtimeWindow()}
+        GROUP BY country, city
+        ORDER BY count DESC
+        LIMIT 50
+      `);
 
       return res;
     }),

@@ -1,38 +1,46 @@
 import {
   AggregateChartEngine,
-  ch,
   ChartEngine,
-  chQuery,
-  clix,
   conversionService,
-  createSqlBuilder,
   EMPTY_BREAKDOWN_LABEL,
-  formatClickhouseDate,
   funnelService,
   getChartPrevStartEndDate,
   getChartStartEndDate,
-  getEventFiltersWhereClause,
   getEventMetasCached,
-  getGroupPropertySelect,
   getProfilePropertyKeysCached,
-  getProfilePropertySelect,
   getProfilesCached,
   getReportById,
   getRetentionCohort,
-  getSelectPropertyKey,
   getSettingsForProject,
-  isKnownEventField,
   mergeGlobalFilters,
-  normalizeEventField,
   onlyReportEvents,
-  profileJoinColumns,
   sankeyService,
-  TABLE_NAMES,
   type IServiceProfile,
   validateShareAccess,
 } from '@openpanel/db';
+import { anQuery } from '@openpanel/db/src/analytics/client';
+import {
+  isKnownEventField,
+  normalizeEventField,
+} from '@openpanel/db/src/analytics/fields';
+import { gapFill } from '@openpanel/db/src/analytics/fill';
+import {
+  type EventFilterScope,
+  GROUP_JOIN,
+  eventFilterClauses,
+  eventPropertyExpr,
+  groupColumnExpr,
+  groupJoin,
+  profileColumnExpr,
+  profileJoin,
+} from '@openpanel/db/src/analytics/filters';
+import { type Query, clix } from '@openpanel/db/src/analytics/query-builder';
+import { recentPropertyValues } from '@openpanel/db/src/analytics/property-values';
+import { type Sql, empty, raw, sql } from '@openpanel/db/src/analytics/sql';
+import { startOf } from '@openpanel/db/src/analytics/time';
 import {
   type IChartEvent,
+  type IInterval,
   zChartEventFilter,
   zChartSeries,
   zCriteria,
@@ -41,9 +49,15 @@ import {
   zTimeInterval,
 } from '@openpanel/validation';
 import { flatten, map, pipe, prop, sort, uniq } from 'ramda';
-import sqlstring from 'sqlstring';
 import { z } from 'zod';
 import { getProjectAccess } from '../access';
+import {
+  createdSince,
+  instant,
+  secondsNow,
+  zonedMinus,
+  zonedWallClock,
+} from '../analytics-time';
 import { TRPCAccessError, TRPCForbiddenError } from '../errors';
 import {
   cacheMiddleware,
@@ -85,14 +99,74 @@ const SESSION_LEVEL_VALUE_COLUMNS = new Set([
 ]);
 
 /**
- * Lookback for the `events` fallback of the filter-value dropdown. A value
- * picker only needs recently-seen values, so clamp the scan (default 30d)
- * instead of the old 6-month full scan. Env-tunable.
+ * Lookback of the filter-value dropdown for event columns and properties. A
+ * value picker only needs recently-seen values, so clamp the scan (default
+ * 30d) instead of the old 6-month full scan. Env-tunable.
  */
 const VALUES_LOOKBACK_DAYS = Number.parseInt(
   process.env.CHART_VALUES_LOOKBACK_DAYS || '30',
   10,
 );
+
+/**
+ * Event property values are read from the most recent events that carry the
+ * key (there is no values rollup), at most this many of them, so a busy
+ * project's picker stays a bounded index scan.
+ */
+const PROPERTY_VALUES_SCAN_LIMIT = 100_000;
+
+/** Distinct values a profile/group/column dropdown returns at most. */
+const DISTINCT_VALUES_LIMIT = 100_000;
+
+const DAY_MS = 86_400_000;
+
+/**
+ * The instants of the chart bucket a data point's `date` stands for. The
+ * ClickHouse query compared `toStartOf<interval>(created_at)` with the date
+ * without a session time zone, so buckets are UTC: day/week/month buckets by
+ * the date's day, weeks starting on Sunday (toStartOfWeek's mode 0), and
+ * hour/minute buckets only when the date is exactly on one. Null when no
+ * bucket can match.
+ */
+function utcBucket(
+  date: Date,
+  interval: IInterval,
+): { start: Date; end: Date } | null {
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+  const day = date.getUTCDate();
+  const midnight = new Date(Date.UTC(year, month, day));
+  switch (interval) {
+    case 'minute': {
+      if (date.getUTCSeconds() !== 0) {
+        return null;
+      }
+      const start = Date.UTC(year, month, day, date.getUTCHours(), date.getUTCMinutes());
+      return { start: new Date(start), end: new Date(start + 60_000) };
+    }
+    case 'hour': {
+      if (date.getUTCMinutes() !== 0 || date.getUTCSeconds() !== 0) {
+        return null;
+      }
+      const start = Date.UTC(year, month, day, date.getUTCHours());
+      return { start: new Date(start), end: new Date(start + 3_600_000) };
+    }
+    case 'day':
+      return { start: midnight, end: new Date(Date.UTC(year, month, day + 1)) };
+    case 'week':
+      if (date.getUTCDay() !== 0) {
+        return null;
+      }
+      return { start: midnight, end: new Date(Date.UTC(year, month, day + 7)) };
+    case 'month':
+      if (day !== 1) {
+        return null;
+      }
+      return { start: midnight, end: new Date(Date.UTC(year, month + 1, 1)) };
+    default:
+      return null;
+  }
+}
 
 /**
  * Cap on distinct event property keys returned to the picker. Projects in the
@@ -120,6 +194,26 @@ const EVENT_PROPERTY_VALUE_AUTOCOMPLETE_LIMIT =
   EVENT_PROPERTY_VALUE_AUTOCOMPLETE_LIMIT_PARSED > 0
     ? EVENT_PROPERTY_VALUE_AUTOCOMPLETE_LIMIT_PARSED
     : 500;
+
+/**
+ * Distinct non-empty values of a profiles/groups expression, most recently
+ * created rows first.
+ */
+function distinctValues(
+  expression: Sql,
+  table: 'profiles' | 'groups',
+  projectId: string,
+): Sql {
+  return sql`
+    SELECT ${expression} AS values
+    FROM ${raw(`analytics.${table}`)}
+    WHERE project_id = ${projectId}
+      AND (${expression})::text <> ''
+    GROUP BY 1
+    ORDER BY max(created_at) DESC
+    LIMIT ${DISTINCT_VALUES_LIMIT}
+  `;
+}
 
 const chartProcedure = publicProcedure.use(
   async ({ ctx, next, getRawInput }) => {
@@ -193,48 +287,58 @@ export const chartRouter = createTRPCRouter({
     )
     .query(async ({ input: { projectId } }) => {
       const { timezone } = await getSettingsForProject(projectId);
-      const chartPromise = chQuery<{
+      const now = secondsNow();
+      const monthsAgo = (months: number) => zonedMinus(now, timezone, { months });
+      const daysAgo = (days: number) => zonedMinus(now, timezone, { days });
+
+      // Profiles and revenue per project day over the last 3 months.
+      const chartPromise = anQuery<{
         value: number;
-        date: Date;
+        date: string;
         revenue: number;
-      }>(
-        `SELECT
-            uniqHLL12(profile_id) as value,
-            toStartOfDay(created_at) as date,
-            sum(revenue * sign) as revenue
-        FROM ${TABLE_NAMES.sessions}
-        WHERE 
-            project_id = ${sqlstring.escape(projectId)} AND 
-            created_at >= now() - interval '3 month'
-        GROUP BY date
-        ORDER BY date ASC
-        WITH FILL FROM toStartOfDay(now() - interval '3 month') 
-        TO toStartOfDay(now()) 
-        STEP INTERVAL 1 day
-        SETTINGS session_timezone = '${timezone}'
-      `
+      }>(sql`
+        SELECT
+          COUNT(DISTINCT s.profile_id) AS value,
+          to_char(s.day, 'YYYY-MM-DD HH24:MI:SS') AS date,
+          COALESCE(sum(s.revenue), 0) AS revenue
+        FROM (
+          SELECT ${startOf(raw('created_at'), 'day', { timezone })} AS day, profile_id, revenue
+          FROM analytics.sessions
+          WHERE project_id = ${projectId}
+            AND ${createdSince(monthsAgo(3))}
+        ) AS s
+        GROUP BY s.day
+        ORDER BY s.day
+      `).then((rows) =>
+        // WITH FILL FROM toStartOfDay(now() - 3 months) TO toStartOfDay(now())
+        gapFill(rows, {
+          key: 'date',
+          from: zonedWallClock(monthsAgo(3), timezone),
+          to: zonedWallClock(now, timezone).slice(0, 10),
+          unit: 'day',
+          fill: (date) => ({ date, value: 0, revenue: 0 }),
+        }),
       );
 
-      const metricsPromise = clix(ch, timezone)
-        .select<{
-          months_3: number;
-          months_3_prev: number;
-          month: number;
-          day: number;
-          day_prev: number;
-          revenue: number;
-        }>([
-          'uniqHLL12(if(created_at >= (now() - toIntervalMonth(3)), profile_id, null)) AS months_3',
-          'uniqHLL12(if(created_at >= (now() - toIntervalMonth(6)) AND created_at < (now() - toIntervalMonth(3)), profile_id, null)) AS months_3_prev',
-          'uniqHLL12(if(created_at >= (now() - toIntervalMonth(1)), profile_id, null)) AS month',
-          'uniqHLL12(if(created_at >= (now() - toIntervalDay(1)), profile_id, null)) AS day',
-          'uniqHLL12(if(created_at >= (now() - toIntervalDay(2)) AND created_at < (now() - toIntervalDay(1)), profile_id, null)) AS day_prev',
-          'sum(revenue * sign) as revenue',
-        ])
-        .from(TABLE_NAMES.sessions)
-        .where('project_id', '=', projectId)
-        .where('created_at', '>=', clix.exp('now() - toIntervalMonth(6)'))
-        .execute();
+      const metricsPromise = anQuery<{
+        months_3: number;
+        months_3_prev: number;
+        month: number;
+        day: number;
+        day_prev: number;
+        revenue: number;
+      }>(sql`
+        SELECT
+          COUNT(DISTINCT profile_id) FILTER (WHERE created_at >= ${instant(monthsAgo(3))}) AS months_3,
+          COUNT(DISTINCT profile_id) FILTER (WHERE created_at >= ${instant(monthsAgo(6))} AND created_at < ${instant(monthsAgo(3))}) AS months_3_prev,
+          COUNT(DISTINCT profile_id) FILTER (WHERE created_at >= ${instant(monthsAgo(1))}) AS month,
+          COUNT(DISTINCT profile_id) FILTER (WHERE created_at >= ${instant(daysAgo(1))}) AS day,
+          COUNT(DISTINCT profile_id) FILTER (WHERE created_at >= ${instant(daysAgo(2))} AND created_at < ${instant(daysAgo(1))}) AS day_prev,
+          COALESCE(sum(revenue), 0) AS revenue
+        FROM analytics.sessions
+        WHERE project_id = ${projectId}
+          AND ${createdSince(monthsAgo(6))}
+      `);
 
       const [chart, [metrics]] = await Promise.all([
         chartPromise,
@@ -274,9 +378,15 @@ export const chartRouter = createTRPCRouter({
     )
     .query(async ({ input: { projectId } }) => {
       const [events, meta] = await Promise.all([
-        chQuery<{ name: string; count: number }>(
-          `SELECT name, count(name) as count FROM ${TABLE_NAMES.event_names_mv} WHERE project_id = ${sqlstring.escape(projectId)} GROUP BY name ORDER BY count DESC, name ASC`
-        ),
+        // `count` counts rollup rows per name, as count(name) over
+        // distinct_event_names_mv did — not events.
+        anQuery<{ name: string; count: number }>(sql`
+          SELECT name, count(*) AS count
+          FROM analytics.event_names
+          WHERE project_id = ${projectId}
+          GROUP BY name
+          ORDER BY count DESC, name COLLATE "C" ASC
+        `),
         getEventMetasCached(projectId),
       ]);
 
@@ -310,28 +420,20 @@ export const chartRouter = createTRPCRouter({
         await getProfilePropertyKeysCached(projectId)
       ).map((key) => `profile.properties.${key}`);
 
-      const query = clix(ch)
-        .select<{ property_key: string; created_at: string }>([
-          'distinct property_key',
-          'max(created_at) as created_at',
-        ])
-        .from(TABLE_NAMES.event_property_values_mv)
-        .where('project_id', '=', projectId)
-        .groupBy(['property_key'])
-        // Order by recency, not by key length. The cap has to drop *something*
-        // on projects with very many distinct keys, and dropping the longest
-        // keys first meant losing the most descriptive ones. `property_key`
-        // breaks ties so the cap can't cut an arbitrary side of a tied group —
-        // an unstable list is the bug this whole change is about.
-        .orderBy('created_at', 'DESC')
-        .orderBy('property_key', 'ASC')
-        .limit(EVENT_PROPERTY_KEY_LIMIT);
-
-      if (event && event !== '*') {
-        query.where('name', '=', event);
-      }
-
-      const res = await query.execute();
+      // Order by recency, not by key length. The cap has to drop *something*
+      // on projects with very many distinct keys, and dropping the longest
+      // keys first meant losing the most descriptive ones. `property_key`
+      // breaks ties so the cap can't cut an arbitrary side of a tied group —
+      // an unstable list is the bug this whole change is about.
+      const res = await anQuery<{ property_key: string; created_at: string }>(sql`
+        SELECT property_key, max(last_seen_at) AS created_at
+        FROM analytics.event_property_keys
+        WHERE project_id = ${projectId}
+          ${event && event !== '*' ? sql`AND name = ${event}::text` : empty}
+        GROUP BY property_key
+        ORDER BY created_at DESC, property_key COLLATE "C" ASC
+        LIMIT ${EVENT_PROPERTY_KEY_LIMIT}
+      `);
 
       const eventProperties = res.map((item) => {
         const key = item.property_key
@@ -397,54 +499,27 @@ export const chartRouter = createTRPCRouter({
       const values: string[] = [];
 
       if (property.startsWith('properties.')) {
-        const query = clix(ch)
-          .select<{
-            property_value: string;
-            created_at: string;
-          }>(['distinct property_value', 'max(created_at) as created_at'])
-          .from(TABLE_NAMES.event_property_values_mv)
-          .where('project_id', '=', projectId)
-          .where('property_key', '=', property.replace(/^properties\./, ''))
-          .groupBy(['property_value'])
-          // Recency + key tie-break for a stable list under the cap — same
-          // rationale as the key picker above.
-          .orderBy('created_at', 'DESC')
-          .orderBy('property_value', 'ASC')
-          .limit(EVENT_PROPERTY_VALUE_AUTOCOMPLETE_LIMIT);
+        // Most recently seen first, the value breaking ties for a stable
+        // list under the cap — same rationale as the key picker above.
+        const res = await recentPropertyValues({
+          projectId,
+          eventName: event && event !== '*' ? event : undefined,
+          key: property.replace(/^properties\./, ''),
+          since: new Date(Date.now() - VALUES_LOOKBACK_DAYS * DAY_MS),
+          scanLimit: PROPERTY_VALUES_SCAN_LIMIT,
+          limit: EVENT_PROPERTY_VALUE_AUTOCOMPLETE_LIMIT,
+        });
 
-        if (event && event !== '*') {
-          query.where('name', '=', event);
-        }
-
-        const res = await query.execute();
-
-        values.push(...res.map((e) => e.property_value));
+        values.push(...res);
       } else if (property.startsWith('profile.')) {
-        const selectExpr = getProfilePropertySelect(property);
-        const query = clix(ch)
-          .select<{ values: string }>([`distinct ${selectExpr} as values`])
-          .from(TABLE_NAMES.profiles, true)
-          .where('project_id', '=', projectId)
-          .where(selectExpr, '!=', '')
-          .where(selectExpr, 'IS NOT NULL', null)
-          .orderBy('created_at', 'DESC')
-          .limit(100_000);
-
-        const res = await query.execute();
+        const res = await anQuery<{ values: string }>(
+          distinctValues(profileColumnExpr(property), 'profiles', projectId),
+        );
         values.push(...res.map((r) => String(r.values)).filter(Boolean));
       } else if (property.startsWith('group.')) {
-        const selectExpr = getGroupPropertySelect(property);
-        const query = clix(ch)
-          .select<{ values: string }>([`distinct ${selectExpr} as values`])
-          .from(TABLE_NAMES.groups, true)
-          .where('project_id', '=', projectId)
-          .where('deleted', '=', 0)
-          .where(selectExpr, '!=', '')
-          .where(selectExpr, 'IS NOT NULL', null)
-          .orderBy('created_at', 'DESC')
-          .limit(100_000);
-
-        const res = await query.execute();
+        const res = await anQuery<{ values: string }>(
+          distinctValues(groupColumnExpr(property), 'groups', projectId),
+        );
         values.push(...res.map((r) => String(r.values)).filter(Boolean));
       } else if (property === 'cohort' || property.startsWith('cohort:')) {
         // Cohort filters use a dedicated cohort multi-select on the client
@@ -468,25 +543,22 @@ export const chartRouter = createTRPCRouter({
         // all-events (`*`): `sessions` has no `name` column to filter on.
         const useSessions =
           event === '*' && SESSION_LEVEL_VALUE_COLUMNS.has(resolvedProperty);
-        const query = clix(ch)
-          .select<{ values: string[] }>([
-            `distinct ${getSelectPropertyKey(resolvedProperty)} as values`,
-          ])
-          .from(useSessions ? TABLE_NAMES.sessions : TABLE_NAMES.events)
-          .where('project_id', '=', projectId)
-          .where(
-            'created_at',
-            '>',
-            clix.exp(`now() - INTERVAL ${VALUES_LOOKBACK_DAYS} DAY`),
-          )
-          .orderBy('created_at', 'DESC')
-          .limit(100_000);
-
-        if (!useSessions && event !== '*') {
-          query.where('name', '=', event);
-        }
-
-        const events = await query.execute();
+        const table = useSessions ? 'sessions' : 'events';
+        const expression = eventPropertyExpr(resolvedProperty, {
+          projectId,
+          timezone: 'UTC',
+          table,
+        });
+        const events = await anQuery<{ values: string }>(sql`
+          SELECT ${expression} AS values
+          FROM ${raw(`analytics.${table}`)}
+          WHERE project_id = ${projectId}
+            AND created_at > ${instant(new Date(Date.now() - VALUES_LOOKBACK_DAYS * DAY_MS))}
+            ${useSessions || event === '*' ? empty : sql`AND name = ${event}::text`}
+          GROUP BY 1
+          ORDER BY max(created_at) DESC
+          LIMIT ${DISTINCT_VALUES_LIMIT}
+        `);
 
         values.push(
           ...pipe(
@@ -799,66 +871,64 @@ export const chartRouter = createTRPCRouter({
         throw new Error('Series must be an event');
       }
 
-      // Build the date range for the specific interval bucket
-      const dateObj = new Date(date);
-      // Build query to get unique profile_ids for this time bucket
-      const { sb, getSql } = createSqlBuilder();
-
-      sb.select.profile_id = 'DISTINCT profile_id';
-      sb.where = getEventFiltersWhereClause(serie.filters, projectId);
-      sb.where.projectId = `project_id = ${sqlstring.escape(projectId)}`;
-      sb.where.dateRange = `${clix.toStartOf('created_at', input.interval)} = ${clix.toDate(sqlstring.escape(formatClickhouseDate(dateObj)), input.interval)}`;
-      if (serie.name !== '*') {
-        sb.where.eventName = `name = ${sqlstring.escape(serie.name)}`;
+      // The instants of the interval bucket the data point stands for
+      const bucket = utcBucket(new Date(date), input.interval);
+      if (!bucket) {
+        return [];
       }
 
-      // Collect profile fields from filters and breakdowns
-      const profileFields = [
-        ...serie.filters
-          .filter((f) => f.name.startsWith('profile.'))
-          .map((f) => f.name.replace('profile.', '')),
-        ...(input.breakdowns
-          ? Object.keys(input.breakdowns)
-              .filter((key) => key.startsWith('profile.'))
-              .map((key) => key.replace('profile.', ''))
-          : []),
+      // Joins as the chart's: the profile when a filter or breakdown reads
+      // it, one row per group when one reads a group (distinct profiles, so
+      // the fan-out doesn't matter). The query ran without a session time
+      // zone, so date filters are UTC.
+      const names = [
+        ...serie.filters.map((filter) => filter.name),
+        ...Object.keys(input.breakdowns ?? {}),
       ];
+      const joinProfile = names.some((name) => name.startsWith('profile.'));
+      const joinGroups = names.some((name) => name.startsWith('group.'));
+      const scope: EventFilterScope = {
+        projectId,
+        timezone: 'UTC',
+        alias: 'e',
+        profileAlias: joinProfile ? 'profile' : undefined,
+        groupJoin: joinGroups ? GROUP_JOIN : undefined,
+      };
 
-      if (profileFields.length > 0) {
-        // Only allowlisted columns: the names are user input and identifiers
-        // cannot be escaped.
-        const fieldsToSelect = profileJoinColumns(profileFields).join(', ');
-        sb.joins.profiles = `LEFT ANY JOIN (SELECT ${fieldsToSelect} FROM ${TABLE_NAMES.profiles} FINAL WHERE project_id = ${sqlstring.escape(projectId)}) as profile on profile.id = profile_id`;
+      const query = clix('UTC')
+        .select<{ profile_id: string }>(['DISTINCT e.profile_id'])
+        .from('analytics.events AS e')
+        .rawWhere(sql`e.project_id = ${projectId}`)
+        .rawWhere(
+          sql`e.created_at >= ${instant(bucket.start)} AND e.created_at < ${instant(bucket.end)}`,
+        );
+      if (joinProfile) {
+        query.rawJoin(profileJoin(scope));
       }
-
-      // Check for group filters/breakdowns and add ARRAY JOIN if needed
-      const anyFilterOnGroup = serie.filters.some((f) =>
-        f.name.startsWith('group.')
-      );
-      const anyBreakdownOnGroup = input.breakdowns
-        ? Object.keys(input.breakdowns).some((key) => key.startsWith('group.'))
-        : false;
-      if (anyFilterOnGroup || anyBreakdownOnGroup) {
-        sb.joins.groups = 'ARRAY JOIN groups AS _group_id';
-        sb.joins.groups_cte = `LEFT ANY JOIN (SELECT id, name, type, properties FROM ${TABLE_NAMES.groups} FINAL WHERE project_id = ${sqlstring.escape(projectId)}) AS _g ON _g.id = _group_id`;
+      if (joinGroups) {
+        query.rawJoin(groupJoin(scope));
       }
-
-      if (input.breakdowns) {
-        Object.entries(input.breakdowns).forEach(([key, value]) => {
-          // Transform property keys (e.g., properties.method -> properties['method'])
-          const propertyKey = getSelectPropertyKey(key, projectId);
-          sb.where[`breakdown_${key}`] =
-            `${propertyKey} = ${sqlstring.escape(value)}`;
-        });
+      if (serie.name !== '*') {
+        query.rawWhere(sql`e.name = ${serie.name}::text`);
+      }
+      for (const clause of eventFilterClauses(serie.filters, scope)) {
+        query.rawWhere(clause);
+      }
+      for (const [key, value] of Object.entries(input.breakdowns ?? {})) {
+        // ClickHouse compared the breakdown's value with the string; the
+        // text of a numeric column compares the same way.
+        query.rawWhere(
+          sql`(${eventPropertyExpr(key, scope)})::text = ${value}::text`,
+        );
       }
 
       // Get unique profile IDs
-      const profileIds = await chQuery<{ profile_id: string }>(getSql());
+      const profileIds = await query.execute();
       if (profileIds.length === 0) {
         return [];
       }
 
-      // Fetch profile details in batches to avoid exceeding ClickHouse max_query_size
+      // Fetch profile details in batches
       const ids = profileIds.map((p) => p.profile_id).filter(Boolean);
       const BATCH_SIZE = 200;
       const profiles: IServiceProfile[] = [];
@@ -915,7 +985,7 @@ export const chartRouter = createTRPCRouter({
       // here. The two copies used to drift — breakdown expressions referencing
       // a `profile` or `cohort_<id>` alias whose join this side never added,
       // which failed with UNKNOWN_IDENTIFIER and surfaced as "No users found".
-      const { query, breakdowns } = await funnelService.buildFunnelBase({
+      const base = await funnelService.buildFunnelBase({
         projectId,
         startDate,
         endDate,
@@ -925,8 +995,11 @@ export const chartRouter = createTRPCRouter({
         funnelGroup,
         timezone,
       });
+      // The funnel builder's query is the analytics query builder.
+      const query = base.query as unknown as Query;
+      const { breakdowns } = base;
 
-      // Same shape as the chart's `funnel` CTE: windowFunnel is already
+      // Same shape as the chart's `funnel` CTE: the funnel level is already
       // computed per primary key (with breakdowns attributed at the entry
       // step, so each group carries one deterministic b_N value), so drop
       // level=0 and select distinct profiles.
@@ -945,26 +1018,24 @@ export const chartRouter = createTRPCRouter({
       // shown as EMPTY_BREAKDOWN_LABEL (see toSeries/normalizeBreakdownValue)
       // — so match against the same normalization, not the raw column, or
       // "Not set" rows and values with stray whitespace return no users.
-      // toString/ifNull make the comparison safe for numeric breakdown
-      // columns (trim on a number is a type error) and for Nullable ones
-      // (trim(NULL) = '' is NULL, never true).
+      // The text form and COALESCE make the comparison work for numeric
+      // breakdown columns and for NULLs.
       breakdowns.forEach((_, index) => {
         const value = breakdownValues[index];
         if (value === undefined) {
           return;
         }
-        const normalized = `trim(ifNull(toString(b_${index}), ''))`;
+        const normalized = sql`btrim(COALESCE((${raw(`b_${index}`)})::text, ''))`;
         if (value === EMPTY_BREAKDOWN_LABEL) {
           query.rawWhere(
-            `(${normalized} = '' OR ${normalized} = ${sqlstring.escape(EMPTY_BREAKDOWN_LABEL)})`
+            sql`(${normalized} = '' OR ${normalized} = ${EMPTY_BREAKDOWN_LABEL}::text)`
           );
         } else {
-          query.rawWhere(`${normalized} = ${sqlstring.escape(value)}`);
+          query.rawWhere(sql`${normalized} = ${value}::text`);
         }
       });
 
-      // Cap the number of profiles to avoid exceeding ClickHouse max_query_size
-      // when passing IDs to the next query
+      // Cap the number of profiles passed on to the profile lookups
       query.limit(1000);
 
       const profileIdsResult = (await query.execute()) as {
@@ -975,8 +1046,7 @@ export const chartRouter = createTRPCRouter({
         return [];
       }
 
-      // Fetch profile details in batches to avoid exceeding ClickHouse max_query_size
-      // when there are many profile IDs to pass in the IN(...) clause
+      // Fetch profile details in batches
       const ids = profileIdsResult.map((p) => p.profile_id).filter(Boolean);
       const BATCH_SIZE = 500;
       const profiles: IServiceProfile[] = [];

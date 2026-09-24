@@ -1,6 +1,5 @@
 import { Arctic, googleGsc } from '@openpanel/auth';
 import {
-  chQuery,
   db,
   getChartStartEndDate,
   getGscCannibalization,
@@ -11,12 +10,14 @@ import {
   getGscQueryDetails,
   getSettingsForProject,
   listGscSites,
-  TABLE_NAMES,
 } from '@openpanel/db';
+import { anQuery } from '@openpanel/db/src/analytics/client';
+import { type Sql, join, sql } from '@openpanel/db/src/analytics/sql';
 import { gscQueue } from '@openpanel/queue';
 import { zRange, zTimeInterval } from '@openpanel/validation';
 import { z } from 'zod';
 import { getProjectAccess, requireProjectAccess } from '../access';
+import { instant } from '../analytics-time';
 import { TRPCForbiddenError, TRPCNotFoundError } from '../errors';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
@@ -48,13 +49,12 @@ async function resolveDates(
 }
 
 /**
- * ClickHouse stores the same AI referrer under several spellings: the parsed
- * display name ('ChatGPT', 'Google Gemini'), the bare host ('chatgpt.com') and
- * the full origin ('https://kagi.com'). Normalize before matching so every
+ * The same AI referrer is stored under several spellings: the parsed display
+ * name ('ChatGPT', 'Google Gemini'), the bare host ('chatgpt.com') and the
+ * full origin ('https://kagi.com'). Normalize before matching so every
  * spelling lands on the same engine.
  */
-const NORMALIZED_REFERRER_NAME =
-  "lower(regexp_replace(referrer_name, '^https?://(www[.])?', ''))";
+const NORMALIZED_REFERRER_NAME = sql`lower(regexp_replace(referrer_name, '^https?://(www[.])?', ''))`;
 
 const AI_REFERRERS = [
   {
@@ -88,20 +88,21 @@ const AI_REFERRERS = [
   aliases: readonly string[];
 }>;
 
-const quoteList = (values: readonly string[]) =>
-  values.map((value) => `'${value}'`).join(', ');
+const AI_REFERRER_ALIASES: string[] = AI_REFERRERS.flatMap((engine) => [
+  ...engine.aliases,
+]);
 
-/** `norm` is the alias bound by AI_REFERRER_CTE below. */
-const AI_REFERRER_CTE = `WITH ${NORMALIZED_REFERRER_NAME} AS norm`;
-
-const AI_REFERRER_FILTER = `norm IN (${quoteList(
-  AI_REFERRERS.flatMap((engine) => engine.aliases)
-)})`;
-
-/** Collapses every alias onto one row per engine. */
-const AI_REFERRER_CANONICAL_NAME = `multiIf(${AI_REFERRERS.map(
-  (engine) => `norm IN (${quoteList(engine.aliases)}), '${engine.canonical}'`
-).join(', ')}, norm)`;
+/**
+ * Collapses every alias onto one row per engine. `norm` is the normalized
+ * name selected by aiReferrerSessions below.
+ */
+const AI_REFERRER_CANONICAL_NAME = sql`CASE ${join(
+  AI_REFERRERS.map(
+    (engine) =>
+      sql`WHEN norm = ANY(${[...engine.aliases]}::text[]) THEN ${engine.canonical}::text`,
+  ),
+  ' ',
+)} ELSE norm END`;
 
 /**
  * Half-open windows so the last day of the range is included and the previous
@@ -114,11 +115,36 @@ function getComparisonWindows(startDate: string, endDate: string) {
   const previousStart = new Date(
     start.getTime() - (endExclusive.getTime() - start.getTime())
   );
-  const fmt = (date: Date) => date.toISOString().slice(0, 19).replace('T', ' ');
   return {
-    current: { start: fmt(start), end: fmt(endExclusive) },
-    previous: { start: fmt(previousStart), end: fmt(start) },
+    current: { start, end: endExclusive },
+    previous: { start: previousStart, end: start },
   };
+}
+
+interface ComparisonWindow {
+  start: Date;
+  end: Date;
+}
+
+/** Sessions of the project that started inside the window. */
+function sessionsIn(projectId: string, window: ComparisonWindow): Sql {
+  return sql`project_id = ${projectId}
+    AND created_at >= ${instant(window.start)}
+    AND created_at < ${instant(window.end)}`;
+}
+
+/**
+ * Sessions from an AI referrer in the window, as a subquery with the
+ * referrer's normalized name as `norm`. Matched by name — will switch to
+ * referrer_type = 'ai' once available.
+ */
+function aiReferrerSessions(projectId: string, window: ComparisonWindow): Sql {
+  return sql`(
+    SELECT ${NORMALIZED_REFERRER_NAME} AS norm
+    FROM analytics.sessions
+    WHERE ${sessionsIn(projectId, window)}
+      AND ${NORMALIZED_REFERRER_NAME} = ANY(${AI_REFERRER_ALIASES}::text[])
+  ) AS s`;
 }
 
 export const gscRouter = createTRPCRouter({
@@ -332,33 +358,28 @@ export const gscRouter = createTRPCRouter({
       const { startDate, endDate } = await resolveDates(input.projectId, input);
       const windows = getComparisonWindows(startDate, endDate);
 
-      const where = (window: { start: string; end: string }) =>
-        `project_id = '${input.projectId}'
-          AND referrer_type = 'search'
-          AND created_at >= '${window.start}'
-          AND created_at < '${window.end}'`;
+      const where = (window: ComparisonWindow) =>
+        sql`${sessionsIn(input.projectId, window)} AND referrer_type = 'search'`;
 
       const [engines, [currentResult], [prevResult]] = await Promise.all([
-        chQuery<{ name: string; sessions: number }>(
-          `SELECT
-            referrer_name as name,
-            count(*) as sessions
-          FROM ${TABLE_NAMES.sessions}
+        anQuery<{ name: string; sessions: number }>(sql`
+          SELECT referrer_name AS name, count(*) AS sessions
+          FROM analytics.sessions
           WHERE ${where(windows.current)}
-          GROUP BY name
+          GROUP BY referrer_name
           ORDER BY sessions DESC
-          LIMIT 10`
-        ),
-        chQuery<{ sessions: number }>(
-          `SELECT count(*) as sessions
-          FROM ${TABLE_NAMES.sessions}
-          WHERE ${where(windows.current)}`
-        ),
-        chQuery<{ sessions: number }>(
-          `SELECT count(*) as sessions
-          FROM ${TABLE_NAMES.sessions}
-          WHERE ${where(windows.previous)}`
-        ),
+          LIMIT 10
+        `),
+        anQuery<{ sessions: number }>(sql`
+          SELECT count(*) AS sessions
+          FROM analytics.sessions
+          WHERE ${where(windows.current)}
+        `),
+        anQuery<{ sessions: number }>(sql`
+          SELECT count(*) AS sessions
+          FROM analytics.sessions
+          WHERE ${where(windows.previous)}
+        `),
       ]);
 
       return {
@@ -383,28 +404,17 @@ export const gscRouter = createTRPCRouter({
       const { startDate, endDate } = await resolveDates(input.projectId, input);
       const windows = getComparisonWindows(startDate, endDate);
 
-      // Matched by name — will switch to referrer_type = 'ai' once available.
-      const where = (window: { start: string; end: string }) =>
-        `project_id = '${input.projectId}'
-          AND ${AI_REFERRER_FILTER}
-          AND created_at >= '${window.start}'
-          AND created_at < '${window.end}'`;
-
       const [engines, [prevResult]] = await Promise.all([
-        chQuery<{ name: string; sessions: number }>(
-          `${AI_REFERRER_CTE}
-          SELECT ${AI_REFERRER_CANONICAL_NAME} as name, count(*) as sessions
-          FROM ${TABLE_NAMES.sessions}
-          WHERE ${where(windows.current)}
-          GROUP BY name
-          ORDER BY sessions DESC`
-        ),
-        chQuery<{ sessions: number }>(
-          `${AI_REFERRER_CTE}
-          SELECT count(*) as sessions
-          FROM ${TABLE_NAMES.sessions}
-          WHERE ${where(windows.previous)}`
-        ),
+        anQuery<{ name: string; sessions: number }>(sql`
+          SELECT ${AI_REFERRER_CANONICAL_NAME} AS name, count(*) AS sessions
+          FROM ${aiReferrerSessions(input.projectId, windows.current)}
+          GROUP BY 1
+          ORDER BY sessions DESC
+        `),
+        anQuery<{ sessions: number }>(sql`
+          SELECT count(*) AS sessions
+          FROM ${aiReferrerSessions(input.projectId, windows.previous)}
+        `),
       ]);
 
       return {

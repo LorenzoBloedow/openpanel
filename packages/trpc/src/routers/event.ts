@@ -1,9 +1,7 @@
 import { TRPCError } from '@trpc/server';
-import sqlstring from 'sqlstring';
 import { z } from 'zod';
 
 import {
-  chQuery,
   convertClickhouseDateToJs,
   db,
   eventService,
@@ -15,10 +13,11 @@ import {
   hasAnonymousShareAccessToProject,
   pagesService,
   sessionService,
-  TABLE_NAMES,
   type IServiceProfile,
   type IServiceSession,
 } from '@openpanel/db';
+import { anQuery } from '@openpanel/db/src/analytics/client';
+import { sql } from '@openpanel/db/src/analytics/sql';
 import {
   zChartEventFilter,
   zRange,
@@ -27,8 +26,26 @@ import {
 
 import { clone } from 'ramda';
 import { getProjectAccess } from '../access';
+import { createdSince } from '../analytics-time';
 import { TRPCForbiddenError } from '../errors';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '../trpc';
+
+const DAY_MS = 86_400_000;
+
+/**
+ * `toDate(created_at) > now() - INTERVAL 30 DAY` (UTC): events from the
+ * first UTC midnight after that instant on.
+ */
+function originWindowStart(): Date {
+  const since = new Date(Date.now() - 30 * DAY_MS);
+  return new Date(
+    Date.UTC(
+      since.getUTCFullYear(),
+      since.getUTCMonth(),
+      since.getUTCDate() + 1,
+    ),
+  );
+}
 
 export const eventRouter = createTRPCRouter({
   updateEventMeta: protectedProcedure
@@ -302,21 +319,25 @@ export const eventRouter = createTRPCRouter({
       }
 
       const [events, counts] = await Promise.all([
-        chQuery<{
+        anQuery<{
           id: string;
           project_id: string;
           name: string;
           type: string;
           path: string;
           created_at: string;
-        }>(
-          `SELECT * FROM ${TABLE_NAMES.events_bots} WHERE project_id = ${sqlstring.escape(projectId)} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${(cursor ?? 0) * limit}`,
-        ),
-        chQuery<{
-          count: number;
-        }>(
-          `SELECT count(*) as count FROM ${TABLE_NAMES.events_bots} WHERE project_id = ${sqlstring.escape(projectId)}`,
-        ),
+        }>(sql`
+          SELECT id, project_id, name, type, path, created_at
+          FROM analytics.events_bots
+          WHERE project_id = ${projectId}
+          ORDER BY created_at DESC
+          LIMIT ${limit} OFFSET ${(cursor ?? 0) * limit}
+        `),
+        anQuery<{ count: number }>(sql`
+          SELECT count(*) AS count
+          FROM analytics.events_bots
+          WHERE project_id = ${projectId}
+        `),
       ]);
 
       return {
@@ -432,11 +453,16 @@ export const eventRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const res = await chQuery<{ origin: string }>(
-        `SELECT DISTINCT origin, count(id) as count FROM ${TABLE_NAMES.events} WHERE project_id = ${sqlstring.escape(
-          input.projectId,
-        )} AND origin IS NOT NULL AND origin != '' AND toDate(created_at) > now() - INTERVAL 30 DAY GROUP BY origin ORDER BY count DESC LIMIT 3`,
-      );
+      const res = await anQuery<{ origin: string }>(sql`
+        SELECT origin, count(*) AS count
+        FROM analytics.events
+        WHERE project_id = ${input.projectId}
+          AND origin <> ''
+          AND ${createdSince(originWindowStart())}
+        GROUP BY origin
+        ORDER BY count DESC
+        LIMIT 3
+      `);
 
       return res.filter((item) => item.origin && !item.origin.includes('localhost:'));
     }),

@@ -1,6 +1,4 @@
 import {
-  ch,
-  clix,
   getActiveVisitorCount,
   getChartPrevStartEndDate,
   getChartStartEndDate,
@@ -9,7 +7,6 @@ import {
   getReferrerSpikes,
   getSettingsForProject,
   overviewService,
-  TABLE_NAMES,
   validateOverviewShareAccess,
   zGetMapDataInput,
   zGetMetricsInput,
@@ -20,6 +17,8 @@ import {
   zGetTopPagesInput,
   zGetUserJourneyInput,
 } from '@openpanel/db';
+import { anQuery } from '@openpanel/db/src/analytics/client';
+import { sql } from '@openpanel/db/src/analytics/sql';
 import {
   type IChartRange,
   pageContextSchema,
@@ -29,6 +28,12 @@ import { format } from 'date-fns';
 import { z } from 'zod';
 import { getProjectAccess } from '../access';
 import { runFilterCommand } from '#ai-features';
+import {
+  getLiveMinuteCounts,
+  liveEvents,
+  liveMinute,
+  liveWindow,
+} from '../analytics-time';
 import { TRPCAccessError, TRPCForbiddenError } from '../errors';
 import {
   cacheMiddleware,
@@ -159,78 +164,47 @@ export const overviewRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const { timezone } = await getSettingsForProject(input.projectId);
 
-      // Get total unique sessions in the last 30 minutes
-      const totalSessionsQuery = clix(ch, timezone)
-        .select<{ total_sessions: number }>([
-          'uniq(session_id) as total_sessions',
-        ])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where('created_at', '>=', clix.exp('now() - INTERVAL 30 MINUTE'));
-
-      // Get counts per minute for the last 30 minutes
-      const minuteCountsQuery = clix(ch, timezone)
-        .select<{
-          minute: string;
-          session_count: number;
-          visitor_count: number;
-        }>([
-          `${clix.toStartOf('created_at', 'minute')} as minute`,
-          'uniq(session_id) as session_count',
-          'uniq(profile_id) as visitor_count',
-        ])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where('created_at', '>=', clix.exp('now() - INTERVAL 30 MINUTE'))
-        .groupBy(['minute'])
-        .orderBy('minute', 'ASC')
-        .fill(
-          clix.exp('toStartOfMinute(now() - INTERVAL 30 MINUTE)'),
-          clix.exp('toStartOfMinute(now())'),
-          clix.exp('INTERVAL 1 MINUTE')
-        );
-
-      // Get referrers per minute for the last 30 minutes
-      const minuteReferrersQuery = clix(ch, timezone)
-        .select<{
-          minute: string;
-          referrer_name: string;
-          count: number;
-        }>([
-          `${clix.toStartOf('created_at', 'minute')} as minute`,
-          'referrer_name',
-          'uniq(session_id) as count',
-        ])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where('created_at', '>=', clix.exp('now() - INTERVAL 30 MINUTE'))
-        .where('referrer_name', '!=', '')
-        .where('referrer_name', 'IS NOT NULL')
-        .groupBy(['minute', 'referrer_name'])
-        .orderBy('minute', 'ASC')
-        .orderBy('count', 'DESC');
-
-      // Get unique referrers in the last 30 minutes
-      const referrersQuery = clix(ch, timezone)
-        .select<{ referrer: string; count: number }>([
-          'referrer_name as referrer',
-          'uniq(session_id) as count',
-        ])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', input.projectId)
-        .where('created_at', '>=', clix.exp('now() - INTERVAL 30 MINUTE'))
-        .where('referrer_name', '!=', '')
-        .where('referrer_name', 'IS NOT NULL')
-        .groupBy(['referrer_name'])
-        .orderBy('count', 'DESC')
-        .limit(10);
+      const window = liveWindow(input.projectId, timezone);
 
       const [totalSessions, minuteCounts, minuteReferrers, referrers] =
         await Promise.all([
-          totalSessionsQuery.execute(),
-          minuteCountsQuery.execute(),
-          minuteReferrersQuery.execute(),
-          referrersQuery.execute(),
+          // Unique sessions in the last 30 minutes
+          anQuery<{ total_sessions: number }>(sql`
+            SELECT COUNT(DISTINCT session_id) AS total_sessions
+            FROM analytics.events
+            WHERE ${liveEvents(window)}
+          `),
+          // Counts per minute for the last 30 minutes
+          getLiveMinuteCounts(window),
+          // Referrers per minute for the last 30 minutes
+          anQuery<{
+            minute: string;
+            referrer_name: string;
+            count: number;
+          }>(sql`
+            SELECT
+              to_char(e.minute, 'YYYY-MM-DD HH24:MI:SS') AS minute,
+              e.referrer_name,
+              COUNT(DISTINCT e.session_id) AS count
+            FROM (
+              SELECT ${liveMinute(window)} AS minute, referrer_name, session_id
+              FROM analytics.events
+              WHERE ${liveEvents(window)}
+                AND referrer_name <> ''
+            ) AS e
+            GROUP BY e.minute, e.referrer_name
+            ORDER BY e.minute ASC, count DESC
+          `),
+          // Unique referrers in the last 30 minutes
+          anQuery<{ referrer: string; count: number }>(sql`
+            SELECT referrer_name AS referrer, COUNT(DISTINCT session_id) AS count
+            FROM analytics.events
+            WHERE ${liveEvents(window)}
+              AND referrer_name <> ''
+            GROUP BY referrer_name
+            ORDER BY count DESC
+            LIMIT 10
+          `),
         ]);
 
       // Group referrers by minute

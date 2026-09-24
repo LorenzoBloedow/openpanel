@@ -1,5 +1,4 @@
 import {
-  chQuery,
   createGroup,
   deleteGroup,
   getGroupById,
@@ -10,14 +9,21 @@ import {
   getGroupStats,
   getGroupsByIds,
   getGroupTypes,
-  TABLE_NAMES,
   toNullIfDefaultMinDate,
   updateGroup,
 } from '@openpanel/db';
+import { anQuery } from '@openpanel/db/src/analytics/client';
+import { gapFill } from '@openpanel/db/src/analytics/fill';
+import { sql } from '@openpanel/db/src/analytics/sql';
 import { zCreateGroup, zUpdateGroup } from '@openpanel/validation';
-import sqlstring from 'sqlstring';
 import { z } from 'zod';
+import { createdSince } from '../analytics-time';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
+
+const DAY_MS = 86_400_000;
+
+/** 'YYYY-MM-DD' of an instant in UTC. */
+const utcDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 export const groupRouter = createTRPCRouter({
   list: protectedProcedure
@@ -83,20 +89,24 @@ export const groupRouter = createTRPCRouter({
     .input(z.object({ id: z.string(), projectId: z.string() }))
     .query(async ({ input: { id, projectId } }) => {
       const [eventData, profileData] = await Promise.all([
-        chQuery<{ totalEvents: number; firstSeen: string; lastSeen: string }>(`
+        anQuery<{
+          totalEvents: number;
+          firstSeen: string | null;
+          lastSeen: string | null;
+        }>(sql`
           SELECT
-            count() AS totalEvents,
-            min(created_at) AS firstSeen,
-            max(created_at) AS lastSeen
-          FROM ${TABLE_NAMES.events}
-          WHERE project_id = ${sqlstring.escape(projectId)}
-            AND has(groups, ${sqlstring.escape(id)})
+            count(*) AS "totalEvents",
+            min(created_at) AS "firstSeen",
+            max(created_at) AS "lastSeen"
+          FROM analytics.events
+          WHERE project_id = ${projectId}
+            AND ${id}::text = ANY(groups)
         `),
-        chQuery<{ uniqueProfiles: number }>(`
-          SELECT count() AS uniqueProfiles
-          FROM ${TABLE_NAMES.profiles} FINAL
-          WHERE project_id = ${sqlstring.escape(projectId)}
-            AND has(groups, ${sqlstring.escape(id)})
+        anQuery<{ uniqueProfiles: number }>(sql`
+          SELECT count(*) AS "uniqueProfiles"
+          FROM analytics.profiles
+          WHERE project_id = ${projectId}
+            AND ${id}::text = ANY(groups)
         `),
       ]);
 
@@ -111,33 +121,46 @@ export const groupRouter = createTRPCRouter({
   activity: protectedProcedure
     .input(z.object({ id: z.string(), projectId: z.string() }))
     .query(({ input: { id, projectId } }) => {
-      return chQuery<{ count: number; date: string }>(`
-        SELECT count() AS count, toStartOfDay(created_at) AS date
-        FROM ${TABLE_NAMES.events}
-        WHERE project_id = ${sqlstring.escape(projectId)}
-          AND has(groups, ${sqlstring.escape(id)})
-        GROUP BY date
-        ORDER BY date DESC
+      // UTC days, as ClickHouse's toStartOfDay without a session time zone.
+      return anQuery<{ count: number; date: string }>(sql`
+        SELECT count(*) AS count, to_char(e.day, 'YYYY-MM-DD HH24:MI:SS') AS date
+        FROM (
+          SELECT date_trunc('day', created_at AT TIME ZONE 'UTC') AS day
+          FROM analytics.events
+          WHERE project_id = ${projectId}
+            AND ${id}::text = ANY(groups)
+        ) AS e
+        GROUP BY e.day
+        ORDER BY e.day DESC
       `);
     }),
 
   memberGrowth: protectedProcedure
     .input(z.object({ id: z.string(), projectId: z.string() }))
-    .query(({ input: { id, projectId } }) => {
-      return chQuery<{ date: string; count: number }>(`
-        SELECT
-          toDate(toStartOfDay(created_at)) AS date,
-          count() AS count
-        FROM ${TABLE_NAMES.profiles} FINAL
-        WHERE project_id = ${sqlstring.escape(projectId)}
-          AND has(groups, ${sqlstring.escape(id)})
-          AND created_at >= now() - INTERVAL 30 DAY
-        GROUP BY date
-        ORDER BY date ASC WITH FILL
-          FROM toDate(now() - INTERVAL 29 DAY)
-          TO toDate(now() + INTERVAL 1 DAY)
-          STEP 1
+    .query(async ({ input: { id, projectId } }) => {
+      // UTC days of the last 30 days; empty days from 29 days ago through
+      // today are filled (ClickHouse WITH FILL).
+      const now = Date.now();
+      const rows = await anQuery<{ date: string; count: number }>(sql`
+        SELECT to_char(p.day, 'YYYY-MM-DD') AS date, count(*) AS count
+        FROM (
+          SELECT (created_at AT TIME ZONE 'UTC')::date AS day
+          FROM analytics.profiles
+          WHERE project_id = ${projectId}
+            AND ${id}::text = ANY(groups)
+            AND ${createdSince(new Date(now - 30 * DAY_MS))}
+        ) AS p
+        GROUP BY p.day
+        ORDER BY p.day
       `);
+      return gapFill(rows, {
+        key: 'date',
+        from: utcDay(now - 29 * DAY_MS),
+        to: utcDay(now + DAY_MS),
+        unit: 'day',
+        format: 'date',
+        fill: (date) => ({ date, count: 0 }),
+      });
     }),
 
   listProfiles: protectedProcedure
@@ -167,11 +190,11 @@ export const groupRouter = createTRPCRouter({
   mostEvents: protectedProcedure
     .input(z.object({ id: z.string(), projectId: z.string() }))
     .query(({ input: { id, projectId } }) => {
-      return chQuery<{ count: number; name: string }>(`
-        SELECT count() as count, name
-        FROM ${TABLE_NAMES.events}
-        WHERE project_id = ${sqlstring.escape(projectId)}
-          AND has(groups, ${sqlstring.escape(id)})
+      return anQuery<{ count: number; name: string }>(sql`
+        SELECT count(*) AS count, name
+        FROM analytics.events
+        WHERE project_id = ${projectId}
+          AND ${id}::text = ANY(groups)
           AND name NOT IN ('screen_view', 'session_start', 'session_end')
         GROUP BY name
         ORDER BY count DESC
@@ -182,11 +205,11 @@ export const groupRouter = createTRPCRouter({
   popularRoutes: protectedProcedure
     .input(z.object({ id: z.string(), projectId: z.string() }))
     .query(({ input: { id, projectId } }) => {
-      return chQuery<{ count: number; path: string }>(`
-        SELECT count() as count, path
-        FROM ${TABLE_NAMES.events}
-        WHERE project_id = ${sqlstring.escape(projectId)}
-          AND has(groups, ${sqlstring.escape(id)})
+      return anQuery<{ count: number; path: string }>(sql`
+        SELECT count(*) AS count, path
+        FROM analytics.events
+        WHERE project_id = ${projectId}
+          AND ${id}::text = ANY(groups)
           AND name = 'screen_view'
         GROUP BY path
         ORDER BY count DESC

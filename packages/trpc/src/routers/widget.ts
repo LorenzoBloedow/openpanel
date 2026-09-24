@@ -1,15 +1,22 @@
 import {
-  ch,
-  clix,
   db,
   getActiveVisitorCount,
   getSettingsForProject,
-  TABLE_NAMES,
 } from '@openpanel/db';
+import { anQuery } from '@openpanel/db/src/analytics/client';
+import { sql } from '@openpanel/db/src/analytics/sql';
 import { getCache } from '@openpanel/redis';
 import { zWidgetOptions, zWidgetType } from '@openpanel/validation';
 import ShortUniqueId from 'short-unique-id';
 import { z } from 'zod';
+import {
+  createdSince,
+  getLiveMinuteCounts,
+  liveEvents,
+  liveWindow,
+  secondsNow,
+  zonedMinus,
+} from '../analytics-time';
 import { TRPCNotFoundError } from '../errors';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '../trpc';
 
@@ -164,13 +171,12 @@ export const widgetRouter = createTRPCRouter({
         cacheKey,
         5 * 60, // 5 minutes
         async () => {
-          const uniqueVisitorsQuery = clix(ch, timezone)
-            .select<{ count: number }>(['uniq(profile_id) as count'])
-            .from(TABLE_NAMES.events)
-            .where('project_id', '=', projectId)
-            .where('created_at', '>=', clix.exp('now() - INTERVAL 30 DAY'));
-
-          const result = await uniqueVisitorsQuery.execute();
+          const result = await anQuery<{ count: number }>(sql`
+            SELECT COUNT(DISTINCT profile_id) AS count
+            FROM analytics.events
+            WHERE project_id = ${projectId}
+              AND ${createdSince(zonedMinus(secondsNow(), timezone, { days: 30 }))}
+          `);
           return result[0]?.count || 0;
         }
       );
@@ -211,94 +217,58 @@ export const widgetRouter = createTRPCRouter({
 
       const { timezone } = await getSettingsForProject(projectId);
 
-      // Always fetch live count and histogram
-      const totalSessionsQuery = clix(ch, timezone)
-        .select<{ total_sessions: number }>([
-          'uniq(session_id) as total_sessions',
-        ])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', projectId)
-        .where('created_at', '>=', clix.exp('now() - INTERVAL 30 MINUTE'));
+      const window = liveWindow(projectId, timezone);
 
-      const minuteCountsQuery = clix(ch, timezone)
-        .select<{
-          minute: string;
-          session_count: number;
-          visitor_count: number;
-        }>([
-          `${clix.toStartOf('created_at', 'minute')} as minute`,
-          'uniq(session_id) as session_count',
-          'uniq(profile_id) as visitor_count',
-        ])
-        .from(TABLE_NAMES.events)
-        .where('project_id', '=', projectId)
-        .where('created_at', '>=', clix.exp('now() - INTERVAL 30 MINUTE'))
-        .groupBy(['minute'])
-        .orderBy('minute', 'ASC')
-        .fill(
-          clix.exp('toStartOfMinute(now() - INTERVAL 30 MINUTE)'),
-          clix.exp('toStartOfMinute(now())'),
-          clix.exp('INTERVAL 1 MINUTE')
-        );
+      // Always fetch live count and histogram
+      const totalSessionsPromise = anQuery<{ total_sessions: number }>(sql`
+        SELECT COUNT(DISTINCT session_id) AS total_sessions
+        FROM analytics.events
+        WHERE ${liveEvents(window)}
+      `);
 
       // Conditionally fetch countries
       const countriesQueryPromise = options.countries
-        ? clix(ch, timezone)
-            .select<{
-              country: string;
-              count: number;
-            }>(['country', 'uniq(session_id) as count'])
-            .from(TABLE_NAMES.events)
-            .where('project_id', '=', projectId)
-            .where('created_at', '>=', clix.exp('now() - INTERVAL 30 MINUTE'))
-            .where('country', '!=', '')
-            .where('country', 'IS NOT NULL')
-            .groupBy(['country'])
-            .orderBy('count', 'DESC')
-            .limit(10)
-            .execute()
+        ? anQuery<{ country: string; count: number }>(sql`
+            SELECT country, COUNT(DISTINCT session_id) AS count
+            FROM analytics.events
+            WHERE ${liveEvents(window)}
+              AND country <> ''
+            GROUP BY country
+            ORDER BY count DESC
+            LIMIT 10
+          `)
         : Promise.resolve<Array<{ country: string; count: number }>>([]);
 
       // Conditionally fetch referrers
       const referrersQueryPromise = options.referrers
-        ? clix(ch, timezone)
-            .select<{ referrer: string; count: number }>([
-              'referrer_name as referrer',
-              'uniq(session_id) as count',
-            ])
-            .from(TABLE_NAMES.events)
-            .where('project_id', '=', projectId)
-            .where('created_at', '>=', clix.exp('now() - INTERVAL 30 MINUTE'))
-            .where('referrer_name', '!=', '')
-            .where('referrer_name', 'IS NOT NULL')
-            .groupBy(['referrer_name'])
-            .orderBy('count', 'DESC')
-            .limit(10)
-            .execute()
+        ? anQuery<{ referrer: string; count: number }>(sql`
+            SELECT referrer_name AS referrer, COUNT(DISTINCT session_id) AS count
+            FROM analytics.events
+            WHERE ${liveEvents(window)}
+              AND referrer_name <> ''
+            GROUP BY referrer_name
+            ORDER BY count DESC
+            LIMIT 10
+          `)
         : Promise.resolve<Array<{ referrer: string; count: number }>>([]);
 
       // Conditionally fetch paths
       const pathsQueryPromise = options.paths
-        ? clix(ch, timezone)
-            .select<{ path: string; count: number }>([
-              'path',
-              'uniq(session_id) as count',
-            ])
-            .from(TABLE_NAMES.events)
-            .where('project_id', '=', projectId)
-            .where('created_at', '>=', clix.exp('now() - INTERVAL 30 MINUTE'))
-            .where('path', '!=', '')
-            .where('path', 'IS NOT NULL')
-            .groupBy(['path'])
-            .orderBy('count', 'DESC')
-            .limit(10)
-            .execute()
+        ? anQuery<{ path: string; count: number }>(sql`
+            SELECT path, COUNT(DISTINCT session_id) AS count
+            FROM analytics.events
+            WHERE ${liveEvents(window)}
+              AND path <> ''
+            GROUP BY path
+            ORDER BY count DESC
+            LIMIT 10
+          `)
         : Promise.resolve<Array<{ path: string; count: number }>>([]);
 
       const [totalSessions, minuteCounts, countries, referrers, paths] =
         await Promise.all([
-          totalSessionsQuery.execute(),
-          minuteCountsQuery.execute(),
+          totalSessionsPromise,
+          getLiveMinuteCounts(window),
           countriesQueryPromise,
           referrersQueryPromise,
           pathsQueryPromise,
