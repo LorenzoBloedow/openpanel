@@ -59,6 +59,11 @@ trpcRoutes.all('/*', (c) => {
         requestInfo.log.warn(payload, 'trpc rate limited');
         return;
       }
+      // A feature compiled out on Cloudflare: expected, not a failure.
+      if (error.code === 'NOT_IMPLEMENTED') {
+        requestInfo.log.warn({ path, message: error.message }, 'trpc feature unavailable');
+        return;
+      }
       requestInfo.log.error(payload, 'trpc error');
     },
   });

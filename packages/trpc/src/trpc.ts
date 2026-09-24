@@ -6,6 +6,7 @@ import { ZodError, z } from 'zod';
 import type { SessionValidationResult } from '@openpanel/auth';
 import { runWithAlsSession } from '@openpanel/db';
 import type { ILogger } from '@openpanel/logger';
+import { isFeatureUnavailableError } from '@openpanel/runtime';
 import type { ISetCookie } from '@openpanel/validation';
 import { type RateLimitOptions, enforceRateLimit } from './rate-limit';
 import { getOrganizationAccess, requireProjectAccess } from './access';
@@ -172,10 +173,29 @@ const sessionScopeMiddleware = t.middleware(async ({ ctx, next }) => {
   });
 });
 
-export const publicProcedure = t.procedure
+/**
+ * Features compiled out on Cloudflare throw FeatureUnavailableError; answer
+ * NOT_IMPLEMENTED (501) with its message instead of a 500, so clients don't
+ * retry and the dashboard can say what's missing.
+ */
+const featureUnavailableMiddleware = t.middleware(async ({ next }) => {
+  const result = await next();
+  if (!result.ok && isFeatureUnavailableError(result.error.cause)) {
+    throw new TRPCError({
+      code: 'NOT_IMPLEMENTED',
+      message: result.error.cause.message,
+      cause: result.error.cause,
+    });
+  }
+  return result;
+});
+
+const baseProcedure = t.procedure.use(featureUnavailableMiddleware);
+
+export const publicProcedure = baseProcedure
   .use(loggerMiddleware)
   .use(sessionScopeMiddleware);
-export const protectedProcedure = t.procedure
+export const protectedProcedure = baseProcedure
   .use(enforceUserIsAuthed)
   .use(enforceAccess)
   .use(loggerMiddleware)
@@ -183,7 +203,7 @@ export const protectedProcedure = t.procedure
 // Authenticated but WITHOUT the org/project membership check. Use for endpoints
 // that must answer for any logged-in user (e.g. checking your own access to an
 // org you may not belong to) and return null instead of throwing.
-export const protectedProcedureWithoutAccess = t.procedure
+export const protectedProcedureWithoutAccess = baseProcedure
   .use(enforceUserIsAuthed)
   .use(loggerMiddleware)
   .use(sessionScopeMiddleware);

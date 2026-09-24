@@ -13,7 +13,9 @@ const DEFAULT_RETRY_COUNT = 1;
 function shouldRetryQuery(failureCount: number, error: unknown) {
   if (error instanceof TRPCClientError) {
     const status = error.data?.httpStatus;
-    if (typeof status === 'number' && status >= 400 && status < 500) {
+    // 4xx won't change on a retry, and neither will 501: the feature is
+    // not available on this deployment.
+    if (typeof status === 'number' && ((status >= 400 && status < 500) || status === 501)) {
       return false;
     }
   }

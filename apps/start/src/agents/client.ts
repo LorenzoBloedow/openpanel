@@ -1,5 +1,11 @@
 import { createClient } from '@better-agent/client';
-import type { ChatApp } from '../../../api/src/agents/app';
+
+/**
+ * The chat agents' app type came from the API's agent definitions, which
+ * are compiled out on Cloudflare (AI answers 501 there), so the client is
+ * untyped until AI comes back.
+ */
+type ChatApp = any;
 
 /**
  * Typed Better Agent client. The `ChatApp` import surfaces every
