@@ -1,7 +1,17 @@
 import type { IChartEventFilter, IInterval } from '@openpanel/validation';
-import sqlstring from 'sqlstring';
-import { ch, TABLE_NAMES, chQuery } from '../clickhouse/client';
-import { clix } from '../clickhouse/query-builder';
+import { anQuery } from '../analytics/client';
+import { type Sql, and, empty, or, raw, sql } from '../analytics/sql';
+import { type TimeCtx, parseTimestamp } from '../analytics/time';
+import {
+  MS_TO_NEXT_VIEW,
+  bucketKey,
+  bucketLabel,
+  bucketOf,
+  chRound,
+  createdBetween,
+  fillBuckets,
+  withFill,
+} from './overview-buckets';
 
 export interface IGetPagesInput {
   projectId: string;
@@ -30,8 +40,18 @@ export interface ITopPage {
   bounce_rate: number;
 }
 
+const DAY_MS = 86_400_000;
+/** getPageConversionsCore ran without session_timezone. */
+const UTC: TimeCtx = { timezone: 'UTC' };
+/** How far back page titles are looked up. */
+const TITLE_LOOKBACK_DAYS = 30;
+
 export class PagesService {
-  constructor(private client: typeof ch) {}
+  /** Takes (and ignores) the ClickHouse client it used to be built with. */
+  // biome-ignore lint/complexity/noUselessConstructor: callers still pass the client
+  constructor(_client?: unknown) {
+    // Nothing to keep: the queries use the analytics pool.
+  }
 
   async getTopPages({
     projectId,
@@ -41,85 +61,67 @@ export class PagesService {
     search,
     limit,
   }: IGetPagesInput): Promise<ITopPage[]> {
-    // CTE: Get titles from the last 30 days for faster retrieval
-    const titlesCte = clix(this.client, timezone)
-      .select([
-        'concat(origin, path) as page_key',
-        "anyLast(properties['__title']) as title",
-      ])
-      .from(TABLE_NAMES.events, false)
-      .where('project_id', '=', projectId)
-      .where('name', '=', 'screen_view')
-      .where('created_at', '>=', clix.exp('now() - INTERVAL 30 DAY'))
-      .groupBy(['origin', 'path']);
+    const ctx: TimeCtx = { timezone };
+    const range = { startDate, endDate };
+    // The JS clock, not now(): a frozen clock (tests) must hold here too.
+    const titlesSince = new Date(
+      Date.now() - TITLE_LOOKBACK_DAYS * DAY_MS,
+    ).toISOString();
 
-    // CTE: compute screen_view durations via window function (leadInFrame gives next event's timestamp)
-    const screenViewDurationsCte = clix(this.client, timezone)
-      .select([
-        'project_id',
-        'session_id',
-        'path',
-        'origin',
-        `dateDiff('millisecond', created_at, lead(created_at, 1, created_at) OVER (PARTITION BY session_id ORDER BY created_at)) AS duration`,
-      ])
-      .from(TABLE_NAMES.events, false)
-      .where('project_id', '=', projectId)
-      .where('name', '=', 'screen_view')
-      .where('path', '!=', '')
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ]);
+    // Case-sensitive LIKE on the path, the origin or the title, as before.
+    const pattern = `%${search}%`;
+    const searchWhere: Sql = search
+      ? sql`WHERE ${or([
+          sql`e.path LIKE ${pattern}::text`,
+          sql`e.origin LIKE ${pattern}::text`,
+          sql`pt.title LIKE ${pattern}::text`,
+        ])}`
+      : empty;
 
-    // Pre-filtered sessions subquery for better performance
-    const sessionsSubquery = clix(this.client, timezone)
-      .select(['id', 'project_id', 'is_bounce'])
-      .from(TABLE_NAMES.sessions, true) // FINAL
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .where('sign', '=', 1);
-
-    // Main query: aggregate events and calculate bounce rate from pre-filtered sessions
-    const query = clix(this.client, timezone)
-      .with('page_titles', titlesCte)
-      .with('screen_view_durations', screenViewDurationsCte)
-      .select<ITopPage>([
-        'e.origin as origin',
-        'e.path as path',
-        "coalesce(pt.title, '') as title",
-        'uniq(e.session_id) as sessions',
-        'count() as pageviews',
-        'round(avg(e.duration) / 1000 / 60, 2) as avg_duration',
-        `round(
-          (uniqIf(e.session_id, s.is_bounce = 1) * 100.0) /
-          nullIf(uniq(e.session_id), 0),
-          2
-        ) as bounce_rate`,
-      ])
-      .from('screen_view_durations e', false)
-      .leftJoin(
-        sessionsSubquery,
-        'e.session_id = s.id AND e.project_id = s.project_id',
-        's'
+    return anQuery<ITopPage>(sql`
+      WITH page_titles AS (
+        SELECT DISTINCT ON (t.origin || t.path)
+          t.origin || t.path AS page_key,
+          COALESCE(t.properties ->> '__title', '') AS title
+        FROM analytics.events t
+        WHERE t.project_id = ${projectId}
+          AND t.name = 'screen_view'
+          AND t.created_at >= ${titlesSince}::timestamptz
+        ORDER BY t.origin || t.path, t.created_at DESC
+      ),
+      screen_view_durations AS (
+        SELECT
+          e.session_id,
+          e.path,
+          e.origin,
+          ${MS_TO_NEXT_VIEW} AS duration
+        FROM analytics.events e
+        WHERE ${and([
+          sql`e.project_id = ${projectId}`,
+          sql`e.name = 'screen_view'`,
+          sql`e.path <> ''`,
+          createdBetween(raw('e.created_at'), range, ctx),
+        ])}
       )
-      .leftJoin('page_titles pt', 'concat(e.origin, e.path) = pt.page_key')
-      .when(!!search, (q) => {
-        const term = `%${search}%`;
-        q.whereGroup()
-          .where('e.path', 'LIKE', term)
-          .orWhere('e.origin', 'LIKE', term)
-          .orWhere('pt.title', 'LIKE', term)
-          .end();
-      })
-      .groupBy(['e.origin', 'e.path', 'pt.title'])
-      .orderBy('sessions', 'DESC');
-    if (limit !== undefined) {
-      query.limit(limit);
-    }
-    return query.execute();
+      SELECT
+        e.origin,
+        e.path,
+        COALESCE(pt.title, '') AS title,
+        count(DISTINCT e.session_id) AS sessions,
+        count(*) AS pageviews,
+        ${chRound(sql`avg(e.duration::double precision) / 1000 / 60`, 2)} AS avg_duration,
+        ${chRound(sql`(count(DISTINCT e.session_id) FILTER (WHERE s.is_bounce))::double precision * 100 / NULLIF(count(DISTINCT e.session_id), 0)`, 2)} AS bounce_rate
+      FROM screen_view_durations e
+      LEFT JOIN analytics.sessions s
+        ON s.project_id = ${projectId}
+        AND s.id = e.session_id
+        AND ${createdBetween(raw('s.created_at'), range, ctx)}
+      LEFT JOIN page_titles pt ON pt.page_key = e.origin || e.path
+      ${searchWhere}
+      GROUP BY e.origin, e.path, pt.title
+      ORDER BY sessions DESC, e.origin, e.path
+      ${limit !== undefined ? sql`LIMIT ${Math.max(0, Math.trunc(limit))}` : empty}
+    `);
   }
 
   async getPageTimeseries({
@@ -135,49 +137,59 @@ export class PagesService {
     filterOrigin?: string;
     filterPath?: string;
   }): Promise<IPageTimeseriesRow[]> {
-    const dateExpr = clix.toStartOf('e.created_at', interval, timezone);
-    const useDateOnly = interval === 'month' || interval === 'week';
-    const fillFrom = clix.toStartOf(
-      clix.datetime(startDate, useDateOnly ? 'toDate' : 'toDateTime'),
-      interval
-    );
-    const fillTo = clix.datetime(
-      endDate,
-      useDateOnly ? 'toDate' : 'toDateTime'
-    );
-    const fillStep = clix.toInterval('1', interval);
+    const ctx: TimeCtx = { timezone };
 
-    return clix(this.client, timezone)
-      .select<IPageTimeseriesRow>([
-        'e.origin as origin',
-        'e.path as path',
-        `${dateExpr} AS date`,
-        'count() as pageviews',
-        'uniq(e.session_id) as sessions',
-      ])
-      .from(`${TABLE_NAMES.events} e`, false)
-      .where('e.project_id', '=', projectId)
-      .where('e.name', '=', 'screen_view')
-      .where('e.path', '!=', '')
-      .where('e.created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .when(!!filterOrigin, (q) => q.where('e.origin', '=', filterOrigin!))
-      .when(!!filterPath, (q) => q.where('e.path', '=', filterPath!))
-      .groupBy(['e.origin', 'e.path', 'date'])
-      .orderBy('date', 'ASC')
-      .fill(fillFrom, fillTo, fillStep)
-      .execute();
+    const rows = await anQuery<IPageTimeseriesRow & { bucket_key: string }>(sql`
+      SELECT
+        b.origin,
+        b.path,
+        ${bucketKey(raw('b.bucket'), interval)} AS bucket_key,
+        ${bucketLabel(raw('b.bucket'), interval, ctx)} AS date,
+        count(*) AS pageviews,
+        count(DISTINCT b.session_id) AS sessions
+      FROM (
+        SELECT
+          ${bucketOf(raw('e.created_at'), interval, ctx)} AS bucket,
+          e.origin,
+          e.path,
+          e.session_id
+        FROM analytics.events e
+        WHERE ${and([
+          sql`e.project_id = ${projectId}`,
+          sql`e.name = 'screen_view'`,
+          sql`e.path <> ''`,
+          createdBetween(raw('e.created_at'), { startDate, endDate }, ctx),
+          filterOrigin ? sql`e.origin = ${filterOrigin}::text` : empty,
+          filterPath ? sql`e.path = ${filterPath}::text` : empty,
+        ])}
+      ) b
+      GROUP BY b.origin, b.path, b.bucket
+      ORDER BY bucket_key, b.origin, b.path
+    `);
+
+    // WITH FILL rows carry the column defaults.
+    return withFill(
+      rows,
+      (row) => row.bucket_key,
+      fillBuckets(interval, startDate, endDate, timezone),
+      (bucket) => ({
+        origin: '',
+        path: '',
+        bucket_key: bucket.key,
+        date: bucket.label,
+        pageviews: 0,
+        sessions: 0,
+      }),
+    ).map(({ bucket_key: _key, ...row }) => row);
   }
 }
 
-export const pagesService = new PagesService(ch);
+export const pagesService = new PagesService();
 
 import { OverviewService } from './overview.service';
 import { getSettingsForProject } from './organization.service';
 
-const _overviewServiceForPages = new OverviewService(ch);
+const _overviewServiceForPages = new OverviewService();
 
 export async function getTopPagesCore(input: {
   projectId: string;
@@ -276,46 +288,63 @@ export async function getPageConversionsCore(input: {
   limit?: number;
 }): Promise<IPageConversionRow[]> {
   const { projectId, startDate, endDate, conversionEvent, windowHours = 24, limit = 100 } = input;
-  const sql = `
-    WITH
-    conversion_events AS (
+  const hours = Math.trunc(Number(windowHours));
+  const rowLimit = Math.trunc(Number(limit));
+  // ClickHouse rejected a window or a limit that isn't a number; now they
+  // match nothing.
+  if (!(Number.isFinite(hours) && Number.isFinite(rowLimit))) {
+    return [];
+  }
+  // This query ran without session_timezone: the bounds are UTC, and text
+  // that isn't a date matches nothing.
+  const inRange = (column: Sql) =>
+    sql`${column} BETWEEN ${parseTimestamp(sql`${startDate}::text`, UTC)} AND ${parseTimestamp(sql`${endDate}::text`, UTC)}`;
+
+  // A page counts a profile once when it viewed the page in the window
+  // hours before one of its conversions (the DISTINCT profile/page pairs of
+  // the ClickHouse join).
+  return anQuery<IPageConversionRow>(sql`
+    WITH conversion_events AS (
       SELECT profile_id, created_at AS conv_time
-      FROM events
-      WHERE project_id = ${sqlstring.escape(projectId)}
-        AND name = ${sqlstring.escape(conversionEvent)}
-        AND created_at BETWEEN toDateTime(${sqlstring.escape(startDate)}) AND toDateTime(${sqlstring.escape(endDate)})
+      FROM analytics.events
+      WHERE project_id = ${projectId}
+        AND name = ${conversionEvent}::text
+        AND ${inRange(raw('created_at'))}
     ),
-    views_before_conversions AS (
-      SELECT DISTINCT e.profile_id, e.path, e.origin
-      FROM events AS e
-      INNER JOIN conversion_events AS c ON e.profile_id = c.profile_id
-      WHERE e.project_id = ${sqlstring.escape(projectId)}
+    converters AS (
+      SELECT e.path, e.origin, count(DISTINCT e.profile_id) AS unique_converters
+      FROM analytics.events e
+      WHERE e.project_id = ${projectId}
         AND e.name = 'screen_view'
-        AND e.path != ''
-        AND e.created_at BETWEEN toDateTime(${sqlstring.escape(startDate)}) AND toDateTime(${sqlstring.escape(endDate)})
-        AND e.created_at < c.conv_time
-        AND e.created_at >= c.conv_time - INTERVAL ${Number(windowHours)} HOUR
+        AND e.path <> ''
+        AND ${inRange(raw('e.created_at'))}
+        AND EXISTS (
+          SELECT 1
+          FROM conversion_events c
+          WHERE c.profile_id = e.profile_id
+            AND e.created_at < c.conv_time
+            AND e.created_at >= c.conv_time - make_interval(hours => ${hours})
+        )
+      GROUP BY e.path, e.origin
     ),
     total_visitors AS (
-      SELECT path, origin, uniq(session_id) AS visitors
-      FROM events
-      WHERE project_id = ${sqlstring.escape(projectId)}
+      SELECT path, origin, count(DISTINCT session_id) AS visitors
+      FROM analytics.events
+      WHERE project_id = ${projectId}
         AND name = 'screen_view'
-        AND path != ''
-        AND created_at BETWEEN toDateTime(${sqlstring.escape(startDate)}) AND toDateTime(${sqlstring.escape(endDate)})
+        AND path <> ''
+        AND ${inRange(raw('created_at'))}
       GROUP BY path, origin
     )
     SELECT
-      vbc.path,
-      vbc.origin,
-      count() AS unique_converters,
-      any(tv.visitors) AS total_visitors,
-      round(100.0 * count() / any(tv.visitors), 2) AS conversion_rate
-    FROM views_before_conversions AS vbc
-    LEFT JOIN total_visitors AS tv ON vbc.path = tv.path AND vbc.origin = tv.origin
-    GROUP BY vbc.path, vbc.origin
-    ORDER BY unique_converters DESC
-    LIMIT ${Number(limit)}
-  `;
-  return chQuery<IPageConversionRow>(sql);
+      c.path,
+      c.origin,
+      c.unique_converters,
+      tv.visitors AS total_visitors,
+      ${chRound(sql`100.0::double precision * c.unique_converters / tv.visitors`, 2)} AS conversion_rate
+    FROM converters c
+    LEFT JOIN total_visitors tv ON tv.path = c.path AND tv.origin = c.origin
+    ORDER BY c.unique_converters DESC, c.path, c.origin
+    LIMIT ${Math.max(0, rowLimit)}
+  `);
 }
