@@ -1,8 +1,4 @@
-import {
-  db,
-  deleteFromClickhouse,
-  deleteOrganization as deleteOrg,
-} from '@openpanel/db';
+import { db } from '@openpanel/db';
 import chalk from 'chalk';
 import fuzzy from 'fuzzy';
 import inquirer from 'inquirer';
@@ -179,33 +175,25 @@ export async function deleteOrganization() {
   console.log(chalk.red('\n🗑️  Deleting organization...\n'));
 
   try {
-    const projectIds = organization.projects.map((p) => p.id);
+    // Scheduled, not deleted here: the worker's hourly cron starts the
+    // ProjectDelete workflow for it, which deletes the projects' analytics
+    // data in chunks, then the projects and the organization.
+    console.log(chalk.yellow('Scheduling the organization for deletion...'));
+    await db.organization.update({
+      where: { id: organization.id },
+      data: { deleteAt: new Date() },
+    });
+    console.log(chalk.green('✓ Organization scheduled for deletion'));
 
-    // Step 1: Delete from ClickHouse (events, profiles, etc.)
-    if (projectIds.length > 0) {
-      console.log(
-        chalk.yellow(
-          `Deleting data from ClickHouse for ${projectIds.length} projects...`,
-        ),
-      );
-      await deleteFromClickhouse(projectIds);
-      console.log(chalk.green('✓ ClickHouse data deletion initiated'));
-    }
-
-    // Step 2: Delete the organization from PostgreSQL (cascade will handle related records)
-    console.log(chalk.yellow('Deleting organization from database...'));
-    await deleteOrg(organization.id);
-    console.log(chalk.green('✓ Organization deleted from database'));
-
-    console.log(chalk.green('\n✅ Organization deleted successfully!'));
+    console.log(chalk.green('\n✅ Organization deletion scheduled!'));
     console.log(
       chalk.gray(
-        `Deleted: ${organization.name} with ${organization.projects.length} projects and ${organization.members.length} members`,
+        `Scheduled: ${organization.name} with ${organization.projects.length} projects and ${organization.members.length} members`,
       ),
     );
     console.log(
       chalk.gray(
-        '\nNote: ClickHouse deletions are processed asynchronously and may take a few moments to complete.',
+        '\nNote: the worker deletes it within the hour (its analytics data first, then the projects and the organization).',
       ),
     );
   } catch (error) {
