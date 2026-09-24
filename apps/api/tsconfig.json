@@ -10,10 +10,5 @@
     "strictNullChecks": true
   },
   "include": ["src", "test", "worker-configuration.d.ts"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    // Drives the insights services through Fastify; ported with them.
-    "src/routes/insights.router.test.ts"
-  ]
+  "exclude": ["node_modules", "dist"]
 }

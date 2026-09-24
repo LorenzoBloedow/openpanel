@@ -1,26 +1,13 @@
 import { ensureTemplateDatabase } from '../packages/db/src/testing/database';
-import { setupPostgresFixtures, teardownPostgresFixtures } from './fixtures';
 
-export { FIXTURE } from './fixtures';
-export const TEST_PROJECT_ID = 'integration-test';
-export const TEST_ORG_ID = 'integration-org';
+export { FIXTURE, TEST_ORG_ID, TEST_PROJECT_ID } from './fixtures';
 
-// globalSetup runs in the parent process before vitest workers start,
-// so vitest's `env` config is not applied — set defaults explicitly.
-function setEnvDefaults() {
-  process.env.DATABASE_URL ??=
-    process.env.TEST_DATABASE_URL ??
-    'postgresql://postgres:postgres@localhost:5432/postgres?schema=public';
-}
-
+/**
+ * Builds the migrated template database that createTestDatabase() clones for
+ * every test file that needs one (the server comes from TEST_DATABASE_URL,
+ * local Postgres by default). Nothing is written to DATABASE_URL's database:
+ * it needn't be migrated, and in CI it isn't.
+ */
 export async function setup() {
-  setEnvDefaults();
-  // Migrated template that createTestDatabase() clones per test file.
   await ensureTemplateDatabase();
-  await setupPostgresFixtures(TEST_PROJECT_ID, TEST_ORG_ID);
-}
-
-export async function teardown() {
-  setEnvDefaults();
-  await teardownPostgresFixtures(TEST_PROJECT_ID, TEST_ORG_ID);
 }

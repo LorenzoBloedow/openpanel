@@ -1,172 +1,172 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+/**
+ * findProfilesCore, the query behind the find_profiles tool, against the
+ * shared fixture (see test/fixtures.ts):
+ *
+ *   Alice   — Smith, US, Chrome, created 60 days ago, 1 session, events 2 days ago
+ *   Bob     — O'Brien, SE, Chrome, created 90 days ago, no events
+ *   Charlie — Brown, US, Firefox, created 30 days ago, 2 sessions, events 5 days ago (incl. purchase)
+ */
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-const mockChQuery = vi.hoisted(() => vi.fn().mockResolvedValue([]));
+import {
+  FIXTURE,
+  type FixtureDatabase,
+  TEST_PROJECT_ID,
+  createFixtureDatabase,
+} from '../../../../../test/fixtures';
+import { upsertProfiles } from '../../../../db/src/analytics/writers';
+import {
+  type FindProfilesInput,
+  findProfilesCore,
+} from '../../../../db/src/services/profile.service';
 
-// Mock the ClickHouse client WITHOUT importOriginal — using importOriginal
-// causes the real module to be bound into profile.service.ts before the mock
-// factory result is visible, bypassing the chQuery replacement.
-vi.mock('../../../../db/src/clickhouse/client', () => {
-  return {
-    chQuery: mockChQuery,
-    chQueryWithMeta: vi.fn().mockResolvedValue({ data: [], rows: 0 }),
-    ch: {},
-    originalCh: {},
-    createClient: () => ({}),
-    withRetry: vi.fn().mockImplementation((fn: () => unknown) => fn()),
-    isClickhouseClustered: () => false,
-    getReplicatedTableName: (name: string) => name,
-    CLICKHOUSE_OPTIONS: {},
-    TABLE_NAMES: {
-      events: 'events',
-      profiles: 'profiles',
-      alias: 'profile_aliases',
-      self_hosting: 'self_hosting',
-      events_bots: 'events_bots',
-      dau_mv: 'dau_mv',
-      event_names_mv: 'distinct_event_names_mv',
-      event_property_values_mv: 'event_property_values_mv',
-      cohort_events_mv: 'cohort_events_mv',
-      sessions: 'sessions',
-      events_imports: 'events_imports',
-      session_replay_chunks: 'session_replay_chunks',
-      gsc_daily: 'gsc_daily',
-      gsc_pages_daily: 'gsc_pages_daily',
-      gsc_queries_daily: 'gsc_queries_daily',
-      groups: 'groups',
-    },
-    formatClickhouseDate: (date: Date | string, skipTime = false) => {
-      if (skipTime) return new Date(date).toISOString().split('T')[0];
-      return new Date(date).toISOString().replace('T', ' ').replace(/(\.\d{3})?Z+$/, '');
-    },
-    toDate: (str: string) => str,
-    convertClickhouseDateToJs: (date: string) => new Date(`${date.replace(' ', 'T')}Z`),
-    isClickhouseDefaultMinDate: (date: string) => date.startsWith('1970-01-01') || date.startsWith('1969-12-31'),
-    toNullIfDefaultMinDate: () => null,
-  };
+/** A second project with more profiles than the tool's maximum page. */
+const CROWDED_PROJECT_ID = 'crowded-project';
+const CROWDED_PROFILE_COUNT = 120;
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 20;
+
+let database: FixtureDatabase;
+
+beforeAll(async () => {
+  database = await createFixtureDatabase();
+  await database.run(() =>
+    upsertProfiles(
+      Array.from({ length: CROWDED_PROFILE_COUNT }, (_, index) => ({
+        id: `crowded-${index}`,
+        project_id: CROWDED_PROJECT_ID,
+        is_external: true,
+        first_name: '',
+        last_name: '',
+        email: '',
+        avatar: '',
+        properties: {},
+        created_at: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString(),
+      })),
+    ),
+  );
 });
 
-import { findProfilesCore } from '../../../../db/src/services/profile.service';
+afterAll(async () => {
+  await database?.drop();
+});
 
-function capturedSql(): string {
-  return mockChQuery.mock.calls[0]?.[0] as string;
+async function find(input: Partial<FindProfilesInput>) {
+  return database.run(() =>
+    findProfilesCore({ projectId: TEST_PROJECT_ID, ...input }),
+  );
 }
 
-beforeEach(() => {
-  vi.clearAllMocks();
-});
+async function findIds(input: Partial<FindProfilesInput>) {
+  return (await find(input)).map((profile) => profile.id);
+}
 
-describe('findProfilesCore — SQL conditions', () => {
-  it('always includes project_id condition', async () => {
-    await findProfilesCore({ projectId: 'proj-1' });
-    expect(capturedSql()).toContain("project_id = 'proj-1'");
+const { alice, bob, charlie } = FIXTURE.profiles;
+
+describe('findProfilesCore', () => {
+  it('returns the project profiles, newest first by default', async () => {
+    expect(await findIds({})).toEqual([charlie, alice, bob]);
   });
 
-  it('adds email ILIKE condition when email is provided', async () => {
-    await findProfilesCore({ projectId: 'proj-1', email: 'carl@' });
-    expect(capturedSql()).toContain("email ILIKE '%carl@%'");
+  it('sorts oldest first with sortOrder asc', async () => {
+    expect(await findIds({ sortOrder: 'asc' })).toEqual([bob, alice, charlie]);
   });
 
-  it('searches across first/last/full name for name filter', async () => {
-    await findProfilesCore({ projectId: 'proj-1', name: 'Carl' });
-    const sql = capturedSql();
-    expect(sql).toContain('first_name ILIKE');
-    expect(sql).toContain('last_name ILIKE');
-    expect(sql).toContain("concat(first_name, ' ', last_name) ILIKE");
-    expect(sql).toContain('%Carl%');
+  it('never returns another project’s profiles', async () => {
+    expect(await findIds({ projectId: 'some-other-project' })).toEqual([]);
   });
 
-  it('matches multi-token name queries by ANDing each token', async () => {
-    await findProfilesCore({ projectId: 'proj-1', name: 'John Smith' });
-    const sql = capturedSql();
-    expect(sql).toContain('%John%');
-    expect(sql).toContain('%Smith%');
-    // Each token wrapped in its own OR-of-fields group, joined by AND.
-    expect(sql).toContain(') AND (');
+  it('matches part of the email, ignoring case', async () => {
+    expect(await findIds({ email: 'alice@' })).toEqual([alice]);
+    expect(await findIds({ email: 'ALICE@EXAMPLE' })).toEqual([alice]);
   });
 
-  it('adds country property condition', async () => {
-    await findProfilesCore({ projectId: 'proj-1', country: 'SE' });
-    expect(capturedSql()).toContain("properties['country'] = 'SE'");
+  it('matches first and last names', async () => {
+    expect(await findIds({ name: 'Charlie' })).toEqual([charlie]);
+    expect(await findIds({ name: 'smith' })).toEqual([alice]);
   });
 
-  it('adds inactiveDays NOT IN subquery', async () => {
-    await findProfilesCore({ projectId: 'proj-1', inactiveDays: 14 });
-    const sql = capturedSql();
-    expect(sql).toContain('NOT IN');
-    expect(sql).toContain('INTERVAL 14 DAY');
+  it('requires every token of a multi-word name', async () => {
+    expect(await findIds({ name: 'Charlie Brown' })).toEqual([charlie]);
+    expect(await findIds({ name: 'Charlie Smith' })).toEqual([]);
   });
 
-  it('floors inactiveDays to integer (prevents SQL injection via floats)', async () => {
-    await findProfilesCore({ projectId: 'proj-1', inactiveDays: 14.9 });
-    expect(capturedSql()).toContain('INTERVAL 14 DAY');
-    expect(capturedSql()).not.toContain('14.9');
+  it('matches names with quotes as plain text', async () => {
+    expect(await findIds({ name: "O'Brien" })).toEqual([bob]);
   });
 
-  it('adds minSessions HAVING subquery', async () => {
-    await findProfilesCore({ projectId: 'proj-1', minSessions: 5 });
-    const sql = capturedSql();
-    expect(sql).toContain('HAVING count() >= 5');
+  it('filters on the profile properties', async () => {
+    expect(await findIds({ country: 'SE' })).toEqual([bob]);
+    expect(await findIds({ browser: 'Firefox' })).toEqual([charlie]);
+    expect(await findIds({ device: 'desktop' })).toEqual([charlie, alice, bob]);
+    expect(await findIds({ city: 'Stockholm' })).toEqual([]);
   });
 
-  it('adds performedEvent IN subquery', async () => {
-    await findProfilesCore({ projectId: 'proj-1', performedEvent: 'purchase' });
-    expect(capturedSql()).toContain("name = 'purchase'");
+  it('applies profile.* filters', async () => {
+    expect(
+      await findIds({
+        filters: [
+          {
+            id: 'browser',
+            name: 'profile.properties.browser',
+            operator: 'is',
+            value: ['Firefox'],
+          },
+        ],
+      }),
+    ).toEqual([charlie]);
   });
 
-  it('defaults to ORDER BY created_at DESC', async () => {
-    await findProfilesCore({ projectId: 'proj-1' });
-    expect(capturedSql()).toContain('ORDER BY created_at DESC');
+  it('keeps only profiles without events in the last N days', async () => {
+    // Alice was active 2 days ago, Charlie 5 days ago, Bob never.
+    expect(await findIds({ inactiveDays: 7 })).toEqual([bob]);
+    expect(await findIds({ inactiveDays: 3 })).toEqual([charlie, bob]);
+    // Fractional days are floored, as before.
+    expect(await findIds({ inactiveDays: 3.9 })).toEqual([charlie, bob]);
   });
 
-  it('respects sortOrder: asc', async () => {
-    await findProfilesCore({ projectId: 'proj-1', sortOrder: 'asc' });
-    expect(capturedSql()).toContain('ORDER BY created_at ASC');
+  it('keeps only profiles with at least N sessions', async () => {
+    expect(await findIds({ minSessions: 2 })).toEqual([charlie]);
+    expect(await findIds({ minSessions: 1 })).toEqual([charlie, alice]);
   });
 
-  it('defaults limit to 20', async () => {
-    await findProfilesCore({ projectId: 'proj-1' });
-    expect(capturedSql()).toContain('LIMIT 20');
+  it('keeps only profiles that performed an event', async () => {
+    expect(await findIds({ performedEvent: 'purchase' })).toEqual([charlie]);
+    expect(await findIds({ performedEvent: 'page_view' })).toEqual([
+      charlie,
+      alice,
+    ]);
   });
 
-  it('caps limit at 100 regardless of input', async () => {
-    await findProfilesCore({ projectId: 'proj-1', limit: 9999 });
-    expect(capturedSql()).toContain('LIMIT 100');
-    expect(capturedSql()).not.toContain('LIMIT 9999');
-  });
-});
-
-describe('findProfilesCore — SQL injection protection', () => {
-  it('escapes single quotes in string values', async () => {
-    await findProfilesCore({ projectId: "proj'; DROP TABLE profiles;--" });
-    // The projectId must be escaped — raw SQL injection string must not appear
-    expect(capturedSql()).not.toContain("proj'; DROP TABLE profiles;--");
+  it('returns whole profile rows', async () => {
+    const [profile] = await find({ email: 'charlie@' });
+    expect(profile).toMatchObject({
+      id: charlie,
+      project_id: TEST_PROJECT_ID,
+      first_name: 'Charlie',
+      last_name: 'Brown',
+      email: 'charlie@example.com',
+      properties: { browser: 'Firefox', country: 'US', device: 'desktop' },
+    });
   });
 
-  it('escapes single quotes in name search', async () => {
-    await findProfilesCore({ projectId: 'proj-1', name: "O'Brien" });
-    // Unescaped apostrophe in the SQL would break the query
-    const sql = capturedSql();
-    expect(sql).not.toMatch(/LIKE '%O'Brien%'/);
+  it('pages 20 profiles by default and at most 100', async () => {
+    const crowded = { projectId: CROWDED_PROJECT_ID };
+    expect(await find(crowded)).toHaveLength(DEFAULT_LIMIT);
+    expect(await find({ ...crowded, limit: 5 })).toHaveLength(5);
+    expect(await find({ ...crowded, limit: 9999 })).toHaveLength(MAX_LIMIT);
   });
 
-  it('escapes backslashes in email', async () => {
-    await findProfilesCore({ projectId: 'proj-1', email: 'test\\@x.com' });
-    // Raw backslash in ClickHouse SQL needs escaping
-    expect(capturedSql()).not.toContain("'%test\\@x.com%'");
-  });
-});
-
-describe('findProfilesCore — return value', () => {
-  it('returns whatever chQuery resolves with', async () => {
-    const fakeProfiles = [{ id: 'p1', first_name: 'Alice' }];
-    mockChQuery.mockResolvedValueOnce(fakeProfiles);
-    const result = await findProfilesCore({ projectId: 'proj-1' });
-    expect(result).toEqual(fakeProfiles);
-  });
-
-  it('returns empty array when no profiles found', async () => {
-    mockChQuery.mockResolvedValueOnce([]);
-    const result = await findProfilesCore({ projectId: 'proj-1' });
-    expect(result).toEqual([]);
+  it('treats hostile input as data', async () => {
+    expect(
+      await findIds({ projectId: "proj'; DROP TABLE analytics.profiles;--" }),
+    ).toEqual([]);
+    expect(await findIds({ email: "x' OR '1'='1" })).toEqual([]);
+    expect(await findIds({ email: 'test\\@x.com' })).toEqual([]);
+    expect(await findIds({ performedEvent: "purchase' OR 1=1 --" })).toEqual(
+      [],
+    );
+    // The table is still there.
+    expect(await findIds({})).toEqual([charlie, alice, bob]);
   });
 });

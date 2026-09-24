@@ -1,32 +1,22 @@
 /**
- * Integration tests for MCP tools against a real ClickHouse instance.
+ * Integration tests for the MCP tools against Postgres.
  *
- * CLICKHOUSE_URL is pinned to http://localhost:8123 in vitest.shared.ts —
- * always targets local Docker, never production. Start with: pnpm dock:up
- *
- * Fixture data (inserted by globalSetup in setup.ts):
+ * The file gets its own test database (cloned from the migrated template)
+ * with the shared fixture seeded into it (see test/fixtures.ts):
  *   Alice   — 3 events: session_start, page_view(/home), session_end  — 2 days ago — country: US, browser: Chrome
  *   Bob     — 0 events (inactive)                                      — profile created 90 days ago — country: SE
  *   Charlie — 5 events: session_start, screen_view, page_view(/shop), purchase, session_end — 5 days ago — browser: Firefox
  *             2 sessions (sess-charlie-1 5d ago, sess-charlie-2 10d ago)
- *
- * For tools that also call getSettingsForProject (Postgres), we mock only
- * that function — all ClickHouse queries still run for real.
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-// Bypass Redis caching — prevents ioredis TCP connections that hang the process
-vi.mock('@openpanel/redis', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@openpanel/redis')>();
-  return {
-    ...actual,
-    getCache: async <T>(_key: string, _ttl: number, fn: () => Promise<T>) =>
-      fn(),
-  };
-});
-
-import { FIXTURE, TEST_PROJECT_ID } from '../../../../test/global-setup';
+import {
+  FIXTURE,
+  type FixtureDatabase,
+  TEST_PROJECT_ID,
+  createFixtureDatabase,
+} from '../../../../test/fixtures';
 import { registerActiveUserTools } from '../tools/analytics/active-users';
 import { registerEngagementTools } from '../tools/analytics/engagement';
 import { registerEventNameTools } from '../tools/analytics/event-names';
@@ -50,6 +40,16 @@ const CTX = {
   clientType: 'read' as const,
 };
 
+let database: FixtureDatabase;
+
+beforeAll(async () => {
+  database = await createFixtureDatabase();
+});
+
+afterAll(async () => {
+  await database?.drop();
+});
+
 function makeServer() {
   const handlers = new Map<string, (input: unknown) => Promise<unknown>>();
   return {
@@ -66,7 +66,7 @@ function makeServer() {
       if (!handler) {
         throw new Error(`Tool not registered: ${name}`);
       }
-      const result = (await handler(input)) as any;
+      const result = (await database.run(() => handler(input))) as any;
       const text = result.content[0].text as string;
       if (result.isError) {
         return { error: text.replace(/^Error:\s*/, '') };

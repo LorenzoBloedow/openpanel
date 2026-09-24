@@ -1,11 +1,17 @@
 /**
- * Shared ClickHouse fixture builder for integration tests.
+ * The shared integration fixture: three profiles, eight events and three
+ * sessions in the `analytics` schema, plus the organization and project rows
+ * around them, seeded into a throwaway test database.
  *
- * Call setupFixtures(projectId) / teardownFixtures(projectId) from any test
- * suite. Each suite uses its own project ID so suites can run concurrently
- * without stomping on each other's data.
+ *   let database: FixtureDatabase;
+ *   beforeAll(async () => {
+ *     database = await createFixtureDatabase();
+ *   });
+ *   afterAll(() => database?.drop());
  *
- * Fixture dataset (3 users, 8 events, 3 sessions):
+ *   const rows = await database.run(() => findProfilesCore({ projectId: TEST_PROJECT_ID }));
+ *
+ * Fixture dataset (3 users, 8 events, 3 sessions), relative to seeding time:
  *
  *   Alice   — created 60 days ago, browser: Chrome, country: US
  *             3 events 2 days ago: session_start → page_view(/home) → session_end
@@ -16,15 +22,25 @@
  *   Charlie — created 30 days ago, browser: Firefox, country: US
  *             5 events 5 days ago: session_start → screen_view → page_view(/shop) → purchase → session_end
  *             2 sessions (sess-charlie-1 5d ago Firefox, sess-charlie-2 10d ago Firefox bounce)
- *
- * Event UUIDs live in the 00000000-0000-0000-0000-xxxxxxxxxxxx namespace.
- * Because events are scoped by project_id, the same UUIDs are safe across
- * different project IDs (ClickHouse's MergeTree ordering includes project_id).
  */
 
-import { createClient } from '../packages/db/src/clickhouse/client';
+import { rebuildRollups } from '../packages/db/src/analytics/rollups';
+import {
+  type EventWriteRow,
+  type SessionWriteRow,
+  insertEvents,
+  upsertProfiles,
+  upsertSessions,
+} from '../packages/db/src/analytics/writers';
 import { db } from '../packages/db/src/prisma-client';
-import { disposeFallbackScope } from '../packages/runtime/index';
+import {
+  type TestDatabase,
+  createTestDatabase,
+} from '../packages/db/src/testing/database';
+import { runWithScope } from '../packages/runtime/index';
+
+export const TEST_PROJECT_ID = 'integration-test';
+export const TEST_ORG_ID = 'integration-org';
 
 // ---------------------------------------------------------------------------
 // Well-known fixture IDs — import these in tests instead of hard-coding strings
@@ -61,21 +77,14 @@ export const FIXTURE = {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-type ChClient = ReturnType<typeof createClient>;
+const DAY_MS = 86_400_000;
+const MINUTE_MS = 60_000;
+const SECOND_MS = 1000;
 
-function getClient() {
-  const url = process.env.CLICKHOUSE_URL ?? 'http://localhost:8123';
-  return createClient({ url });
-}
-
-function timeAgo(now: Date, days: number, minutesOffset = 0) {
-  return (
-    new Date(now.getTime() - days * 86_400_000 - minutesOffset * 60_000)
-      .toISOString()
-      .replace('T', ' ')
-      // biome-ignore lint/performance/useTopLevelRegex: test setup
-      .replace(/\.\d+Z$/, '')
-  );
+/** UTC ISO timestamp, whole seconds (the ClickHouse fixture's precision). */
+function timeAgo(now: Date, days: number, minutesOffset = 0): string {
+  const at = now.getTime() - days * DAY_MS - minutesOffset * MINUTE_MS;
+  return new Date(Math.floor(at / SECOND_MS) * SECOND_MS).toISOString();
 }
 
 function buildEvent(
@@ -87,8 +96,8 @@ function buildEvent(
   sessionId: string,
   daysBack: number,
   minutesOffset = 0,
-  overrides: Record<string, unknown> = {}
-) {
+  overrides: Partial<EventWriteRow> = {},
+): EventWriteRow {
   return {
     id,
     project_id: projectId,
@@ -128,8 +137,8 @@ function buildSession(
   id: string,
   profileId: string,
   daysBack: number,
-  overrides: Record<string, unknown> = {}
-) {
+  overrides: Partial<SessionWriteRow> = {},
+): SessionWriteRow {
   return {
     id,
     project_id: projectId,
@@ -149,6 +158,8 @@ function buildSession(
     country: 'US',
     region: '',
     city: '',
+    longitude: null,
+    latitude: null,
     device: 'desktop',
     brand: '',
     model: '',
@@ -164,273 +175,233 @@ function buildSession(
     referrer: '',
     referrer_name: '',
     referrer_type: '',
-    sign: 1,
     version: 1,
-    properties: {},
     ...overrides,
   };
 }
 
-async function insertFixtures(client: ChClient, projectId: string) {
-  const now = new Date();
-
-  await client.insert({
-    table: 'openpanel.profiles',
-    values: [
-      {
-        id: FIXTURE.profiles.alice,
-        project_id: projectId,
-        first_name: 'Alice',
-        last_name: 'Smith',
-        email: 'alice@example.com',
-        avatar: '',
-        is_external: false,
-        // browser/country in properties so tests can filter profiles by these fields
-        properties: { browser: 'Chrome', country: 'US', device: 'desktop' },
-        groups: [],
-        created_at: timeAgo(now, 60),
-        last_seen_at: timeAgo(now, 1),
-      },
-      {
-        id: FIXTURE.profiles.bob,
-        project_id: projectId,
-        first_name: 'Bob',
-        last_name: "O'Brien",
-        email: 'bob@example.com',
-        avatar: '',
-        is_external: false,
-        // Bob is intentionally inactive (no events) — useful for inactiveDays tests
-        properties: { browser: 'Chrome', country: 'SE', device: 'desktop' },
-        groups: [],
-        created_at: timeAgo(now, 90),
-        last_seen_at: timeAgo(now, 90),
-      },
-      {
-        id: FIXTURE.profiles.charlie,
-        project_id: projectId,
-        first_name: 'Charlie',
-        last_name: 'Brown',
-        email: 'charlie@example.com',
-        avatar: '',
-        is_external: false,
-        properties: { browser: 'Firefox', country: 'US', device: 'desktop' },
-        groups: [],
-        created_at: timeAgo(now, 30),
-        last_seen_at: timeAgo(now, 5),
-      },
-    ],
-    format: 'JSONEachRow',
-  });
+async function insertAnalyticsFixtures(projectId: string, now: Date) {
+  await upsertProfiles([
+    {
+      id: FIXTURE.profiles.alice,
+      project_id: projectId,
+      first_name: 'Alice',
+      last_name: 'Smith',
+      email: 'alice@example.com',
+      avatar: '',
+      is_external: false,
+      // browser/country in properties so tests can filter profiles by these fields
+      properties: { browser: 'Chrome', country: 'US', device: 'desktop' },
+      groups: [],
+      created_at: timeAgo(now, 60),
+      last_seen_at: timeAgo(now, 1),
+    },
+    {
+      id: FIXTURE.profiles.bob,
+      project_id: projectId,
+      first_name: 'Bob',
+      last_name: "O'Brien",
+      email: 'bob@example.com',
+      avatar: '',
+      is_external: false,
+      // Bob is intentionally inactive (no events) — useful for inactiveDays tests
+      properties: { browser: 'Chrome', country: 'SE', device: 'desktop' },
+      groups: [],
+      created_at: timeAgo(now, 90),
+      last_seen_at: timeAgo(now, 90),
+    },
+    {
+      id: FIXTURE.profiles.charlie,
+      project_id: projectId,
+      first_name: 'Charlie',
+      last_name: 'Brown',
+      email: 'charlie@example.com',
+      avatar: '',
+      is_external: false,
+      properties: { browser: 'Firefox', country: 'US', device: 'desktop' },
+      groups: [],
+      created_at: timeAgo(now, 30),
+      last_seen_at: timeAgo(now, 5),
+    },
+  ]);
 
   // Alice: session_start → page_view → session_end (2 days ago, spaced 2 min apart)
   // Charlie: session_start → screen_view → page_view → purchase → session_end (5 days ago, spaced 5 min apart)
-  // Events are spaced so windowFunnel strict_increase mode works correctly.
-  await client.insert({
-    table: 'openpanel.events',
-    values: [
-      buildEvent(
-        now,
-        projectId,
-        FIXTURE.events.alice.sessionStart,
-        'session_start',
-        FIXTURE.profiles.alice,
-        FIXTURE.sessions.alice1,
-        2,
-        4
-      ),
-      buildEvent(
-        now,
-        projectId,
-        FIXTURE.events.alice.pageView,
-        'page_view',
-        FIXTURE.profiles.alice,
-        FIXTURE.sessions.alice1,
-        2,
-        2,
-        { path: '/home', browser: 'Chrome' }
-      ),
-      buildEvent(
-        now,
-        projectId,
-        FIXTURE.events.alice.sessionEnd,
-        'session_end',
-        FIXTURE.profiles.alice,
-        FIXTURE.sessions.alice1,
-        2,
-        0,
-        { duration: 120_000 }
-      ),
+  // Events are spaced so funnels that need strictly increasing times work.
+  await insertEvents([
+    buildEvent(
+      now,
+      projectId,
+      FIXTURE.events.alice.sessionStart,
+      'session_start',
+      FIXTURE.profiles.alice,
+      FIXTURE.sessions.alice1,
+      2,
+      4,
+    ),
+    buildEvent(
+      now,
+      projectId,
+      FIXTURE.events.alice.pageView,
+      'page_view',
+      FIXTURE.profiles.alice,
+      FIXTURE.sessions.alice1,
+      2,
+      2,
+      { path: '/home', browser: 'Chrome' },
+    ),
+    buildEvent(
+      now,
+      projectId,
+      FIXTURE.events.alice.sessionEnd,
+      'session_end',
+      FIXTURE.profiles.alice,
+      FIXTURE.sessions.alice1,
+      2,
+      0,
+      { duration: 120_000 },
+    ),
 
-      buildEvent(
-        now,
-        projectId,
-        FIXTURE.events.charlie.sessionStart,
-        'session_start',
-        FIXTURE.profiles.charlie,
-        FIXTURE.sessions.charlie1,
-        5,
-        20,
-        { browser: 'Firefox' }
-      ),
-      buildEvent(
-        now,
-        projectId,
-        FIXTURE.events.charlie.screenView,
-        'screen_view',
-        FIXTURE.profiles.charlie,
-        FIXTURE.sessions.charlie1,
-        5,
-        15,
-        { path: '/shop', browser: 'Firefox' }
-      ),
-      buildEvent(
-        now,
-        projectId,
-        FIXTURE.events.charlie.pageView,
-        'page_view',
-        FIXTURE.profiles.charlie,
-        FIXTURE.sessions.charlie1,
-        5,
-        10,
-        { path: '/shop', browser: 'Firefox' }
-      ),
-      buildEvent(
-        now,
-        projectId,
-        FIXTURE.events.charlie.purchase,
-        'purchase',
-        FIXTURE.profiles.charlie,
-        FIXTURE.sessions.charlie1,
-        5,
-        5,
-        { path: '/checkout', revenue: 9900, browser: 'Firefox' }
-      ),
-      buildEvent(
-        now,
-        projectId,
-        FIXTURE.events.charlie.sessionEnd,
-        'session_end',
-        FIXTURE.profiles.charlie,
-        FIXTURE.sessions.charlie1,
-        5,
-        0,
-        { duration: 300_000, browser: 'Firefox' }
-      ),
-    ],
-    format: 'JSONEachRow',
-  });
-
-  await client.insert({
-    table: 'openpanel.sessions',
-    values: [
-      buildSession(
-        now,
-        projectId,
-        FIXTURE.sessions.alice1,
-        FIXTURE.profiles.alice,
-        2
-      ),
-      buildSession(
-        now,
-        projectId,
-        FIXTURE.sessions.charlie1,
-        FIXTURE.profiles.charlie,
-        5,
-        {
-          browser: 'Firefox',
-          entry_path: '/shop',
-          exit_path: '/checkout',
-          revenue: 9900,
-          duration: 300,
-          screen_view_count: 2,
-          event_count: 5,
-        }
-      ),
-      buildSession(
-        now,
-        projectId,
-        FIXTURE.sessions.charlie2,
-        FIXTURE.profiles.charlie,
-        10,
-        {
-          browser: 'Firefox',
-          is_bounce: true,
-          entry_path: '/shop',
-          exit_path: '/shop',
-          duration: 15,
-        }
-      ),
-    ],
-    format: 'JSONEachRow',
-  });
-}
-
-async function deleteFixtures(client: ChClient, projectId: string) {
-  await Promise.all([
-    client.command({
-      query: `DELETE FROM openpanel.profiles WHERE project_id = '${projectId}'`,
-    }),
-    client.command({
-      query: `DELETE FROM openpanel.events WHERE project_id = '${projectId}'`,
-    }),
-    client.command({
-      query: `DELETE FROM openpanel.sessions WHERE project_id = '${projectId}'`,
-    }),
-    client.command({
-      query: `ALTER TABLE openpanel.distinct_event_names_mv DELETE WHERE project_id = '${projectId}'`,
-    }),
+    buildEvent(
+      now,
+      projectId,
+      FIXTURE.events.charlie.sessionStart,
+      'session_start',
+      FIXTURE.profiles.charlie,
+      FIXTURE.sessions.charlie1,
+      5,
+      20,
+      { browser: 'Firefox' },
+    ),
+    buildEvent(
+      now,
+      projectId,
+      FIXTURE.events.charlie.screenView,
+      'screen_view',
+      FIXTURE.profiles.charlie,
+      FIXTURE.sessions.charlie1,
+      5,
+      15,
+      { path: '/shop', browser: 'Firefox' },
+    ),
+    buildEvent(
+      now,
+      projectId,
+      FIXTURE.events.charlie.pageView,
+      'page_view',
+      FIXTURE.profiles.charlie,
+      FIXTURE.sessions.charlie1,
+      5,
+      10,
+      { path: '/shop', browser: 'Firefox' },
+    ),
+    buildEvent(
+      now,
+      projectId,
+      FIXTURE.events.charlie.purchase,
+      'purchase',
+      FIXTURE.profiles.charlie,
+      FIXTURE.sessions.charlie1,
+      5,
+      5,
+      { path: '/checkout', revenue: 9900, browser: 'Firefox' },
+    ),
+    buildEvent(
+      now,
+      projectId,
+      FIXTURE.events.charlie.sessionEnd,
+      'session_end',
+      FIXTURE.profiles.charlie,
+      FIXTURE.sessions.charlie1,
+      5,
+      0,
+      { duration: 300_000, browser: 'Firefox' },
+    ),
   ]);
+
+  await upsertSessions([
+    buildSession(now, projectId, FIXTURE.sessions.alice1, FIXTURE.profiles.alice, 2),
+    buildSession(
+      now,
+      projectId,
+      FIXTURE.sessions.charlie1,
+      FIXTURE.profiles.charlie,
+      5,
+      {
+        browser: 'Firefox',
+        entry_path: '/shop',
+        exit_path: '/checkout',
+        revenue: 9900,
+        duration: 300,
+        screen_view_count: 2,
+        event_count: 5,
+      },
+    ),
+    buildSession(
+      now,
+      projectId,
+      FIXTURE.sessions.charlie2,
+      FIXTURE.profiles.charlie,
+      10,
+      {
+        browser: 'Firefox',
+        is_bounce: true,
+        entry_path: '/shop',
+        exit_path: '/shop',
+        duration: 15,
+      },
+    ),
+  ]);
+
+  // The ingest consumer maintains these incrementally; direct writes don't.
+  await rebuildRollups(projectId);
 }
 
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
-export async function setupPostgresFixtures(
-  projectId: string,
-  orgId: string
-): Promise<void> {
-  // `db` reads DATABASE_URL when first used, not at import time (globalSetup
-  // sets it before calling in).
+/**
+ * Seed the fixture into the database of the current scope: the organization
+ * (UTC) and project rows, then the analytics rows and their rollups.
+ */
+export async function seedFixtures({
+  projectId = TEST_PROJECT_ID,
+  orgId = TEST_ORG_ID,
+  now = new Date(),
+}: { projectId?: string; orgId?: string; now?: Date } = {}): Promise<void> {
+  await db.organization.upsert({
+    where: { id: orgId },
+    create: { id: orgId, name: 'Test Org', timezone: 'UTC' },
+    update: { timezone: 'UTC' },
+  });
+  await db.project.upsert({
+    where: { id: projectId },
+    create: { id: projectId, name: 'Test Project', organizationId: orgId },
+    update: {},
+  });
+  await insertAnalyticsFixtures(projectId, now);
+}
+
+export interface FixtureDatabase extends TestDatabase {
+  /** Run `fn` in a scope whose DATABASE_URL is this database. */
+  run<T>(fn: () => Promise<T>): Promise<T>;
+}
+
+/** A fresh migrated test database with the fixture seeded into it. */
+export async function createFixtureDatabase(
+  options: { projectId?: string; orgId?: string; now?: Date } = {},
+): Promise<FixtureDatabase> {
+  const database = await createTestDatabase();
+  // The interactive route, as for the requests under test (in Node both
+  // routes share one pool on DATABASE_URL).
+  const run = <T>(fn: () => Promise<T>) =>
+    runWithScope({ env: { DATABASE_URL: database.url }, route: 'hyperdrive' }, fn);
   try {
-    await db.organization.upsert({
-      where: { id: orgId },
-      create: { id: orgId, name: 'Test Org', timezone: 'UTC' },
-      update: { timezone: 'UTC' },
-    });
-    await db.project.upsert({
-      where: { id: projectId },
-      create: { id: projectId, name: 'Test Project', organizationId: orgId },
-      update: {},
-    });
-  } finally {
-    await disposeFallbackScope();
+    await run(() => seedFixtures(options));
+  } catch (error) {
+    await database.drop();
+    throw error;
   }
-}
-
-export async function teardownPostgresFixtures(
-  projectId: string,
-  orgId: string
-): Promise<void> {
-  try {
-    await db.project.deleteMany({ where: { id: projectId } });
-    await db.organization.deleteMany({ where: { id: orgId } });
-  } finally {
-    await disposeFallbackScope();
-  }
-}
-
-
-
-export async function setupFixtures(projectId: string): Promise<void> {
-  const client = getClient();
-  await deleteFixtures(client, projectId);
-  await insertFixtures(client, projectId);
-  await client.close();
-}
-
-export async function teardownFixtures(projectId: string): Promise<void> {
-  const client = getClient();
-  await deleteFixtures(client, projectId);
-  await client.close();
+  return { ...database, run };
 }
