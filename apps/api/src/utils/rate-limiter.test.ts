@@ -1,41 +1,85 @@
 /**
- * Tests for the rate limiter's onExceeded log line — it records the request
- * URL, which on some routes carries a credential in the query string.
+ * The public API's rate limiter on Workers rate limiting bindings: the key
+ * it counts by, the 429 it answers with, and its log line — which records
+ * the request URL, a credential carrier on some routes.
  */
-
+import { Hono } from 'hono';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@openpanel/redis', () => ({ getRedisCache: vi.fn() }));
-
-const { activateRateLimiter } = await import('./rate-limiter');
+import { mountFastifyPlugin } from '@/compat/fastify';
+import type { AppEnv } from '@/env';
+import { activateRateLimiter } from './rate-limiter';
 
 const SECRET = 'c3VwZXItc2VjcmV0LXRva2Vu';
 
-async function captureOptions() {
-  const register = vi.fn();
-  await activateRateLimiter({
-    fastify: { register } as never,
-    max: 10,
+async function limitedApp(options: { max: number; timeWindow: string }) {
+  const warn = vi.fn();
+  const app = new Hono<AppEnv>();
+  app.use(async (c, next) => {
+    c.set('logger', { warn, info: vi.fn(), error: vi.fn(), debug: vi.fn() } as never);
+    await next();
   });
-  return register.mock.calls[0]?.[1] as {
-    onExceeded: (req: unknown) => void;
+  await mountFastifyPlugin(app, '/limited', (fastify) => {
+    activateRateLimiter({ fastify, ...options });
+    fastify.get('/', async () => ({ ok: true }));
+  });
+  return { app, warn };
+}
+
+function binding(success: boolean) {
+  const keys: string[] = [];
+  return {
+    keys,
+    limit: vi.fn(async ({ key }: { key: string }) => {
+      keys.push(key);
+      return { success };
+    }),
   };
 }
 
 describe('activateRateLimiter', () => {
-  it('does not log the value of a sensitive query parameter', async () => {
-    const options = await captureOptions();
-    const warn = vi.fn();
+  it('counts per client id and lets requests under the limit through', async () => {
+    const { app } = await limitedApp({ max: 100, timeWindow: '10 seconds' });
+    const RL_PUBLIC = binding(true);
+    const response = await app.request(
+      '/limited',
+      { headers: { 'openpanel-client-id': 'client-1' } },
+      { RL_PUBLIC },
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+    expect(RL_PUBLIC.keys).toEqual(['client-1']);
+  });
 
-    options.onExceeded({
-      headers: { 'openpanel-client-id': 'client-1' },
-      socket: { remoteAddress: '127.0.0.1' },
-      url: `/mcp?token=${SECRET}&projectId=p1`,
-      log: { warn },
+  it('falls back to the trusted client IP', async () => {
+    const { app } = await limitedApp({ max: 20, timeWindow: '10 seconds' });
+    const RL_MANAGE = binding(true);
+    await app.request('/limited', { headers: { 'cf-connecting-ip': '203.0.113.9' } }, { RL_MANAGE });
+    expect(RL_MANAGE.keys).toEqual(['203.0.113.9']);
+  });
+
+  it('answers 429 and does not log the value of a sensitive query parameter', async () => {
+    const { app, warn } = await limitedApp({ max: 100, timeWindow: '10 seconds' });
+    const response = await app.request(
+      `/limited?token=${SECRET}&projectId=p1`,
+      { headers: { 'openpanel-client-id': 'client-1' } },
+      { RL_PUBLIC: binding(false) },
+    );
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({
+      statusCode: 429,
+      error: 'Too Many Requests',
+      message: 'You have exceeded the rate limit for this endpoint.',
     });
 
     const payload = warn.mock.calls[0]?.[0];
     expect(JSON.stringify(payload)).not.toContain(SECRET);
-    expect(payload.url).toBe('/mcp?token=[REDACTED]&projectId=p1');
+    expect(payload.url).toBe('/limited?token=[REDACTED]&projectId=p1');
+  });
+
+  it('refuses a limit that has no binding', async () => {
+    await expect(limitedApp({ max: 7, timeWindow: '1 minute' })).rejects.toThrow(
+      'No rate limiting binding for 7 requests per 1 minute',
+    );
   });
 });

@@ -99,7 +99,12 @@ function isSvg(buffer: Uint8Array, contentType?: string): boolean {
 let resvgReady: Promise<void> | undefined;
 
 async function rasterizeSvg(buffer: Uint8Array, width: number): Promise<Uint8Array> {
-  resvgReady ??= initWasm(loadResvgWasm()).catch((error) => {
+  resvgReady ??= initWasm(loadResvgWasm()).catch((error: unknown) => {
+    // resvg keeps one module per isolate; someone else initializing it
+    // first is fine.
+    if (error instanceof Error && error.message.startsWith('Already initialized')) {
+      return;
+    }
     resvgReady = undefined;
     throw error;
   });

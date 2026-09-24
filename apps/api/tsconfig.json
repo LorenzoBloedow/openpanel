@@ -13,9 +13,7 @@
   "exclude": [
     "node_modules",
     "dist",
-    // Fastify-era tests still to be ported.
-    "src/routes/insights.router.test.ts",
-    "src/utils/image-proxy.test.ts",
-    "src/utils/rate-limiter.test.ts"
+    // Drives the insights services through Fastify; ported with them.
+    "src/routes/insights.router.test.ts"
   ]
 }
