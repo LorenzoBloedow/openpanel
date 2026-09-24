@@ -1,3 +1,4 @@
-- When we write clickhouse queries you should always use the custom query builder we have in 
-  - `./packages/db/src/clickhouse/query-builder.ts`
-  - `./packages/db/src/clickhouse/query-functions.ts`
+- Analytics queries run on Postgres (the `analytics` schema). Use the query layer in
+  - `./packages/db/src/analytics/sql.ts` (the `sql` tagged template, bound parameters)
+  - `./packages/db/src/analytics/query-builder.ts` (dynamic queries)
+  - `./packages/db/src/analytics/filters.ts` (event, profile, group and cohort filters)

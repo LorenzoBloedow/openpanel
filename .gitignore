@@ -10,13 +10,11 @@ dump.sql
 dump-*
 .sql
 tmp
-docker/data*
 *.mmdb
 
 # Logs
 
 logs
-!self-hosting/logs
 _.log
 npm-debug.log_
 yarn-debug.log*

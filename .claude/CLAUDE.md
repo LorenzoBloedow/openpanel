@@ -6,81 +6,82 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Openpanel is an open-source web/product analytics platform (Mixpanel alternative). It's a **pnpm monorepo** with apps, packages, tooling, and SDKs.
+Openpanel is an open-source web/product analytics platform (Mixpanel alternative). It's a **pnpm monorepo** with apps, packages, tooling, and SDKs. This branch (`cloudflare`) runs it entirely on Cloudflare Workers with Neon Postgres as the only database; see `tooling/cloudflare/DEPLOY.md`.
 
 ## Common Commands
 
 ```bash
 # Development
-pnpm dev                    # Run all services (api, worker, dashboard) in parallel
-pnpm dev:public             # Run public/docs site only
-pnpm dock:up / dock:down    # Start/stop Docker (PostgreSQL, Redis, ClickHouse)
+pnpm dev                    # API + worker (wrangler dev) and the dashboard (Vite)
+pnpm dev:public             # Public/docs site only (vinext)
+pnpm dock:up / dock:down    # Start/stop local Postgres (Docker Compose)
+pnpm dock:psql              # Postgres shell
 
 # Code quality
 pnpm check                  # Lint check (Biome via Ultracite)
-pnpm fix                    # Auto-fix lint/format issues
 pnpm typecheck              # Typecheck all packages
 
 # Testing
-pnpm test                   # Run all tests (vitest)
+pnpm test                   # Run all tests (vitest; needs local Postgres)
 pnpm vitest run <path>      # Run a single test file
-# Workspace: packages/* and apps/* (excluding apps/start)
+# Workspace: packages/*, apps/* (excluding apps/start) and tooling/cloudflare
 
 # Database
-pnpm codegen                # Generate Prisma types + geo data
-pnpm migrate                # Run Prisma migrations (dev)
-pnpm migrate:deploy         # Deploy migrations (production - never run this)
+pnpm codegen                # Generate Prisma types
+pnpm migrate                # Prisma migrations (dev)
+pnpm migrate:deploy         # Prisma + analytics schema migrations (never run against production by hand)
 
-# Docker utilities
-pnpm dock:ch                # ClickHouse CLI
-pnpm dock:redis             # Redis CLI
+# Cloudflare (tooling/cloudflare)
+pnpm cf:setup / cf:deploy   # Provision an account / migrate and deploy the Workers
+pnpm cf:backup / cf:restore # Backups in the R2 format, and restoring them
 ```
 
 ## Architecture
 
 ### Apps
 
-| App | Stack | Port | Purpose |
+| App | Stack | Dev port | Purpose |
 |-----|-------|------|---------|
-| `apps/api` | Fastify + tRPC | 3333 | REST/RPC API server |
-| `apps/start` | TanStack Start (Vite + React 19) | 3000 | Dashboard SPA |
-| `apps/public` | Next.js 16 + Fumadocs | - | Marketing/docs site |
-| `apps/worker` | Express + BullMQ | 9999 | Background job processor |
+| `apps/api` | Hono on Workers | 3333 | Ingestion (`/track`), tRPC, public API, OAuth, the `LiveHub` Durable Object (WebSockets) |
+| `apps/worker` | Workers | 9999 | Queue consumers (`op-events`, `op-jobs`), crons, Workflows (Backup, ProjectDelete, GscBackfill) |
+| `apps/start` | TanStack Start on Workers | 3000 | Dashboard (calls the API through a service binding) |
+| `apps/public` | vinext (Next.js on Vite) + Fumadocs | 9090 | Marketing/docs site |
 
 ### Key Packages
 
 | Package | Purpose |
 |---------|---------|
-| `packages/db` | Prisma ORM (PostgreSQL) + ClickHouse client |
+| `packages/db` | Prisma (engine-less, `public` schema) and the analytics layer on Postgres (`src/analytics/*`, `analytics` schema, migrations in `analytics-migrations/`) |
+| `packages/runtime` | Per-invocation scope: env, `waitUntil`, and the database route (`hyperdrive` / `direct`) |
 | `packages/trpc` | tRPC router definitions, context, middleware |
-| `packages/auth` | Authentication (Arctic OAuth, Oslo sessions, argon2) |
-| `packages/queue` | BullMQ + GroupMQ job queue definitions |
-| `packages/redis` | Redis client + LRU caching |
+| `packages/auth` | Authentication (Arctic OAuth, Oslo sessions, argon2 WASM) |
+| `packages/queue` | Cloudflare Queues producers (`JOBS_QUEUE`) and the LiveHub client |
+| `packages/redis` | Historical name: a per-isolate memo (`cacheable`), no Redis |
 | `packages/validation` | Zod schemas shared across apps |
 | `packages/common` | Shared utilities (date-fns, ua-parser, nanoid) |
-| `packages/email` | React Email templates via Resend |
+| `packages/email` | React Email templates, sent through Cloudflare Email Service |
 | `packages/sdks/*` | Client SDKs (web, react, next, express, react-native, etc.) |
 
 ### Data Flow
 
-1. **Event ingestion**: Client SDKs → `apps/api` (track routes) → Redis queue
-2. **Processing**: `apps/worker` picks up jobs from BullMQ, batches events into ClickHouse
-3. **Dashboard queries**: `apps/start` → tRPC → `apps/api` → ClickHouse (analytics) / PostgreSQL (config)
-4. **Real-time**: WebSocket via Fastify, pub/sub via Redis
+1. **Event ingestion**: SDKs → `apps/api` `/track` (one Hyperdrive round trip for dedupe and the live session) → `op-events` queue (replay chunks are inserted directly)
+2. **Processing**: `apps/worker` applies each queue batch in one Postgres transaction (events, sessions, profiles, rollups); a minute cron closes idle sessions
+3. **Dashboard queries**: `apps/start` → tRPC → `apps/api` → Postgres via Hyperdrive
+4. **Real-time**: WebSockets on the `LiveHub` Durable Object; the worker publishes to it after each batch
 
-### Three-Database Strategy
+### One database
 
-- **PostgreSQL**: Relational data (users, orgs, projects, dashboards). Managed by Prisma.
-- **ClickHouse**: Analytics event storage (OLAP). High-volume reads/writes.
-- **Redis**: Caching, job queues (BullMQ), rate limiting, pub/sub.
+- **Neon Postgres** holds everything: Prisma models in `public`, events/sessions/profiles/rollups in `analytics`, and short-lived state (live sessions, dedupe, rate-limit lockouts, cron slots).
+- **Hyperdrive** serves paths where a user waits; background work connects to Neon's pooled endpoint directly (`packages/db/src/db-routing.ts`).
+- **R2** holds nightly backups. There is no Redis, ClickHouse or D1.
 
 ### Dashboard (apps/start)
 
-Uses TanStack Router with file-based routing (`src/routes/`). State management via Redux Toolkit. UI built on Radix primitives + Tailwind v4. Charts via Recharts. Modals in `src/modals/`.
+Uses TanStack Router with file-based routing (`src/routes/`). State management via Redux Toolkit. UI built on Radix primitives + Tailwind v4. Charts via Recharts. Modals in `src/modals/`. Features compiled out on Cloudflare (AI, integrations, importers, MCP, billing) are hidden via `useAppContext().features`.
 
 ### API (apps/api)
 
-Fastify server with tRPC integration. Route files in `src/routes/`. Hooks for IP extraction, request logging, timestamps. Built with `tsdown`.
+Hono on Workers with tRPC over the fetch adapter. Route files in `src/routes/`; the export/insights/manage controllers keep their Fastify style through `src/compat/fastify.ts`. Built and bundled by wrangler.
 ---
 
 ## Core Principles

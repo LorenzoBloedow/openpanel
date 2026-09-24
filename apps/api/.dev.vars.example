@@ -16,7 +16,16 @@ ALLOW_REGISTRATION=true
 # Optional
 # SESSION_TIMEOUT_MS=1800000
 # API_CORS_ORIGINS=http://localhost:3001
+# Comma-separated client ids whose requests log IPs and user agents.
+# ENABLE_VERBOSE_LOGGING=
+# Read-only demo: every visitor is signed in as this user.
+# DEMO_USER_ID=
+
+# Social login and Search Console
 # GITHUB_CLIENT_ID=
 # GITHUB_CLIENT_SECRET=
+# GITHUB_REDIRECT_URI=http://localhost:3333/oauth/github/callback
 # GOOGLE_CLIENT_ID=
 # GOOGLE_CLIENT_SECRET=
+# GOOGLE_REDIRECT_URI=http://localhost:3333/oauth/google/callback
+# GSC_GOOGLE_REDIRECT_URI=http://localhost:3333/gsc/callback
