@@ -1,23 +1,51 @@
-import * as HyperDX from '@hyperdx/node-opentelemetry';
-import pino, { type Logger } from 'pino';
+/**
+ * Structured logger for Cloudflare Workers (and Node scripts/tests).
+ *
+ * The API is the pino subset the codebase uses — `info/warn/error/...` with
+ * `(obj, msg)` or `(msg)` call shapes, and `child(bindings)` — but every line
+ * is written with `console.*` as one structured object, which Workers Logs
+ * ingests as JSON. pino, pino-pretty and the HyperDX OpenTelemetry package
+ * were Node-only (worker threads, `process.stdout` streams) and are gone.
+ */
 
-export type ILogger = Logger;
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
-const logLevel = process.env.LOG_LEVEL ?? 'info';
-const silent = process.env.LOG_SILENT === 'true';
+type LogFn = {
+  (obj: unknown, msg?: string, ...args: unknown[]): void;
+  (msg: string, ...args: unknown[]): void;
+};
 
-// Exactly one shipping path at a time (see logging-capture-plan.md):
-// - 'otlp': pino ships via the HyperDX transport (requires HYPERDX_API_KEY).
-// - 'stdout': pino writes JSON to stdout; an external collector ships it.
-const logExporter =
-  process.env.LOG_EXPORTER ??
-  (process.env.HYPERDX_API_KEY ? 'otlp' : 'stdout');
+export interface ILogger {
+  level: LogLevel;
+  trace: LogFn;
+  debug: LogFn;
+  info: LogFn;
+  warn: LogFn;
+  error: LogFn;
+  fatal: LogFn;
+  child(bindings: Record<string, unknown>): ILogger;
+}
 
-// Originals captured before interceptProcessOutput wraps the streams. Code
-// that must bypass capture (e.g. crash handlers mirroring fatals to stderr)
-// uses these so the line isn't re-ingested and shipped twice.
-export const rawStdoutWrite = process.stdout.write.bind(process.stdout);
-export const rawStderrWrite = process.stderr.write.bind(process.stderr);
+const LEVEL_VALUES: Record<LogLevel, number> = {
+  trace: 10,
+  debug: 20,
+  info: 30,
+  warn: 40,
+  error: 50,
+  fatal: 60,
+};
+
+function readEnv(key: string): string | undefined {
+  if (typeof process === 'undefined' || !process.env) {
+    return undefined;
+  }
+  return process.env[key];
+}
+
+function resolveLevel(): LogLevel {
+  const level = (readEnv('LOG_LEVEL') ?? 'info').toLowerCase();
+  return level in LEVEL_VALUES ? (level as LogLevel) : 'info';
+}
 
 // Substring match (lowercased). Catches camelCase, snake_case, prefixed and
 // suffixed variants in one entry — e.g. 'token' covers accessToken,
@@ -94,12 +122,7 @@ export function sanitizeUrlQuery(url: string): string {
 
 export function redactSensitive(value: unknown, depth = 0): unknown {
   if (value instanceof Error) {
-    return {
-      ...value,
-      message: value.message,
-      stack: value.stack,
-      name: value.name,
-    };
+    return serializeError(value);
   }
   if (
     depth >= MAX_REDACT_DEPTH ||
@@ -131,158 +154,136 @@ export function redactSensitive(value: unknown, depth = 0): unknown {
   return result;
 }
 
+function serializeError(error: Error): Record<string, unknown> {
+  const serialized: Record<string, unknown> = {
+    ...(error as unknown as Record<string, unknown>),
+    type: error.name,
+    name: error.name,
+    message: error.message,
+    stack: error.stack,
+  };
+  if (error.cause !== undefined) {
+    serialized.cause =
+      error.cause instanceof Error ? serializeError(error.cause) : error.cause;
+  }
+  return serialized;
+}
+
 // Shared by logs and traces so both signals land under the same service
-// name in ClickStack (e.g. new-api-production).
+// name (e.g. openpanel-api-production).
 export function getServiceName(name: string): string {
-  return [process.env.LOG_PREFIX, name, process.env.NODE_ENV ?? 'dev']
+  return [readEnv('LOG_PREFIX'), name, readEnv('NODE_ENV') ?? 'dev']
     .filter(Boolean)
     .join('-');
 }
 
-export function createLogger({ name }: { name: string }): ILogger {
-  const service = getServiceName(name);
-
-  const useHyperDX = logExporter === 'otlp' && !!process.env.HYPERDX_API_KEY;
-  const usePretty = !useHyperDX && process.env.NODE_ENV !== 'production';
-
-  return pino({
-    name: service,
-    level: logLevel,
-    enabled: !silent,
-    formatters: {
-      log: (obj) => {
-        return redactSensitive(obj) as Record<string, unknown>;
-      },
-    },
-    // Keep trace_id/span_id on every line even in stdout mode so trace↔log
-    // correlation survives when a collector does the shipping.
-    mixin: process.env.HYPERDX_API_KEY
-      ? HyperDX.getPinoMixinFunction
-      : undefined,
-    transport: useHyperDX
-      ? HyperDX.getPinoTransport(logLevel, {
-          detectResources: true,
-          service,
-        })
-      : usePretty
-        ? {
-            target: 'pino-pretty',
-            options: {
-              colorize: true,
-              translateTime: 'SYS:standard',
-              ignore: 'pid,hostname,service',
-            },
-          }
-        : undefined,
+// printf-style interpolation for the `%s`/`%d`/`%o` placeholders pino supports.
+function format(msg: string, args: unknown[]): string {
+  if (args.length === 0) {
+    return msg;
+  }
+  let index = 0;
+  const formatted = msg.replace(/%[sdifjoO%]/g, (token) => {
+    if (token === '%%') {
+      return '%';
+    }
+    if (index >= args.length) {
+      return token;
+    }
+    const arg = args[index++];
+    if (token === '%d' || token === '%i' || token === '%f') {
+      return String(Number(arg));
+    }
+    if (typeof arg === 'string') {
+      return arg;
+    }
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return String(arg);
+    }
   });
+  return formatted;
 }
 
-const MAX_INTERCEPTED_LINE_LENGTH = 8192;
+const CONSOLE_METHOD: Record<LogLevel, 'debug' | 'log' | 'warn' | 'error'> = {
+  trace: 'debug',
+  debug: 'debug',
+  info: 'log',
+  warn: 'warn',
+  error: 'error',
+  fatal: 'error',
+};
 
-let intercepted = false;
+class ConsoleLogger implements ILogger {
+  level: LogLevel;
 
-/**
- * Route everything written to process.stdout/stderr through the given pino
- * logger, so output that bypasses our loggers (Prisma engine lines, dependency
- * console.*, Node warnings) still reaches the OTLP pipeline. Call it before
- * anything else runs in the app entry.
- *
- * No feedback loop: pino writes via sonic-boom straight to the file
- * descriptor (and transports write from a worker thread), so pino's own
- * output never passes through these wrappers. A reentrancy guard covers any
- * exotic transport that does.
- *
- * In otlp mode raw lines are also passed through to the original stream so
- * `docker logs` stays useful. In stdout mode pino's JSON line on stdout IS
- * the container output — teeing would print everything twice.
- */
-export function interceptProcessOutput(logger: ILogger): void {
-  if (intercepted) {
-    return;
-  }
-  // Keep local dev output untouched.
-  if (
-    process.env.NODE_ENV !== 'production' &&
-    !process.env.HYPERDX_API_KEY &&
-    process.env.LOG_EXPORTER === undefined
+  constructor(
+    private readonly bindings: Record<string, unknown>,
+    private readonly silent: boolean,
+    level: LogLevel,
   ) {
-    return;
+    this.level = level;
   }
-  intercepted = true;
 
-  const passthrough = logExporter !== 'stdout';
-  let logging = false;
+  child(bindings: Record<string, unknown>): ILogger {
+    return new ConsoleLogger(
+      { ...this.bindings, ...bindings },
+      this.silent,
+      this.level,
+    );
+  }
 
-  const wrap = (
-    stream: NodeJS.WriteStream,
-    original: typeof rawStdoutWrite,
-    emit: (line: string) => void
-  ) => {
-    let buffer = '';
+  private write(level: LogLevel, first: unknown, rest: unknown[]) {
+    if (this.silent || LEVEL_VALUES[level] < LEVEL_VALUES[this.level]) {
+      return;
+    }
 
-    const emitLines = (chunk: string) => {
-      if (logging) {
-        return;
-      }
-      buffer += chunk;
-      let newlineIndex = buffer.indexOf('\n');
-      while (newlineIndex !== -1) {
-        const line = buffer.slice(0, newlineIndex).trimEnd();
-        buffer = buffer.slice(newlineIndex + 1);
-        if (line) {
-          logging = true;
-          try {
-            emit(line.slice(0, MAX_INTERCEPTED_LINE_LENGTH));
-          } finally {
-            logging = false;
-          }
-        }
-        newlineIndex = buffer.indexOf('\n');
-      }
-      if (buffer.length > MAX_INTERCEPTED_LINE_LENGTH) {
-        const line = buffer;
-        buffer = '';
-        logging = true;
-        try {
-          emit(line.slice(0, MAX_INTERCEPTED_LINE_LENGTH));
-        } finally {
-          logging = false;
-        }
-      }
-    };
+    let fields: Record<string, unknown> = {};
+    let msg: string | undefined;
 
-    const write = (
-      chunk: Uint8Array | string,
-      encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
-      callback?: (error?: Error | null) => void
-    ): boolean => {
-      try {
-        emitLines(
-          typeof chunk === 'string'
-            ? chunk
-            : Buffer.from(chunk).toString('utf8')
-        );
-      } catch {
-        // Interception must never break the stream.
+    if (typeof first === 'string') {
+      msg = format(first, rest);
+    } else {
+      if (first instanceof Error) {
+        fields = { err: first };
+      } else if (first !== null && typeof first === 'object') {
+        fields = first as Record<string, unknown>;
+      } else if (first !== undefined) {
+        fields = { value: first };
       }
-      if (passthrough) {
-        return original(chunk as never, encodingOrCallback as never, callback);
+      const [maybeMsg, ...args] = rest;
+      if (typeof maybeMsg === 'string') {
+        msg = format(maybeMsg, args);
+      } else if (!msg && first instanceof Error) {
+        msg = first.message;
       }
-      const cb =
-        typeof encodingOrCallback === 'function' ? encodingOrCallback : callback;
-      if (typeof cb === 'function') {
-        process.nextTick(cb);
-      }
-      return true;
-    };
+    }
 
-    stream.write = write as typeof stream.write;
-  };
+    const record = redactSensitive({
+      level,
+      time: new Date().toISOString(),
+      ...this.bindings,
+      ...fields,
+      ...(msg !== undefined ? { msg } : {}),
+    });
 
-  wrap(process.stdout, rawStdoutWrite, (line) =>
-    logger.info({ source: 'stdout' }, line)
-  );
-  wrap(process.stderr, rawStderrWrite, (line) =>
-    logger.error({ source: 'stderr' }, line)
+    // One structured object per line; Workers Logs indexes the fields.
+    console[CONSOLE_METHOD[level]](record);
+  }
+
+  trace = (first: unknown, ...rest: unknown[]) => this.write('trace', first, rest);
+  debug = (first: unknown, ...rest: unknown[]) => this.write('debug', first, rest);
+  info = (first: unknown, ...rest: unknown[]) => this.write('info', first, rest);
+  warn = (first: unknown, ...rest: unknown[]) => this.write('warn', first, rest);
+  error = (first: unknown, ...rest: unknown[]) => this.write('error', first, rest);
+  fatal = (first: unknown, ...rest: unknown[]) => this.write('fatal', first, rest);
+}
+
+export function createLogger({ name }: { name: string }): ILogger {
+  return new ConsoleLogger(
+    { name: getServiceName(name) },
+    readEnv('LOG_SILENT') === 'true',
+    resolveLevel(),
   );
 }

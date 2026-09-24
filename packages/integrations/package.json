@@ -3,6 +3,19 @@
   "version": "0.0.1",
   "type": "module",
   "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./src/registry": {
+      "workerd": "./src/registry.workerd.ts",
+      "default": "./src/registry.ts"
+    },
+    "./src/slack": {
+      "workerd": "./src/slack.workerd.ts",
+      "default": "./src/slack.ts"
+    },
+    "./src/object-store": "./src/object-store/index.ts",
+    "./src/*": "./src/*.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
@@ -13,6 +26,7 @@
     "@openpanel/common": "workspace:*",
     "@openpanel/js-runtime": "workspace:*",
     "@openpanel/logger": "workspace:*",
+    "@openpanel/runtime": "workspace:*",
     "@openpanel/validation": "workspace:*",
     "@slack/bolt": "^3.18.0",
     "@slack/oauth": "^3.0.0"

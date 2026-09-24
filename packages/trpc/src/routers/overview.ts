@@ -28,7 +28,7 @@ import {
 import { format } from 'date-fns';
 import { z } from 'zod';
 import { getProjectAccess } from '../access';
-import { runFilterCommand } from '../agents/filter-command';
+import { runFilterCommand } from '#ai-features';
 import { TRPCAccessError, TRPCForbiddenError } from '../errors';
 import {
   cacheMiddleware,

@@ -4,7 +4,10 @@
   "type": "module",
   "main": "index.ts",
   "exports": {
-    ".": "./index.ts",
+    ".": {
+      "workerd": "./index.workerd.ts",
+      "default": "./index.ts"
+    },
     "./prices": "./src/prices.ts",
     "./subscription-state": "./src/subscription-state.ts",
     "./subscription-state-meta": "./src/subscription-state-meta.ts"
@@ -13,6 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@openpanel/runtime": "workspace:*",
     "@polar-sh/sdk": "^0.49.0",
     "date-fns": "^3.3.1"
   },

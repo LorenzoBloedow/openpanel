@@ -1,0 +1,29 @@
+{
+  "name": "@openpanel/workerd-compat",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Runs the shared packages inside workerd (Miniflare) to prove they work on Cloudflare Workers, not just Node.",
+  "scripts": {
+    "test": "vitest run",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@openpanel/auth": "workspace:*",
+    "@openpanel/common": "workspace:*",
+    "@openpanel/email": "workspace:*",
+    "@openpanel/geo": "workspace:*",
+    "@openpanel/integrations": "workspace:*",
+    "@openpanel/logger": "workspace:*",
+    "@openpanel/payments": "workspace:*",
+    "@openpanel/redis": "workspace:*",
+    "@openpanel/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.2.4",
+    "@openpanel/tsconfig": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.137.0"
+  }
+}

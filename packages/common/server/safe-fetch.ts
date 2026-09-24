@@ -1,22 +1,20 @@
-import dns from 'node:dns/promises';
-import net from 'node:net';
 import ipaddr from 'ipaddr.js';
-import { Agent, fetch as undiciFetch } from 'undici';
 
 /**
  * SSRF guard for the endpoints that fetch user-supplied URLs (the favicon/OG
- * proxy and the public site checker).
+ * proxy and webhook-style deliveries).
  *
- * Two things have to be true for the guard to hold:
+ * On Cloudflare Workers outbound `fetch` leaves from Cloudflare's edge, which
+ * cannot reach private networks, loopback or link-local metadata services —
+ * the class of targets the old Node implementation defended against by
+ * resolving hostnames and pinning sockets to the validated address. That
+ * pinning (undici + node:dns) is neither available nor needed here.
  *
- * 1. Every address a hostname resolves to must be publicly routable. Checking
- *    only the first A record lets an attacker publish a second AAAA record.
- * 2. The socket must connect to the address we validated. Resolving and then
- *    handing the hostname to `fetch` re-resolves it, so a DNS rebind between
- *    the two lookups reaches the internal target anyway. We pin the validated
- *    address into the connection instead.
- *
- * Redirects are followed manually so every hop goes through the same checks.
+ * What remains, as defense in depth:
+ * - only http/https,
+ * - IP-literal hosts must be publicly routable,
+ * - redirects are followed manually so every hop is re-validated,
+ * - responses are read under a size cap and a timeout.
  */
 
 export class BlockedUrlError extends Error {
@@ -69,108 +67,54 @@ export function isBlockedIp(ip: string): boolean {
   return BLOCKED_RANGES.has(parsed.range());
 }
 
-/**
- * Resolve a hostname, rejecting it entirely if any address is non-public.
- */
-async function resolvePublicAddresses(hostname: string): Promise<string[]> {
+function stripBrackets(hostname: string) {
   // WHATWG URL keeps the brackets around IPv6 literals ("[::1]").
-  const host =
-    hostname.startsWith('[') && hostname.endsWith(']')
-      ? hostname.slice(1, -1)
-      : hostname;
+  return hostname.startsWith('[') && hostname.endsWith(']')
+    ? hostname.slice(1, -1)
+    : hostname;
+}
 
-  // A bare IP in the URL never hits DNS, so check it directly.
-  if (net.isIP(host)) {
+const BLOCKED_HOSTNAMES = new Set(['localhost', 'localhost.localdomain']);
+
+/**
+ * Reject hosts that are obviously internal. IP literals are checked against
+ * the blocked ranges; names are left to the platform, whose egress cannot
+ * reach non-public addresses.
+ */
+function assertPublicHost(hostname: string): string[] {
+  const host = stripBrackets(hostname).toLowerCase();
+  if (!host) {
+    throw new BlockedUrlError('Missing host');
+  }
+  if (BLOCKED_HOSTNAMES.has(host) || host.endsWith('.localhost')) {
+    throw new BlockedUrlError(`Refusing to connect to ${host}`);
+  }
+  if (ipaddr.isValid(host)) {
     if (isBlockedIp(host)) {
       throw new BlockedUrlError(`Refusing to connect to ${host}`);
     }
     return [host];
   }
-
-  let addresses: { address: string }[];
-  try {
-    // `lookup` rather than `resolve4`/`resolve6` so /etc/hosts and the system
-    // resolver are honoured the same way the real connection would.
-    addresses = await dns.lookup(host, { all: true, verbatim: true });
-  } catch {
-    throw new BlockedUrlError(`Could not resolve ${host}`);
-  }
-
-  if (addresses.length === 0) {
-    throw new BlockedUrlError(`Could not resolve ${host}`);
-  }
-
-  for (const { address } of addresses) {
-    if (isBlockedIp(address)) {
-      throw new BlockedUrlError(
-        `Refusing to connect to ${host} (resolves to a non-public address)`,
-      );
-    }
-  }
-
-  return addresses.map((entry) => entry.address);
+  return [];
 }
 
 /**
- * Validate a URL's scheme and destination without fetching it. Use this to
- * guard non-fetch outbound connections (raw TCP, TLS handshakes).
+ * Validate a URL's scheme and destination without fetching it.
  * Throws {@link BlockedUrlError} when the URL must not be requested.
+ * Returns the IP literal when the host is one, otherwise an empty list.
  */
 export async function assertPublicUrl(url: URL): Promise<string[]> {
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new BlockedUrlError('Only http/https URLs are allowed');
   }
-  return resolvePublicAddresses(url.hostname);
+  return assertPublicHost(url.hostname);
 }
 
-/** Validate a bare hostname (no URL available), e.g. before a TLS probe. */
+/** Validate a bare hostname (no URL available). */
 export async function assertPublicHostname(
   hostname: string,
 ): Promise<string[]> {
-  return resolvePublicAddresses(hostname);
-}
-
-/**
- * A `lookup` that resolves every hostname to `address`, so a socket cannot end
- * up anywhere other than the address we just validated. Shared by the undici
- * dispatcher below and by clients whose transport we don't own (the AWS SDK),
- * which otherwise re-resolve the hostname themselves and can be steered
- * elsewhere by a DNS answer that changes after the check (rebinding).
- *
- * Signature-compatible with both `net.LookupFunction` and undici's connect
- * `lookup`; the two type it slightly differently, so call sites cast.
- */
-export function createPinnedLookup(address: string) {
-  const family = net.isIPv6(address) ? 6 : 4;
-  return (
-    _hostname: string,
-    options: { all?: boolean },
-    callback: (
-      err: null,
-      addressOrList: string | { address: string; family: number }[],
-      family?: number,
-    ) => void,
-  ) => {
-    if (options.all) {
-      callback(null, [{ address, family }]);
-      return;
-    }
-    callback(null, address, family);
-  };
-}
-
-/**
- * A dispatcher that only ever connects to `address`, so the socket cannot end
- * up somewhere other than the address we just validated.
- */
-export function createPinnedAgent(address: string): Agent {
-  return new Agent({
-    connect: {
-      // undici types this as net.LookupFunction; the shared implementation is
-      // signature-compatible but typed loosely so node's Agent can use it too.
-      lookup: createPinnedLookup(address) as unknown as net.LookupFunction,
-    },
-  });
+  return assertPublicHost(hostname);
 }
 
 export interface SafeFetchOptions {
@@ -183,7 +127,7 @@ export interface SafeFetchOptions {
   maxRedirects?: number;
   /**
    * When false, a 3xx is returned as-is instead of being followed. Callers
-   * that walk the chain themselves still get per-hop validation and pinning.
+   * that walk the chain themselves still get per-hop validation.
    */
   followRedirects?: boolean;
   /** Reject responses whose body exceeds this many bytes. */
@@ -250,7 +194,7 @@ export interface SafeFetchStreamResult {
   body: ReadableStream<Uint8Array> | null;
   finalUrl: string;
   chain: { url: string; status: number }[];
-  /** Release the pinned connection. Safe to call more than once. */
+  /** Release the response body. Safe to call more than once. */
   close: () => Promise<void>;
 }
 
@@ -263,20 +207,13 @@ function combineSignals(
     : timeoutSignal;
 }
 
-/**
- * Walk the redirect chain, resolving/validating/pinning every hop.
- *
- * Returns the final response together with the agent that owns its connection.
- * The caller must close that agent once it is done with the body - which is
- * what lets the streaming variant hand the body out without buffering it.
- */
+/** Walk the redirect chain, validating every hop before requesting it. */
 async function walkToFinalResponse(
   input: string | URL,
   options: SafeFetchOptions,
   signal: AbortSignal,
 ): Promise<{
-  response: Awaited<ReturnType<typeof undiciFetch>>;
-  agent: Agent;
+  response: Response;
   finalUrl: string;
   chain: { url: string; status: number }[];
 }> {
@@ -289,40 +226,27 @@ async function walkToFinalResponse(
   let current = input instanceof URL ? input : new URL(input);
 
   for (let hop = 0; ; hop++) {
-    const [address] = await assertPublicUrl(current);
-    const agent = createPinnedAgent(address!);
+    await assertPublicUrl(current);
 
-    let response: Awaited<ReturnType<typeof undiciFetch>>;
-    try {
-      response = await undiciFetch(current, {
-        method: options.method ?? 'GET',
-        headers: options.headers,
-        body: options.body,
-        signal,
-        // Handled below so every hop is re-validated.
-        redirect: 'manual',
-        dispatcher: agent,
-      });
-    } catch (error) {
-      await agent.close().catch(() => {
-        // best effort
-      });
-      throw error;
-    }
+    const response = await fetch(current, {
+      method: options.method ?? 'GET',
+      headers: options.headers,
+      body: options.body,
+      signal,
+      // Handled below so every hop is re-validated.
+      redirect: 'manual',
+    });
 
     const status = response.status;
     const location = response.headers.get('location');
     chain.push({ url: current.toString(), status });
 
     if (!(followRedirects && REDIRECT_STATUS.has(status) && location)) {
-      return { response, agent, finalUrl: current.toString(), chain };
+      return { response, finalUrl: current.toString(), chain };
     }
 
     // A redirect hop is discarded entirely; the next one is validated afresh.
     await response.body?.cancel().catch(() => {
-      // best effort
-    });
-    await agent.close().catch(() => {
       // best effort
     });
 
@@ -339,8 +263,8 @@ async function walkToFinalResponse(
 }
 
 /**
- * `fetch` with SSRF protection: every hop is resolved, checked and pinned to
- * the validated address, and the body is read under a size cap.
+ * `fetch` with SSRF protection: every hop is validated before it is
+ * requested, and the body is read under a size cap.
  * Throws {@link BlockedUrlError} if any hop points somewhere non-public.
  */
 export async function safeFetch(
@@ -355,29 +279,20 @@ export async function safeFetch(
   );
 
   try {
-    const { response, agent, finalUrl, chain } = await walkToFinalResponse(
+    const { response, finalUrl, chain } = await walkToFinalResponse(
       input,
       options,
       combineSignals(controller.signal, options.signal),
     );
 
-    try {
-      const body = await readBodyWithLimit(
-        response.body as ReadableStream<Uint8Array> | null,
-        maxBytes,
-      );
-      return {
-        status: response.status,
-        headers: response.headers as unknown as Headers,
-        body,
-        finalUrl,
-        chain,
-      };
-    } finally {
-      await agent.close().catch(() => {
-        // best effort
-      });
-    }
+    const body = await readBodyWithLimit(response.body, maxBytes);
+    return {
+      status: response.status,
+      headers: response.headers,
+      body,
+      finalUrl,
+      chain,
+    };
   } finally {
     clearTimeout(timeout);
   }
@@ -385,12 +300,11 @@ export async function safeFetch(
 
 /**
  * Same guarantees as {@link safeFetch}, but hands back the live body instead of
- * buffering it. For callers that stream large responses through a parser and
- * cannot hold them in memory (the importer's remote CSV reader).
+ * buffering it.
  *
- * `timeoutMs` bounds the connection and redirect walk only - once the caller
- * owns the stream, a long download is legitimate, so cancellation after that
- * point is the caller's job via `options.signal`.
+ * `timeoutMs` bounds the redirect walk only — once the caller owns the stream,
+ * a long download is legitimate, so cancellation after that point is the
+ * caller's job via `options.signal`.
  */
 export async function safeFetchStream(
   input: string | URL,
@@ -403,7 +317,7 @@ export async function safeFetchStream(
   );
 
   try {
-    const { response, agent, finalUrl, chain } = await walkToFinalResponse(
+    const { response, finalUrl, chain } = await walkToFinalResponse(
       input,
       options,
       combineSignals(controller.signal, options.signal),
@@ -412,8 +326,8 @@ export async function safeFetchStream(
     let closed = false;
     return {
       status: response.status,
-      headers: response.headers as unknown as Headers,
-      body: response.body as ReadableStream<Uint8Array> | null,
+      headers: response.headers,
+      body: response.body,
       finalUrl,
       chain,
       close: async () => {
@@ -422,9 +336,6 @@ export async function safeFetchStream(
         }
         closed = true;
         await response.body?.cancel().catch(() => {
-          // best effort
-        });
-        await agent.close().catch(() => {
           // best effort
         });
       },

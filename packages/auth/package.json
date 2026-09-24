@@ -3,20 +3,28 @@
   "version": "0.0.1",
   "type": "module",
   "main": "index.ts",
+  "imports": {
+    "#argon2-wasm": {
+      "workerd": "./src/argon2-wasm.workerd.ts",
+      "default": "./src/argon2-wasm.ts"
+    }
+  },
   "scripts": {
+    "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@node-rs/argon2": "^2.0.2",
     "@openpanel/db": "workspace:^",
     "@openpanel/validation": "workspace:^",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
     "@oslojs/otp": "^1.1.0",
+    "@phi-ag/argon2": "^0.5.28",
     "arctic": "^2.3.0",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
+    "@node-rs/argon2": "^2.0.2",
     "@openpanel/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "@types/qrcode": "^1.5.6",

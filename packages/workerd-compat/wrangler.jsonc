@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Test-only Worker: the compat suite runs the shared packages inside workerd
+  // with the same compatibility settings as openpanel-api / openpanel-worker.
+  "name": "openpanel-workerd-compat",
+  "compatibility_date": "2026-09-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    // Throwaway key; the ciphertext vectors in the tests were made with it.
+    "ENCRYPTION_KEY": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+    "SELF_HOSTED": "true"
+  }
+}

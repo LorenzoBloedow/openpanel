@@ -1,4 +1,4 @@
-import { generateInsightExplanation } from '@openpanel/ai';
+import { generateInsightExplanation } from '#ai-features';
 import {
   db,
   getSegmentDailySeriesCore,

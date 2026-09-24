@@ -1,54 +1,32 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import type { ReaderModel } from '@maxmind/geoip2-node';
-import { Reader } from '@maxmind/geoip2-node';
-import { LRUCache } from 'lru-cache';
 import datacenterAsns from './datacenter-asns';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+/**
+ * Geolocation on Cloudflare comes from `request.cf`, which Cloudflare fills
+ * in for the address that connected to the Worker. The MaxMind databases the
+ * Node API read from disk (60–70 MB) can't be bundled into a Worker, so an
+ * event is only geolocated when its IP is the connecting IP.
+ *
+ * Forwarded addresses (`openpanel-client-ip`, `x-client-ip`, the `__ip`
+ * property, server-side SDKs, proxies such as the Next.js route handler)
+ * get empty geo for now; see docs/cloudflare for the planned IP-range table.
+ */
 
-// Resolve a bundled `.mmdb` file, trying the api/worker layout first and the
-// local package layout second (mirrors how the file ships via `pnpm codegen`).
-async function loadDatabase(filename: string): Promise<ReaderModel | null> {
-  // From api or worker package
-  const dbPath = path.join(__dirname, `../../../packages/geo/${filename}`);
-  // From local package
-  const dbPathLocal = path.join(__dirname, `../${filename}`);
-  try {
-    const dbBuffer = await readFile(dbPath);
-    console.log(`${filename} loaded (dist)`, dbPath);
-    return Reader.openBuffer(dbBuffer);
-  } catch {
-    try {
-      const dbBuffer = await readFile(dbPathLocal);
-      console.log(`${filename} loaded (local)`, dbPathLocal);
-      return Reader.openBuffer(dbBuffer);
-    } catch {
-      console.error(`${filename} not found`, { dbPath, dbPathLocal });
-      return null;
-    }
-  }
+/** The subset of `IncomingRequestCfProperties` we read. */
+export interface CfGeoProperties {
+  country?: string | null;
+  city?: string | null;
+  region?: string | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
+  asn?: number | null;
+  asOrganization?: string | null;
 }
 
-// Singleton promises - initialized once, awaited on every call
-let readerPromise: Promise<ReaderModel | null> | null = null;
-let asnReaderPromise: Promise<ReaderModel | null> | null = null;
-
-function getReader(): Promise<ReaderModel | null> {
-  if (!readerPromise) {
-    readerPromise = loadDatabase('GeoLite2-City.mmdb');
-  }
-  return readerPromise;
-}
-
-function getAsnReader(): Promise<ReaderModel | null> {
-  if (!asnReaderPromise) {
-    asnReaderPromise = loadDatabase('GeoLite2-ASN.mmdb');
-  }
-  return asnReaderPromise;
+export interface GeoSource {
+  /** `request.cf` of the incoming request. */
+  cf?: CfGeoProperties | null;
+  /** The address Cloudflare saw connect (`cf-connecting-ip`). */
+  connectingIp?: string | null;
 }
 
 export interface GeoLocation {
@@ -69,41 +47,56 @@ const DEFAULT_GEO: GeoLocation = {
 
 const ignore = ['127.0.0.1', '::1'];
 
-const cache = new LRUCache<string, GeoLocation>({
-  max: 1000,
-  ttl: 1000 * 60 * 5,
-  ttlAutopurge: true,
-});
+// Cloudflare's pseudo country codes: XX = unknown, T1 = Tor.
+const PSEUDO_COUNTRIES = new Set(['XX', 'T1']);
 
-export async function getGeoLocation(ip?: string): Promise<GeoLocation> {
+function normalizeIp(ip: string) {
+  return ip.trim().toLowerCase();
+}
+
+/** `request.cf` describes the connecting address only. */
+function cfFor(ip: string | undefined, source?: GeoSource) {
+  if (!source?.cf || !ip || !source.connectingIp) {
+    return null;
+  }
+  return normalizeIp(ip) === normalizeIp(source.connectingIp)
+    ? source.cf
+    : null;
+}
+
+function toNumber(value: string | number | null | undefined) {
+  if (value === null || value === undefined || value === '') {
+    return undefined;
+  }
+  const parsed = typeof value === 'number' ? value : Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function toText(value: string | null | undefined) {
+  return value ? value : undefined;
+}
+
+export async function getGeoLocation(
+  ip?: string,
+  source?: GeoSource,
+): Promise<GeoLocation> {
   if (!ip || ignore.includes(ip)) {
     return DEFAULT_GEO;
   }
 
-  const cached = cache.get(ip);
-  if (cached) {
-    return cached;
-  }
-
-  const reader = await getReader();
-
-  try {
-    const response = reader?.city(ip);
-    const res = {
-      city: response?.city?.names.en,
-      country: response?.country?.isoCode,
-      region: response?.subdivisions?.[0]?.names.en,
-      longitude: response?.location?.longitude,
-      latitude: response?.location?.latitude,
-    };
-    cache.set(ip, res);
-    return res;
-  } catch {
-    // Cache negative lookups too — the reader throws AddressNotFoundError for
-    // IPs absent from the db, and re-throwing on every event is wasted work.
-    cache.set(ip, DEFAULT_GEO);
+  const cf = cfFor(ip, source);
+  if (!cf) {
     return DEFAULT_GEO;
   }
+
+  const country = toText(cf.country)?.toUpperCase();
+  return {
+    country: country && !PSEUDO_COUNTRIES.has(country) ? country : undefined,
+    city: toText(cf.city),
+    region: toText(cf.region),
+    longitude: toNumber(cf.longitude),
+    latitude: toNumber(cf.latitude),
+  };
 }
 
 export interface AsnInfo {
@@ -122,40 +115,29 @@ const DEFAULT_ASN: AsnInfo = {
 
 const datacenterAsnSet = new Set<number>(datacenterAsns);
 
-const asnCache = new LRUCache<string, AsnInfo>({
-  max: 1000,
-  ttl: 1000 * 60 * 5,
-  ttlAutopurge: true,
-});
+export function isDatacenterAsn(asn: number | undefined): boolean {
+  return asn !== undefined && datacenterAsnSet.has(asn);
+}
 
 // Resolve the Autonomous System an IP belongs to and whether it is a known
 // datacenter / hosting network. Used to flag (not block) likely-bot traffic.
-export async function getAsnInfo(ip?: string): Promise<AsnInfo> {
+export async function getAsnInfo(
+  ip?: string,
+  source?: GeoSource,
+): Promise<AsnInfo> {
   if (!ip || ignore.includes(ip)) {
     return DEFAULT_ASN;
   }
 
-  const cached = asnCache.get(ip);
-  if (cached) {
-    return cached;
-  }
-
-  const reader = await getAsnReader();
-
-  try {
-    const response = reader?.asn(ip);
-    const asn = response?.autonomousSystemNumber;
-    const res: AsnInfo = {
-      asn,
-      org: response?.autonomousSystemOrganization,
-      isHosting: asn !== undefined && datacenterAsnSet.has(asn),
-    };
-    asnCache.set(ip, res);
-    return res;
-  } catch {
-    // Cache negative lookups too — the reader throws AddressNotFoundError for
-    // IPs absent from the db, and re-throwing on every event is wasted work.
-    asnCache.set(ip, DEFAULT_ASN);
+  const cf = cfFor(ip, source);
+  if (!cf) {
     return DEFAULT_ASN;
   }
+
+  const asn = typeof cf.asn === 'number' ? cf.asn : undefined;
+  return {
+    asn,
+    org: toText(cf.asOrganization),
+    isHosting: isDatacenterAsn(asn),
+  };
 }

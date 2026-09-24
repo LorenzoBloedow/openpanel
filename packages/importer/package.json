@@ -32,6 +32,6 @@
     "@types/uuid": "^9.0.7",
     "bullmq": "^5.8.7",
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "vitest": "^4.1.11"
   }
 }

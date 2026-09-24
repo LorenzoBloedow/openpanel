@@ -3,14 +3,21 @@
   "version": "0.0.1",
   "type": "module",
   "main": "index.ts",
+  "imports": {
+    "#prisma-generated": {
+      "workerd": "./src/generated/prisma-workerd/client.ts",
+      "default": "./src/generated/prisma/client.ts"
+    }
+  },
   "scripts": {
     "codegen": "pnpm with-env prisma generate && jiti prisma/prisma-json-types.ts",
     "migrate": "pnpm with-env prisma migrate dev",
     "migrate:deploy:code": "pnpm with-env jiti ./code-migrations/migrate.ts",
     "migrate:deploy:db": "pnpm with-env prisma migrate deploy",
-    "migrate:deploy": "pnpm migrate:deploy:db && pnpm migrate:deploy:code",
-    "duplicate-events": "pnpm with-env jiti ./scripts/find-duplicate-events.ts",
+    "migrate:deploy:analytics": "pnpm with-env jiti ./scripts/migrate-analytics.ts",
+    "migrate:deploy": "pnpm migrate:deploy:db && pnpm migrate:deploy:analytics && pnpm migrate:deploy:code",
     "typecheck": "tsc --noEmit",
+    "test": "vitest",
     "with-env": "dotenv -e ../../.env -c --"
   },
   "dependencies": {
@@ -22,12 +29,14 @@
     "@openpanel/payments": "workspace:*",
     "@openpanel/queue": "workspace:^",
     "@openpanel/redis": "workspace:*",
+    "@openpanel/runtime": "workspace:*",
     "@openpanel/validation": "workspace:*",
-    "@prisma/client": "^6.14.0",
-    "@prisma/extension-read-replicas": "^0.4.1",
+    "@prisma/adapter-pg": "6.19.3",
+    "@prisma/client": "6.19.3",
     "fast-deep-equal": "^3.1.3",
     "jiti": "^2.4.1",
     "mathjs": "^12.3.2",
+    "pg": "^8.23.0",
     "prisma-json-types-generator": "^3.1.1",
     "ramda": "^0.29.1",
     "sqlstring": "^2.3.3",
@@ -38,10 +47,11 @@
   "devDependencies": {
     "@openpanel/tsconfig": "workspace:*",
     "@types/node": "catalog:",
+    "@types/pg": "^8.23.1",
     "@types/ramda": "^0.29.6",
     "@types/sqlstring": "^2.3.2",
     "@types/uuid": "^9.0.8",
-    "prisma": "^6.14.0",
+    "prisma": "6.19.3",
     "typescript": "catalog:"
   }
 }

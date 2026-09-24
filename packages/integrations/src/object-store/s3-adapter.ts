@@ -8,11 +8,11 @@ import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
 import { Agent as HttpAgent } from 'node:http';
 import { Agent as HttpsAgent } from 'node:https';
 import type { LookupFunction } from 'node:net';
+import { decryptCredential } from '@openpanel/common/server';
 import {
-  assertSafeUrl,
+  assertSafeUrlResolved,
   createPinnedLookup,
-  decryptCredential,
-} from '@openpanel/common/server';
+} from '@openpanel/common/server/ssrf-node';
 import { createLogger } from '@openpanel/logger';
 import type { IS3ExportConfig } from '@openpanel/validation';
 
@@ -30,8 +30,7 @@ const logger = createLogger({ name: 's3-adapter' });
  * The AWS SDK resolves the endpoint hostname itself, so validating the address
  * up front is check-then-connect: a hostname whose DNS answer flips between the
  * two (rebinding) would connect somewhere we never checked. Pinning removes the
- * second resolution entirely. Mirrors createPinnedAgent in
- * common/server/safe-fetch, which does the same for fetch callers.
+ * second resolution entirely.
  */
 function pinnedRequestHandler(address: string) {
   const lookup = createPinnedLookup(address) as unknown as LookupFunction;
@@ -82,7 +81,7 @@ export class S3Adapter implements IObjectStoreAdapter {
     // Self-hosted returns null (guard skipped) — a single tenant already owns
     // the network, and internal MinIO endpoints are a legitimate use.
     const addresses = this.config.endpoint
-      ? await assertSafeUrl(this.config.endpoint)
+      ? await assertSafeUrlResolved(this.config.endpoint)
       : null;
 
     return this.getClientWithAccessKeys(addresses?.[0]);

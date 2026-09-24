@@ -1,63 +1,56 @@
+/**
+ * Per-isolate memoization — the Redis-free replacement for the old
+ * L1 (LRU) + L2 (Redis) cache.
+ *
+ * OpenPanel on Cloudflare has no shared cache: every Worker isolate keeps its
+ * own small LRU. The old design already served entries from a per-process L1
+ * for up to 60 s after a `.clear()` elsewhere, so capping every TTL at 60 s
+ * keeps the same worst-case staleness while the API stays identical for the
+ * call sites (`cacheable(fn, ttl)`, `.clear()`, `.set()`, `getCache(...)`).
+ */
 import { LRUCache } from 'lru-cache';
-import { getRedisCache } from './redis';
 
 export { LRUCache } from 'lru-cache';
 
-export const deleteCache = (key: string) => {
-  return getRedisCache().del(key);
-};
+/** Upper bound for every entry: other isolates cannot be invalidated. */
+export const MAX_MEMO_TTL_MS = 60 * 1000;
 
-// Global LRU cache for getCache function
+const MEMO_MAX_ENTRIES = 1000;
+
+/** A memo entry lives for `expireInSec`, capped at {@link MAX_MEMO_TTL_MS}. */
+export function memoTtlMs(expireInSec: number) {
+  return Math.max(1, Math.min(expireInSec * 1000, MAX_MEMO_TTL_MS));
+}
+
+// Global LRU cache for getCache()
 const globalLruCache = new LRUCache<string, any>({
-  max: 5000, // Store up to 5000 entries
-  ttl: 1000 * 60, // 1 minutes default TTL
+  max: 5000,
+  ttl: MAX_MEMO_TTL_MS,
 });
+
+export const deleteCache = async (key: string) => {
+  return globalLruCache.delete(key) ? 1 : 0;
+};
 
 export async function getCache<T>(
   key: string,
   expireInSec: number,
   fn: () => Promise<T>,
-  useLruCache?: boolean
+  // Kept for signature compatibility; every entry is in-memory now.
+  _useLruCache?: boolean,
 ): Promise<T> {
-  // L1 Cache: Check global LRU cache first (in-memory, instant)
-  if (useLruCache) {
-    const lruHit = globalLruCache.get(key);
-    if (lruHit !== undefined) {
-      return lruHit as T;
-    }
+  const hit = globalLruCache.get(key);
+  if (hit !== undefined) {
+    return hit as T;
   }
 
-  // L2 Cache: Check Redis cache (shared across instances)
-  const hit = await getRedisCache().get(key);
-  if (hit) {
-    const parsed = parseCache(hit);
-
-    // Store in LRU cache for next time
-    if (useLruCache) {
-      globalLruCache.set(key, parsed, {
-        ttl: expireInSec * 1000, // Use the same TTL as Redis
-      });
-    }
-
-    return parsed;
-  }
-
-  // Cache miss: Execute function
   const data = await fn();
-
-  // Store in both caches
-  if (useLruCache) {
-    globalLruCache.set(key, data, {
-      ttl: expireInSec * 1000,
-    });
+  if (data !== undefined) {
+    globalLruCache.set(key, data, { ttl: memoTtlMs(expireInSec) });
   }
-  // Fire and forget Redis write for better performance
-  getRedisCache().setex(key, expireInSec, JSON.stringify(data));
-
   return data;
 }
 
-// Helper functions for managing global LRU cache
 export function clearGlobalLruCache(key?: string) {
   if (key) {
     return globalLruCache.delete(key);
@@ -96,6 +89,10 @@ function stringify(obj: unknown): string {
 
   if (Array.isArray(obj)) {
     return `[${obj.map(stringify).join(',')}]`;
+  }
+
+  if (obj instanceof Date) {
+    return obj.toISOString();
   }
 
   if (typeof obj === 'object') {
@@ -137,58 +134,34 @@ function shouldCache(result: unknown, options: CacheableOptions = {}): boolean {
   return true;
 }
 
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$/;
-const parseCache = (cached: string) => {
-  try {
-    return JSON.parse(cached, (_, value) => {
-      if (typeof value === 'string' && DATE_REGEX.test(value)) {
-        return new Date(value);
-      }
-      return value;
-    });
-  } catch (error) {
-    console.error('Failed to parse cache', error);
-    return null;
-  }
+type CachedFn<T extends (...args: any) => any> = T & {
+  getKey: (...args: Parameters<T>) => string;
+  clear: (...args: Parameters<T>) => Promise<number>;
+  set: (
+    ...args: Parameters<T>
+  ) => (payload: Awaited<ReturnType<T>>) => Promise<'OK' | undefined>;
 };
-
-// L1 cache: short TTL to offload Redis; clear() invalidates Redis, other nodes may serve stale from LRU for up to this long
-const CACHEABLE_LRU_TTL_MS = 60 * 1000; // 60 seconds
-const CACHEABLE_LRU_MAX = 1000;
 
 // Overload 1: cacheable(fn, expireInSec, options?)
 export function cacheable<T extends (...args: any) => any>(
   fn: T,
   expireInSec: number,
-  options?: CacheableOptions
-): T & {
-  getKey: (...args: Parameters<T>) => string;
-  clear: (...args: Parameters<T>) => Promise<number>;
-  set: (
-    ...args: Parameters<T>
-  ) => (payload: Awaited<ReturnType<T>>) => Promise<'OK'>;
-};
+  options?: CacheableOptions,
+): CachedFn<T>;
 
 // Overload 2: cacheable(name, fn, expireInSec, options?)
 export function cacheable<T extends (...args: any) => any>(
   name: string,
   fn: T,
   expireInSec: number,
-  options?: CacheableOptions
-): T & {
-  getKey: (...args: Parameters<T>) => string;
-  clear: (...args: Parameters<T>) => Promise<number>;
-  set: (
-    ...args: Parameters<T>
-  ) => (payload: Awaited<ReturnType<T>>) => Promise<'OK'>;
-};
+  options?: CacheableOptions,
+): CachedFn<T>;
 
-// Implementation for cacheable (Redis-only - async)
 export function cacheable<T extends (...args: any) => any>(
   fnOrName: T | string,
   fnOrExpireInSec: number | T,
   expireInSecOrOptions?: number | CacheableOptions,
-  maybeOptions?: CacheableOptions
+  maybeOptions?: CacheableOptions,
 ) {
   const name = typeof fnOrName === 'string' ? fnOrName : fnOrName.name;
   const fn =
@@ -201,7 +174,6 @@ export function cacheable<T extends (...args: any) => any>(
   let expireInSec: number | null = null;
   let options: CacheableOptions = {};
 
-  // Parse parameters based on function signature
   if (typeof fnOrName === 'function') {
     // Overload 1: cacheable(fn, expireInSec, options?)
     expireInSec = typeof fnOrExpireInSec === 'number' ? fnOrExpireInSec : null;
@@ -229,66 +201,42 @@ export function cacheable<T extends (...args: any) => any>(
   const getKey = (...args: Parameters<T>) =>
     `${cachePrefix}:${stringify(args)}`.replaceAll(/\s/g, '');
 
-  const lruCache = new LRUCache<string, any>({
-    max: CACHEABLE_LRU_MAX,
-    ttl: CACHEABLE_LRU_TTL_MS,
+  const memo = new LRUCache<string, any>({
+    max: MEMO_MAX_ENTRIES,
+    ttl: memoTtlMs(expireInSec),
   });
 
-  // L1 LRU (60s) + L2 Redis. clear() deletes Redis + local LRU; other nodes may serve stale from LRU for up to 60s.
   const cachedFn = async (
     ...args: Parameters<T>
   ): Promise<Awaited<ReturnType<T>>> => {
     const key = getKey(...args);
 
-    // L1: in-memory LRU first (offloads Redis on hot keys)
-    const lruHit = lruCache.get(key);
-    if (lruHit !== undefined && shouldCache(lruHit, options)) {
-      return lruHit as Awaited<ReturnType<T>>;
+    const hit = memo.get(key);
+    if (hit !== undefined && shouldCache(hit, options)) {
+      return hit as Awaited<ReturnType<T>>;
     }
 
-    // L2: Redis (shared across instances)
-    const cached = await getRedisCache().get(key);
-    if (cached) {
-      const parsed = parseCache(cached);
-      if (shouldCache(parsed, options)) {
-        lruCache.set(key, parsed);
-        return parsed;
-      }
-    }
-
-    // Cache miss: execute function
     const result = await fn(...(args as any));
 
     if (shouldCache(result, options)) {
-      lruCache.set(key, result);
-      getRedisCache()
-        .setex(key, expireInSec, JSON.stringify(result))
-        .catch(() => {
-          // ignore error
-        });
+      memo.set(key, result);
     }
 
     return result;
   };
 
   cachedFn.getKey = getKey;
-  cachedFn.clear = (...args: Parameters<T>) => {
-    const key = getKey(...args);
-    lruCache.delete(key);
-    return getRedisCache().del(key);
+  cachedFn.clear = async (...args: Parameters<T>) => {
+    return memo.delete(getKey(...args)) ? 1 : 0;
   };
   cachedFn.set =
     (...args: Parameters<T>) =>
-    (payload: Awaited<ReturnType<T>>) => {
-      const key = getKey(...args);
-      if (shouldCache(payload, options)) {
-        lruCache.set(key, payload);
-        return getRedisCache()
-          .setex(key, expireInSec, JSON.stringify(payload))
-          .catch(() => {
-            // ignore error
-          });
+    async (payload: Awaited<ReturnType<T>>) => {
+      if (!shouldCache(payload, options)) {
+        return undefined;
       }
+      memo.set(getKey(...args), payload);
+      return 'OK' as const;
     };
 
   return cachedFn;

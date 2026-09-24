@@ -3,6 +3,7 @@ import {
   PREFERRED_DEFAULT_MODEL_ID,
 } from '@openpanel/validation';
 
+import { AI_FEATURES_AVAILABLE } from '#ai-features';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 /**
@@ -15,9 +16,10 @@ import { createTRPCRouter, protectedProcedure } from '../trpc';
  */
 export const chatRouter = createTRPCRouter({
   models: protectedProcedure.query(() => {
+    // No AI on Cloudflare yet: report no providers so the UI hides chat.
     const providers = {
-      openai: Boolean(process.env.OPENAI_API_KEY),
-      anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
+      openai: AI_FEATURES_AVAILABLE && Boolean(process.env.OPENAI_API_KEY),
+      anthropic: AI_FEATURES_AVAILABLE && Boolean(process.env.ANTHROPIC_API_KEY),
     };
     const models = getAvailableChatModels(providers);
     const preferred = models.find((m) => m.id === PREFERRED_DEFAULT_MODEL_ID);

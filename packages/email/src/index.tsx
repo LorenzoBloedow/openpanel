@@ -1,11 +1,9 @@
-import React from 'react';
-import { render } from '@react-email/render';
-import { createTransport } from 'nodemailer';
-import { Resend } from 'resend';
 import type { z } from 'zod';
 
 import { db } from '@openpanel/db';
+import { getEnv } from '@openpanel/runtime';
 import { type TemplateKey, type Templates, templates } from './emails';
+import { renderTemplate } from './render';
 import { getUnsubscribeUrl } from './unsubscribe';
 
 /** a***@example.com, enough to correlate a log line without exposing the address. */
@@ -17,35 +15,65 @@ function redactEmail(email: string): string {
   return `${email[0]}***${email.slice(at)}`;
 }
 
+export * from './render';
 export * from './unsubscribe';
-
-const FROM = process.env.EMAIL_SENDER ?? 'hello@openpanel.dev';
 
 export type EmailData<T extends TemplateKey> = z.infer<Templates[T]['schema']>;
 export type EmailTemplate = keyof Templates;
 
-function createSmtpTransport() {
-  return createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
-    secure: process.env.SMTP_SECURE === 'true',
-    auth:
-      process.env.SMTP_USER && process.env.SMTP_PASS
-        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-        : undefined,
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 30_000,
-  });
+/**
+ * The Cloudflare Email Service `send_email` binding (Workers API). Declared
+ * structurally so the package doesn't depend on @cloudflare/workers-types.
+ * See https://developers.cloudflare.com/email-service/api/send-emails/workers-api/
+ */
+export interface SendEmailBinding {
+  send(message: {
+    from: string | { email: string; name?: string };
+    to: string | string[];
+    subject: string;
+    html?: string;
+    text?: string;
+    replyTo?: string;
+    headers?: Record<string, string>;
+  }): Promise<{ messageId: string }>;
 }
 
+export interface SentEmail {
+  messageId: string;
+}
+
+function getSender() {
+  const email = process.env.EMAIL_SENDER ?? 'hello@openpanel.dev';
+  const name = process.env.EMAIL_SENDER_NAME;
+  return name ? { email, name } : email;
+}
+
+function getEmailCode(error: unknown): string | undefined {
+  if (error && typeof error === 'object' && 'code' in error) {
+    return String((error as { code: unknown }).code);
+  }
+  if (error instanceof Error) {
+    // Email Service errors carry codes like E_SENDER_NOT_VERIFIED in the message.
+    return error.message.match(/\bE_[A-Z_]+\b/)?.[0];
+  }
+  return undefined;
+}
+
+/**
+ * Render a template and send it through Cloudflare Email Service.
+ *
+ * Returns `null` whenever the email was not sent — invalid data, the
+ * recipient unsubscribed from the category, no `EMAIL` binding, or a send
+ * error — so callers that must know about delivery (email sequences) can
+ * treat `null` as "not sent".
+ */
 export async function sendEmail<T extends TemplateKey>(
   templateKey: T,
   options: {
     to: string;
     data: z.infer<Templates[T]['schema']>;
   },
-) {
+): Promise<SentEmail | null> {
   const { to, data } = options;
   const template = templates[templateKey];
   const props = template.schema.safeParse(data);
@@ -67,7 +95,7 @@ export async function sendEmail<T extends TemplateKey>(
 
     if (unsubscribed) {
       console.log(
-        `Skipping email to ${to} - unsubscribed from ${template.category}`,
+        `Skipping email to ${redactEmail(to)} - unsubscribed from ${template.category}`,
       );
       return null;
     }
@@ -77,33 +105,13 @@ export async function sendEmail<T extends TemplateKey>(
   if ('category' in template && template.category) {
     const unsubscribeUrl = getUnsubscribeUrl(to, template.category);
     (props.data as any).unsubscribeUrl = unsubscribeUrl;
+    // Both are on Email Service's custom-header allowlist.
     headers['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
     headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
   }
 
-  const subject = template.subject(props.data as any);
-
-  if (process.env.SMTP_HOST) {
-    try {
-      const html = await render(
-        <template.Component {...(props.data as any)} />,
-      );
-      const transport = createSmtpTransport();
-      const res = await transport.sendMail({
-        from: FROM,
-        to,
-        subject,
-        html,
-        headers,
-      });
-      return res;
-    } catch (error) {
-      console.error('Failed to send email via SMTP', error);
-      return null;
-    }
-  }
-
-  if (!process.env.RESEND_API_KEY) {
+  const binding = getEnv<{ EMAIL?: SendEmailBinding }>().EMAIL;
+  if (!binding) {
     // Never dump the payload: template data carries password-reset and
     // unsubscribe links, and the recipient is personal data
     // (GHSA-xr2x-w49w-hp2c).
@@ -113,22 +121,27 @@ export async function sendEmail<T extends TemplateKey>(
     return null;
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
   try {
-    const res = await resend.emails.send({
-      from: FROM,
+    const { subject, html, text } = await renderTemplate(
+      templateKey,
+      props.data as any,
+    );
+    const result = await binding.send({
+      from: getSender(),
       to,
       subject,
-      react: <template.Component {...(props.data as any)} />,
+      html,
+      text,
       headers: Object.keys(headers).length > 0 ? headers : undefined,
     });
-    if (res.error) {
-      throw new Error(res.error.message);
-    }
-    return res;
+    return { messageId: result.messageId };
   } catch (error) {
-    console.error('Failed to send email via Resend', error);
+    console.error('Failed to send email via Cloudflare Email Service', {
+      template: templateKey,
+      to: redactEmail(to),
+      code: getEmailCode(error),
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }

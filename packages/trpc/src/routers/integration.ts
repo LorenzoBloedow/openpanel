@@ -11,6 +11,7 @@ import {
   redactConfigSecrets,
 } from '@openpanel/integrations/src/registry';
 import { getSlackInstallUrl } from '@openpanel/integrations/src/slack';
+import { assertFeatureAvailable } from '@openpanel/runtime';
 import {
   type IIntegrationConfig,
   type ISlackConfig,
@@ -237,6 +238,10 @@ export const integrationRouter = createTRPCRouter({
   createOrUpdateSlack: protectedProcedure
     .input(zCreateSlackIntegration)
     .mutation(async ({ input, ctx }) => {
+      // Before touching the row: without Slack (Cloudflare) the install URL
+      // below would throw after an empty integration had been saved.
+      assertFeatureAvailable('integrations');
+
       // For an update, authorize against the existing integration's scope so a
       // user can't clear/re-install another project's Slack integration.
       let organizationId: string;

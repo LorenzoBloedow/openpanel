@@ -1,9 +1,6 @@
-import {
-  createHash as cryptoCreateHash,
-  randomBytes,
-  scrypt,
-  timingSafeEqual,
-} from 'node:crypto';
+import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
+import { shake256 } from '@noble/hashes/sha3.js';
+import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
 
 export function generateSalt() {
   return randomBytes(16).toString('hex');
@@ -47,6 +44,11 @@ export async function verifyPassword(
     scrypt(password, salt!, keyLength, (err, derivedKey) => {
       if (err) {
         reject(err);
+        return;
+      }
+      if (hashKeyBuff.length !== derivedKey.length) {
+        resolve(false);
+        return;
       }
       // compare the new supplied password with the hashed password using timeSafeEqual
       resolve(
@@ -59,8 +61,12 @@ export async function verifyPassword(
   });
 }
 
+/**
+ * SHAKE256 with a custom output length, hex encoded. Device ids depend on
+ * this staying byte-identical to Node's
+ * `createHash('shake256', { outputLength })`, so it uses @noble/hashes rather
+ * than workerd's node:crypto, which does not implement SHAKE.
+ */
 export function createHash(data: string, len: number) {
-  return cryptoCreateHash('shake256', { outputLength: len })
-    .update(data)
-    .digest('hex');
+  return bytesToHex(shake256(utf8ToBytes(data), { dkLen: len }));
 }

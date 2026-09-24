@@ -4,18 +4,17 @@
   "type": "module",
   "main": "index.ts",
   "scripts": {
+    "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@openpanel/json": "workspace:*",
-    "ioredis": "5.8.2",
+    "@openpanel/runtime": "workspace:*",
     "lru-cache": "^11.2.2"
   },
   "devDependencies": {
     "@openpanel/db": "workspace:*",
     "@openpanel/tsconfig": "workspace:*",
     "@types/node": "catalog:",
-    "prisma": "^5.1.1",
     "typescript": "catalog:"
   }
 }

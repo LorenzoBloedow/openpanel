@@ -24,6 +24,6 @@
     "@openpanel/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:",
-    "vitest": "^1.0.0"
+    "vitest": "^4.1.11"
   }
 }

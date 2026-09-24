@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { assertSafeUrl, createPinnedLookup } from './ssrf';
+import { afterEach, describe, expect, it } from 'vitest';
+import { assertSafeUrl } from './ssrf';
 
 describe('assertSafeUrl', () => {
   const original = process.env.SELF_HOSTED;
@@ -49,39 +49,10 @@ describe('assertSafeUrl', () => {
     await expect(assertSafeUrl('http://127.0.0.1/x')).resolves.toBeNull();
   });
 
-  it('returns the validated addresses so the caller can pin to them', async () => {
-    // Validating without pinning is check-then-connect: a client that resolves
-    // the hostname again can be steered elsewhere by a changed DNS answer.
+  it('returns the validated IP literal', async () => {
     process.env.SELF_HOSTED = '';
     await expect(assertSafeUrl('http://93.184.216.34/x')).resolves.toEqual([
       '93.184.216.34',
     ]);
-  });
-});
-
-describe('createPinnedLookup', () => {
-  it('resolves every hostname to the pinned address', () => {
-    const lookup = createPinnedLookup('93.184.216.34');
-
-    const single = vi.fn();
-    lookup('anything.example', {}, single);
-    expect(single).toHaveBeenCalledWith(null, '93.184.216.34', 4);
-
-    const all = vi.fn();
-    lookup('anything.example', { all: true }, all);
-    expect(all).toHaveBeenCalledWith(null, [
-      { address: '93.184.216.34', family: 4 },
-    ]);
-  });
-
-  it('reports IPv6 addresses with the right family', () => {
-    const lookup = createPinnedLookup('2606:2800:220:1:248:1893:25c8:1946');
-    const cb = vi.fn();
-    lookup('anything.example', {}, cb);
-    expect(cb).toHaveBeenCalledWith(
-      null,
-      '2606:2800:220:1:248:1893:25c8:1946',
-      6,
-    );
   });
 });

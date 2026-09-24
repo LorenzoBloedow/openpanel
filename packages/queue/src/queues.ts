@@ -1,280 +1,133 @@
-import { createHash } from 'node:crypto';
-import type {
-  IClickhouseSession,
-  IServiceCreateEventPayload,
-  IServiceEvent,
-  Prisma,
-} from '@openpanel/db';
-import { createLogger } from '@openpanel/logger';
-import { getRedisGroupQueue, getRedisQueue } from '@openpanel/redis';
-import { Queue } from 'bullmq';
-import { Queue as GroupQueue } from 'groupmq';
-import type { ITrackPayload } from '../../validation';
+/**
+ * Background job queues on Cloudflare Queues.
+ *
+ * Every named queue that used to be a BullMQ `Queue` is now a thin producer
+ * that sends `{ v, queue, name, data }` to the shared `JOBS_QUEUE` binding;
+ * the worker's `op-jobs` consumer dispatches on `queue` + `name`. The exported
+ * objects keep BullMQ's `.add(name, data, opts)` shape so producers stay as
+ * they were.
+ *
+ * Cloudflare Queues have no job ids, deduplication or ordering. `jobId` and
+ * `deduplication.id` travel with the message and the consumer drops
+ * duplicates it sees in the same batch; the jobs themselves are idempotent
+ * (they recompute and upsert).
+ */
+import type { Prisma } from '@openpanel/db';
+import { getEnv } from '@openpanel/runtime';
 
-export const EVENTS_GROUP_QUEUES_SHARDS = Number.parseInt(
-  process.env.EVENTS_GROUP_QUEUES_SHARDS || '1',
-  10
-);
-
-export const getQueueName = (name: string) =>
-  process.env.QUEUE_CLUSTER ? `{${name}}` : name;
-
-function pickShard(projectId: string) {
-  const h = createHash('sha1').update(projectId).digest(); // 20 bytes
-  // take first 4 bytes as unsigned int
-  const x = h.readUInt32BE(0);
-  return x % EVENTS_GROUP_QUEUES_SHARDS; // 0..n-1
+/** Mirrors `@cloudflare/workers-types` Queue without depending on it. */
+export interface QueueBinding<Body = unknown> {
+  send(body: Body, options?: { delaySeconds?: number }): Promise<void>;
+  sendBatch(
+    messages: Iterable<{ body: Body; delaySeconds?: number }>,
+  ): Promise<void>;
 }
 
-export const queueLogger = createLogger({ name: 'queue' });
+export const JOB_MESSAGE_VERSION = 1;
 
-// BullMQ re-emits ioredis connection errors on every Queue instance; with no
-// 'error' listener Node throws them as uncaughtException and kills the
-// process (the api died ~daily from idle-socket ECONNRESETs, see
-// api-crash-econnreset-plan.md). ioredis reconnects on its own — log and
-// continue.
-const guardQueue = <
-  T extends { on(event: 'error', listener: (error: Error) => void): unknown },
->(
-  queue: T,
-  name: string
-): T => {
-  queue.on('error', (error) => {
-    queueLogger.error({ err: error, queue: name }, 'queue connection error');
-  });
-  return queue;
-};
+export type JobQueueName =
+  | 'notification'
+  | 'insights'
+  | 'gsc'
+  | 'cohortCompute'
+  | 'import'
+  | 'jobs';
 
-export interface EventsQueuePayloadIncomingEvent {
-  type: 'incomingEvent';
-  payload: {
-    projectId: string;
-    event: ITrackPayload & {
-      timestamp: string | number;
-      isTimestampFromThePast: boolean;
-    };
-    uaInfo:
-      | {
-          readonly isServer: true;
-          readonly device: 'server';
-          readonly os: '';
-          readonly osVersion: '';
-          readonly browser: '';
-          readonly browserVersion: '';
-          readonly brand: '';
-          readonly model: '';
-        }
-      | {
-          readonly os: string | undefined;
-          readonly osVersion: string | undefined;
-          readonly browser: string | undefined;
-          readonly browserVersion: string | undefined;
-          readonly device: string;
-          readonly brand: string | undefined;
-          readonly model: string | undefined;
-          readonly isServer: false;
-        };
-    geo: {
-      country: string | undefined;
-      city: string | undefined;
-      region: string | undefined;
-      longitude: number | undefined;
-      latitude: number | undefined;
-    };
-    headers: Record<string, string | undefined>;
-    deviceId: string;
-    sessionId: string;
-  };
-}
-export interface EventsQueuePayloadCreateEvent {
-  type: 'createEvent';
-  payload: Omit<IServiceEvent, 'id'>;
+export interface JobMessage<Data = unknown> {
+  v: typeof JOB_MESSAGE_VERSION;
+  queue: JobQueueName;
+  name: string;
+  data: Data;
+  /** BullMQ jobId / deduplication id, used by the consumer to drop duplicates. */
+  jobId?: string;
+  enqueuedAt: number;
 }
 
-export interface EventsQueuePayloadCreateSessionEnd {
-  type: 'createSessionEnd';
-  payload: IServiceCreateEventPayload;
-  // Snapshot of the session at the moment the close was decided. Used as a
-  // fallback when the live Redis blob has expired by the time the job runs,
-  // and to detect post-enqueue extensions (so we don't close a session that
-  // received more events in the meantime).
-  snapshot: IClickhouseSession;
+export interface JobsOptions {
+  /** Delay in milliseconds (BullMQ semantics). Rounded up to whole seconds. */
+  delay?: number;
+  jobId?: string;
+  deduplication?: { id: string };
+  // Accepted for compatibility; Cloudflare Queues retries are configured on
+  // the consumer (max_retries / retry_delay).
+  attempts?: number;
+  backoff?: unknown;
+  removeOnComplete?: unknown;
+  removeOnFail?: unknown;
 }
 
-// TODO: Rename `EventsQueuePayloadCreateSessionEnd`
-export type SessionsQueuePayload = EventsQueuePayloadCreateSessionEnd;
+// Cloudflare Queues cap delaySeconds at 24 hours.
+const MAX_DELAY_SECONDS = 24 * 60 * 60;
+// sendBatch accepts at most 100 messages per call.
+const MAX_BATCH_SIZE = 100;
 
-export type EventsQueuePayload =
-  | EventsQueuePayloadCreateEvent
-  | EventsQueuePayloadCreateSessionEnd
-  | EventsQueuePayloadIncomingEvent;
-
-export type CronQueuePayloadSalt = {
-  type: 'salt';
-  payload: undefined;
-};
-export type CronQueuePayloadFlushEvents = {
-  type: 'flushEvents';
-  payload: undefined;
-};
-export type CronQueuePayloadFlushProfiles = {
-  type: 'flushProfiles';
-  payload: undefined;
-};
-export type CronQueuePayloadFlushSessions = {
-  type: 'flushSessions';
-  payload: undefined;
-};
-export type CronQueuePayloadPing = {
-  type: 'ping';
-  payload: undefined;
-};
-export type CronQueuePayloadDelete = {
-  type: 'delete';
-  payload: undefined;
-};
-export type CronQueuePayloadInsightsDaily = {
-  type: 'insightsDaily';
-  payload: undefined;
-};
-export type CronQueuePayloadOnboarding = {
-  type: 'onboarding';
-  payload: undefined;
-};
-export type CronQueuePayloadFlushProfileBackfill = {
-  type: 'flushProfileBackfill';
-  payload: undefined;
-};
-export type CronQueuePayloadFlushReplay = {
-  type: 'flushReplay';
-  payload: undefined;
-};
-export type CronQueuePayloadGscSync = {
-  type: 'gscSync';
-  payload: undefined;
-};
-export type CronQueuePayloadFlushGroups = {
-  type: 'flushGroups';
-  payload: undefined;
-};
-export type CronQueuePayloadCohortRefresh = {
-  type: 'cohortRefresh';
-  payload: undefined;
-};
-export type CronQueuePayloadSessionReaper = {
-  type: 'sessionReaper';
-  payload: undefined;
-};
-export type CronQueuePayloadSessionVacuum = {
-  type: 'sessionVacuum';
-  payload: undefined;
-};
-export type CronQueuePayloadInsightCleanup = {
-  type: 'insightCleanup';
-  payload: undefined;
-};
-export type CronQueuePayloadWeeklyDigest = {
-  type: 'weeklyDigest';
-  payload: undefined;
-};
-export type CronQueuePayloadDataHealth = {
-  type: 'dataHealth';
-  payload: undefined;
-};
-export type CronQueuePayloadWindDown = {
-  type: 'windDown';
-  payload: undefined;
-};
-export type CronQueuePayloadFlushExports = {
-  type: 'flushExports';
-  payload: undefined;
-};
-export type CronQueuePayload =
-  | CronQueuePayloadSalt
-  | CronQueuePayloadFlushEvents
-  | CronQueuePayloadFlushSessions
-  | CronQueuePayloadFlushProfiles
-  | CronQueuePayloadFlushProfileBackfill
-  | CronQueuePayloadFlushReplay
-  | CronQueuePayloadFlushGroups
-  | CronQueuePayloadFlushExports
-  | CronQueuePayloadPing
-  | CronQueuePayloadDelete
-  | CronQueuePayloadInsightsDaily
-  | CronQueuePayloadOnboarding
-  | CronQueuePayloadGscSync
-  | CronQueuePayloadCohortRefresh
-  | CronQueuePayloadSessionReaper
-  | CronQueuePayloadSessionVacuum
-  | CronQueuePayloadInsightCleanup
-  | CronQueuePayloadWeeklyDigest
-  | CronQueuePayloadDataHealth
-  | CronQueuePayloadWindDown;
-
-export type CronQueueType = CronQueuePayload['type'];
-
-const orderingDelayMs = Number.parseInt(
-  process.env.ORDERING_DELAY_MS || '100',
-  10
-);
-
-const autoBatchMaxWaitMs = Number.parseInt(
-  process.env.AUTO_BATCH_MAX_WAIT_MS || '0',
-  10
-);
-const autoBatchSize = Number.parseInt(process.env.AUTO_BATCH_SIZE || '0', 10);
-
-export const eventsGroupQueues = Array.from({
-  length: EVENTS_GROUP_QUEUES_SHARDS,
-}).map(
-  (_, index, list) =>
-    new GroupQueue<EventsQueuePayloadIncomingEvent['payload']>({
-      logger: process.env.NODE_ENV === 'production' ? queueLogger : undefined,
-      namespace: getQueueName(
-        list.length === 1 ? 'group_events' : `group_events_${index}`
-      ),
-      redis: getRedisGroupQueue(),
-      keepCompleted: 1,
-      keepFailed: 10_000,
-      orderingDelayMs,
-      autoBatch:
-        autoBatchMaxWaitMs && autoBatchSize
-          ? {
-              maxWaitMs: autoBatchMaxWaitMs,
-              size: autoBatchSize,
-            }
-          : undefined,
-    })
-);
-
-export const getEventsGroupQueueShard = (groupId: string) => {
-  const shard = pickShard(groupId);
-  const queue = eventsGroupQueues[shard];
-  if (!queue) {
-    throw new Error(`Queue not found for group ${groupId}`);
+export function getJobsQueueBinding(): QueueBinding<JobMessage> {
+  const binding = getEnv<{ JOBS_QUEUE?: QueueBinding<JobMessage> }>()
+    .JOBS_QUEUE;
+  if (!binding) {
+    throw new Error(
+      'JOBS_QUEUE binding is missing. Background jobs can only be enqueued from a Worker with the jobs queue bound.',
+    );
   }
-  return queue;
-};
+  return binding;
+}
 
-export const sessionsQueue = guardQueue(
-  new Queue<SessionsQueuePayload>(getQueueName('sessions'), {
-    connection: getRedisQueue(),
-    defaultJobOptions: {
-      removeOnComplete: true,
-    },
-  }),
-  'sessions'
-);
+function toDelaySeconds(delayMs: number | undefined) {
+  if (!delayMs || delayMs <= 0) {
+    return undefined;
+  }
+  return Math.min(Math.ceil(delayMs / 1000), MAX_DELAY_SECONDS);
+}
 
-export const cronQueue = guardQueue(
-  new Queue<CronQueuePayload>(getQueueName('cron'), {
-    connection: getRedisQueue(),
-    defaultJobOptions: {
-      removeOnComplete: 10,
-    },
-  }),
-  'cron'
-);
+export class JobQueue<Data> {
+  constructor(readonly name: JobQueueName) {}
+
+  createMessage(jobName: string, data: Data, opts?: JobsOptions): JobMessage<Data> {
+    const jobId = opts?.deduplication?.id ?? opts?.jobId;
+    return {
+      v: JOB_MESSAGE_VERSION,
+      queue: this.name,
+      name: jobName,
+      data,
+      ...(jobId ? { jobId } : {}),
+      enqueuedAt: Date.now(),
+    };
+  }
+
+  async add(jobName: string, data: Data, opts?: JobsOptions) {
+    const message = this.createMessage(jobName, data, opts);
+    await getJobsQueueBinding().send(message, {
+      delaySeconds: toDelaySeconds(opts?.delay),
+    });
+    return { id: message.jobId, name: jobName, data };
+  }
+
+  async addBulk(
+    jobs: Array<{ name: string; data: Data; opts?: JobsOptions }>,
+  ) {
+    const binding = getJobsQueueBinding();
+    for (let i = 0; i < jobs.length; i += MAX_BATCH_SIZE) {
+      await binding.sendBatch(
+        jobs.slice(i, i + MAX_BATCH_SIZE).map((job) => ({
+          body: this.createMessage(job.name, job.data, job.opts),
+          delaySeconds: toDelaySeconds(job.opts?.delay),
+        })),
+      );
+    }
+  }
+}
+
+export type CronQueueType =
+  | 'salt'
+  | 'delete'
+  | 'insightsDaily'
+  | 'gscSync'
+  | 'cohortRefresh'
+  | 'sessionReaper'
+  | 'insightCleanup'
+  | 'weeklyDigest'
+  | 'backup'
+  | 'maintenance';
 
 export type NotificationQueuePayload = {
   type: 'sendNotification';
@@ -283,14 +136,8 @@ export type NotificationQueuePayload = {
   };
 };
 
-export const notificationQueue = guardQueue(
-  new Queue<NotificationQueuePayload>(getQueueName('notification'), {
-    connection: getRedisQueue(),
-    defaultJobOptions: {
-      removeOnComplete: 10,
-    },
-  }),
-  'notification'
+export const notificationQueue = new JobQueue<NotificationQueuePayload>(
+  'notification',
 );
 
 export type ImportQueuePayload = {
@@ -300,30 +147,15 @@ export type ImportQueuePayload = {
   };
 };
 
-export const importQueue = guardQueue(
-  new Queue<ImportQueuePayload>(getQueueName('import'), {
-    connection: getRedisQueue(),
-    defaultJobOptions: {
-      removeOnComplete: 10,
-      removeOnFail: 50,
-    },
-  }),
-  'import'
-);
+export const importQueue = new JobQueue<ImportQueuePayload>('import');
 
 export type InsightsQueuePayloadProject = {
   type: 'insightsProject';
   payload: { projectId: string; date: string };
 };
 
-export const insightsQueue = guardQueue(
-  new Queue<InsightsQueuePayloadProject>(getQueueName('insights'), {
-    connection: getRedisQueue(),
-    defaultJobOptions: {
-      removeOnComplete: 100,
-    },
-  }),
-  'insights'
+export const insightsQueue = new JobQueue<InsightsQueuePayloadProject>(
+  'insights',
 );
 
 export type GscQueuePayloadSync = {
@@ -336,33 +168,28 @@ export type GscQueuePayloadBackfill = {
 };
 export type GscQueuePayload = GscQueuePayloadSync | GscQueuePayloadBackfill;
 
-export const gscQueue = guardQueue(
-  new Queue<GscQueuePayload>(getQueueName('gsc'), {
-    connection: getRedisQueue(),
-    defaultJobOptions: {
-      removeOnComplete: 50,
-      removeOnFail: 100,
-    },
-  }),
-  'gsc'
-);
+export const gscQueue = new JobQueue<GscQueuePayload>('gsc');
 
 export type CohortComputePayload = {
   cohortId: string;
 };
 
-export const cohortComputeQueue = guardQueue(
-  new Queue<CohortComputePayload>(getQueueName('cohortCompute'), {
-    connection: getRedisQueue(),
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: { type: 'exponential', delay: 5000 },
-      // `age` alone only trims when another job in this queue finishes, so pair
-      // it with a count bound to keep the completed/failed sets from growing
-      // unbounded during quiet periods.
-      removeOnComplete: { age: 3600, count: 100 },
-      removeOnFail: { age: 86400, count: 100 },
-    },
-  }),
-  'cohortCompute'
+export const cohortComputeQueue = new JobQueue<CohortComputePayload>(
+  'cohortCompute',
 );
+
+/** Generic maintenance jobs fanned out by crons (digests, counts, cleanup). */
+export type MaintenanceJobPayload =
+  | { type: 'weeklyDigestProject'; payload: { projectId: string } }
+  | { type: 'updateEventsCount'; payload: { projectId: string } }
+  | { type: 'deleteProjectData'; payload: { projectId: string } };
+
+export const jobsQueue = new JobQueue<MaintenanceJobPayload>('jobs');
+
+export type AnyJobMessage =
+  | (JobMessage<NotificationQueuePayload> & { queue: 'notification' })
+  | (JobMessage<ImportQueuePayload> & { queue: 'import' })
+  | (JobMessage<InsightsQueuePayloadProject> & { queue: 'insights' })
+  | (JobMessage<GscQueuePayload> & { queue: 'gsc' })
+  | (JobMessage<CohortComputePayload> & { queue: 'cohortCompute' })
+  | (JobMessage<MaintenanceJobPayload> & { queue: 'jobs' });

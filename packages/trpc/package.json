@@ -3,6 +3,12 @@
   "version": "0.0.1",
   "type": "module",
   "main": "index.ts",
+  "imports": {
+    "#ai-features": {
+      "workerd": "./src/ai-features.workerd.ts",
+      "default": "./src/ai-features.ts"
+    }
+  },
   "scripts": {
     "test": "vitest",
     "typecheck": "tsc --noEmit"
@@ -18,9 +24,10 @@
     "@openpanel/integrations": "workspace:^",
     "@openpanel/js-runtime": "workspace:*",
     "@openpanel/payments": "workspace:^",
-    "@openpanel/redis": "workspace:*",
-    "@openpanel/validation": "workspace:*",
     "@openpanel/queue": "workspace:*",
+    "@openpanel/redis": "workspace:*",
+    "@openpanel/runtime": "workspace:*",
+    "@openpanel/validation": "workspace:*",
     "@trpc/client": "^11.17.0",
     "@trpc/server": "^11.17.0",
     "date-fns": "^3.3.1",

@@ -1,21 +1,25 @@
-import { hash, verify } from '@node-rs/argon2';
 import { sha1 } from '@oslojs/crypto/sha1';
 import { encodeHexLowerCase } from '@oslojs/encoding';
+import { argon2Verify, argon2idHash } from './argon2';
+
+// OWASP's argon2id baseline; unchanged from the @node-rs/argon2 days so
+// existing hashes keep verifying.
+export const PASSWORD_HASH_OPTIONS = {
+  memoryCost: 19456,
+  timeCost: 2,
+  outputLen: 32,
+  parallelism: 1,
+} as const;
 
 export async function hashPassword(password: string): Promise<string> {
-  return await hash(password, {
-    memoryCost: 19456,
-    timeCost: 2,
-    outputLen: 32,
-    parallelism: 1,
-  });
+  return await argon2idHash(password, PASSWORD_HASH_OPTIONS);
 }
 
 export async function verifyPasswordHash(
   hash: string,
   password: string,
 ): Promise<boolean> {
-  return await verify(hash, password);
+  return await argon2Verify(hash, password);
 }
 
 export async function verifyPasswordStrength(

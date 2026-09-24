@@ -33,7 +33,15 @@ export function buildOtpauthUrl({
 }
 
 export async function generateQrDataUrl(otpauthUrl: string): Promise<string> {
-  return qrcode.toDataURL(otpauthUrl, { margin: 1, width: 240 });
+  // SVG instead of PNG: the PNG renderer needs canvas (browser build, which
+  // Workers bundles resolve to) or pngjs + zlib (Node build). An SVG data URL
+  // renders the same in the dashboard's <img>.
+  const svg = await qrcode.toString(otpauthUrl, {
+    type: 'svg',
+    margin: 1,
+    width: 240,
+  });
+  return `data:image/svg+xml;base64,${btoa(svg)}`;
 }
 
 export function verifyTotpCode(secret: string, code: string): boolean {
