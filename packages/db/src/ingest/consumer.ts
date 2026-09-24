@@ -26,6 +26,7 @@ import {
   type IngestRecord,
   type ProfileOpRecord,
   deserializeEventPayload,
+  stripNulChars,
 } from './envelope';
 import { getBucketSessionId } from './session-id';
 import {
@@ -719,7 +720,8 @@ export async function applyEnvelopes(
   options: ApplyEnvelopesOptions = {},
 ): Promise<ApplyEnvelopesResult> {
   const now = options.now ?? new Date();
-  const records = dedupeRecords(envelopes);
+  // Envelopes from older API versions may still carry NUL characters.
+  const records = dedupeRecords(stripNulChars(envelopes));
 
   return anTransaction(async (client) => {
     const fresh = await claimLedger(client, records.map((record) => record.id));

@@ -5,14 +5,15 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "customConditions": ["workerd"],
     "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo.json",
     "strictNullChecks": true
   },
-  "include": ["."],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "test", "worker-configuration.d.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    // BullMQ job handlers not ported to the op-jobs consumer yet.
+    "src/jobs"
+  ]
 }

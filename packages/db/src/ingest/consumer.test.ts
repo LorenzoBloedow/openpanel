@@ -274,17 +274,125 @@ describe('applyEnvelopes', () => {
 
   it('merges group properties', async () => {
     const projectId = 'p-groups';
-    const group = (id: string, properties: Record<string, unknown>): IngestRecord => ({
+    const group = (properties: Record<string, unknown>): IngestRecord => ({
       type: 'group',
       id: uuidv7(),
       group: { id: 'acme', projectId, type: 'company', name: 'Acme', properties },
     });
-    await inScope(() => applyEnvelopes([envelope(projectId, [group('1', { plan: 'pro', seats: 5 })])]));
-    await inScope(() => applyEnvelopes([envelope(projectId, [group('2', { billing: { country: 'SE' } })])]));
+    await inScope(() => applyEnvelopes([envelope(projectId, [group({ plan: 'pro', seats: 5 })])]));
+    await inScope(() => applyEnvelopes([envelope(projectId, [group({ billing: { country: 'SE' } })])]));
     const [row] = await rows<{ properties: Record<string, string> }>(
       sql`SELECT properties FROM analytics.groups WHERE project_id = ${projectId}`,
     );
     expect(row!.properties).toEqual({ plan: 'pro', seats: '5', 'billing.country': 'SE' });
+  });
+});
+
+describe('applyEnvelopes (ported worker scenarios)', () => {
+  it('emits session_start once across separate batches (new → extend → extend)', async () => {
+    const projectId = 'p-rapid';
+    for (const minute of [0, 1, 2]) {
+      await inScope(() =>
+        applyEnvelopes([envelope(projectId, [event(projectId, 'd1', minute)])], {
+          now: at(minute),
+        }),
+      );
+    }
+    const names = await rows<{ name: string }>(
+      sql`SELECT name FROM analytics.events WHERE project_id = ${projectId} ORDER BY created_at`,
+    );
+    expect(names.map((row) => row.name)).toEqual([
+      'session_start',
+      'screen_view',
+      'screen_view',
+      'screen_view',
+    ]);
+  });
+
+  it('gives events the referrer of their session', async () => {
+    const projectId = 'p-referrer';
+    await inScope(() =>
+      applyEnvelopes(
+        [
+          envelope(projectId, [
+            event(projectId, 'd1', 0),
+            event(projectId, 'd1', 1, {
+              path: '/next',
+              referrer: '',
+              referrerName: '',
+              referrerType: '',
+            }),
+          ]),
+        ],
+        { now: at(1) },
+      ),
+    );
+    const events = await rows<{ path: string; referrer: string; referrer_name: string; referrer_type: string }>(
+      sql`SELECT path, referrer, referrer_name, referrer_type FROM analytics.events WHERE project_id = ${projectId} AND name = 'screen_view' ORDER BY created_at`,
+    );
+    expect(events[1]).toEqual({
+      path: '/next',
+      referrer: 'https://www.google.com/',
+      referrer_name: 'Google',
+      referrer_type: 'search',
+    });
+  });
+
+  it('stores a server event without any live session as sessionless', async () => {
+    const projectId = 'p-server-alone';
+    await inScope(() =>
+      applyEnvelopes(
+        [
+          envelope(projectId, [
+            event(projectId, '', 0, { name: 'webhook', profileId: 'nobody', sessionId: '' }, 'server'),
+          ]),
+        ],
+        { now: at(0) },
+      ),
+    );
+    const events = await rows<{ name: string; session_id: string; device_id: string }>(
+      sql`SELECT name, session_id, device_id FROM analytics.events WHERE project_id = ${projectId}`,
+    );
+    expect(events).toEqual([{ name: 'webhook', session_id: '', device_id: '' }]);
+    const sessions = await rows<{ id: string }>(
+      sql`SELECT id FROM analytics.sessions WHERE project_id = ${projectId}`,
+    );
+    expect(sessions).toEqual([]);
+  });
+
+  it('strips NUL characters instead of failing the batch', async () => {
+    const projectId = 'p-nul';
+    // Built by hand: an older API didn't strip them before queuing.
+    const raw: EventsEnvelope = {
+      v: 1,
+      projectId,
+      records: [
+        event(projectId, 'd1', 0, {
+          name: 'nul\u0000event',
+          path: '/a\u0000b',
+          properties: { 'k\u0000ey': 'va\u0000lue' },
+        }),
+      ],
+    };
+    await inScope(() => applyEnvelopes([raw], { now: at(0) }));
+    const events = await rows<{ name: string; path: string; properties: Record<string, string> }>(
+      sql`SELECT name, path, properties FROM analytics.events WHERE project_id = ${projectId} AND name <> 'session_start'`,
+    );
+    expect(events).toEqual([{ name: 'nulevent', path: '/ab', properties: { key: 'value' } }]);
+  });
+
+  it('clamps revenue that doesn’t fit a bigint', async () => {
+    const projectId = 'p-revenue';
+    await inScope(() =>
+      applyEnvelopes(
+        [envelope(projectId, [event(projectId, 'd1', 0, { name: 'revenue', revenue: 1e30 })])],
+        { now: at(0) },
+      ),
+    );
+    const [row] = await rows<{ revenue: number }>(
+      sql`SELECT revenue FROM analytics.events WHERE project_id = ${projectId} AND name = 'revenue'`,
+    );
+    expect(row?.revenue).toBe(Number.MAX_SAFE_INTEGER);
   });
 });
 

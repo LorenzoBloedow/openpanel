@@ -193,6 +193,28 @@ export function profileRecordToUpsert(
   return record.profile;
 }
 
+/**
+ * Postgres text and jsonb can't hold NUL characters (ClickHouse could), so
+ * one NUL in an SDK property would fail a whole batch. Strip them from
+ * every string, keys included.
+ */
+export function stripNulChars<T>(value: T): T {
+  if (typeof value === 'string') {
+    return (value.includes('\u0000') ? value.replaceAll('\u0000', '') : value) as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map(stripNulChars) as T;
+  }
+  if (value !== null && typeof value === 'object' && !(value instanceof Date)) {
+    const out: Record<string, unknown> = {};
+    for (const [key, inner] of Object.entries(value)) {
+      out[stripNulChars(key)] = stripNulChars(inner);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 export class EnvelopeTooLargeError extends Error {
   constructor(readonly bytes: number) {
     super(
@@ -210,7 +232,7 @@ export function buildEnvelope(
   const envelope: EventsEnvelope = zEventsEnvelope.parse({
     v: EVENTS_ENVELOPE_VERSION,
     projectId,
-    records,
+    records: stripNulChars(records),
   });
   const bytes = new TextEncoder().encode(JSON.stringify(envelope)).length;
   if (bytes > MAX_ENVELOPE_BYTES) {

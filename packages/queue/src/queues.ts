@@ -129,12 +129,27 @@ export type CronQueueType =
   | 'backup'
   | 'maintenance';
 
-export type NotificationQueuePayload = {
-  type: 'sendNotification';
-  payload: {
-    notification: Prisma.NotificationUncheckedCreateInput;
-  };
-};
+export type NotificationQueuePayload =
+  | {
+      type: 'sendNotification';
+      payload: {
+        notification: Prisma.NotificationUncheckedCreateInput;
+      };
+    }
+  | {
+      /** Match freshly ingested events against the project's event rules. */
+      type: 'checkEventRules';
+      payload: {
+        projectId: string;
+        /** Serialized event payloads (ISO dates) with their row ids. */
+        events: Array<Record<string, unknown> & { id: string }>;
+      };
+    }
+  | {
+      /** Match closed sessions' events against the project's funnel rules. */
+      type: 'checkFunnelRules';
+      payload: { projectId: string; sessionIds: string[] };
+    };
 
 export const notificationQueue = new JobQueue<NotificationQueuePayload>(
   'notification',

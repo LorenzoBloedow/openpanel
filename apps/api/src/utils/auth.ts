@@ -1,15 +1,27 @@
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
 import { verifyPassword } from '@openpanel/common/server';
-import type { IServiceClientWithProject } from '@openpanel/db';
-import { ClientType, getClientByIdCached } from '@openpanel/db';
-import { getRedisCache } from '@openpanel/redis';
+// Deep imports keep the ingest path off the db barrel (query services).
+import { ClientType } from '@openpanel/db/src/prisma-client';
+import {
+  type IServiceClientWithProject,
+  getClientByIdCached,
+} from '@openpanel/db/src/services/clients.service';
+import { LRUCache } from '@openpanel/redis';
 import type {
-  DeprecatedPostEventPayload,
   IProjectFilterIp,
   IProjectFilterProfileId,
-  ITrackHandlerPayload,
 } from '@openpanel/validation';
-import type { FastifyRequest, RawRequestDefaultExpression } from 'fastify';
 import { path } from 'ramda';
+
+type HeaderSource = Headers | Record<string, string | undefined>;
+
+function header(headers: HeaderSource, name: string): string | undefined {
+  if (headers instanceof Headers) {
+    return headers.get(name) ?? undefined;
+  }
+  return headers[name];
+}
 
 const cleanDomain = (domain: string) =>
   domain
@@ -39,16 +51,19 @@ export class SdkAuthError extends Error {
   }
 }
 
-const CLIENT_SECRET_CACHE_SEC = 60 * 5;
+const CLIENT_SECRET_CACHE_MS = 60 * 5 * 1000;
 
 /**
- * Checks a supplied client secret against the stored hash.
- *
- * Only successful verifications are cached. The cache key contains the
- * caller-supplied secret, so caching a negative result would let anyone create
- * entries with keys of their choosing. A client with no stored secret skips the
- * cache entirely.
+ * Verified (client id, secret) pairs, per isolate. scrypt is deliberately
+ * slow, and server-side SDKs send the secret on every request. Keyed by a
+ * hash so secrets never sit in memory as cache keys, and only successes are
+ * cached (a failed guess must not create entries).
  */
+const verifiedSecrets = new LRUCache<string, true>({
+  max: 10_000,
+  ttl: CLIENT_SECRET_CACHE_MS,
+});
+
 async function verifyClientSecret(
   clientId: string,
   clientSecret: string | undefined,
@@ -58,37 +73,40 @@ async function verifyClientSecret(
     return false;
   }
 
-  const cacheKey = `client:auth:${clientId}:${Buffer.from(clientSecret).toString('base64')}`;
-
-  // Strict compare: entries written before only positives were cached may still
-  // hold "false".
-  if ((await getRedisCache().get(cacheKey)) === 'true') {
+  const cacheKey = bytesToHex(
+    sha256(utf8ToBytes(`${clientId}\u0000${clientSecret}\u0000${storedSecret}`))
+  );
+  if (verifiedSecrets.get(cacheKey)) {
     return true;
   }
 
   const isVerified = await verifyPassword(clientSecret, storedSecret);
-
   if (isVerified) {
-    getRedisCache()
-      .setex(cacheKey, CLIENT_SECRET_CACHE_SEC, 'true')
-      .catch(() => {
-        // ignore error
-      });
+    verifiedSecrets.set(cacheKey, true);
   }
-
   return isVerified;
 }
 
+export interface SdkRequest {
+  headers: HeaderSource;
+  clientIp: string;
+  body: unknown;
+}
+
+export interface SdkAuthResult {
+  client: IServiceClientWithProject;
+  /** The supplied secret matched the stored hash (server-side SDKs). */
+  clientSecretAuth: boolean;
+}
+
 export async function validateSdkRequest(
-  req: FastifyRequest<{
-    Body: ITrackHandlerPayload | DeprecatedPostEventPayload;
-  }>
-): Promise<IServiceClientWithProject> {
+  req: SdkRequest
+): Promise<SdkAuthResult> {
   const { headers, clientIp } = req;
-  const clientIdNew = headers['openpanel-client-id'] as string;
-  const clientIdOld = headers['mixan-client-id'] as string;
-  const clientSecretNew = headers['openpanel-client-secret'] as string;
-  const clientSecretOld = headers['mixan-client-secret'] as string;
+  const clientIdNew = header(headers, 'openpanel-client-id');
+  const clientIdOld = header(headers, 'mixan-client-id');
+  const clientSecretNew = header(headers, 'openpanel-client-secret');
+  const clientSecretOld = header(headers, 'mixan-client-secret');
   const clientIdFromBody = path<string | undefined>(['clientId'], req.body);
   const clientSecretFromBody = path<string | undefined>(
     ['clientSecret'],
@@ -97,7 +115,7 @@ export async function validateSdkRequest(
   const clientId = clientIdNew || clientIdOld || clientIdFromBody;
   const clientSecret =
     clientSecretNew || clientSecretOld || clientSecretFromBody;
-  const origin = headers.origin;
+  const origin = header(headers, 'origin');
 
   const createError = (message: string) =>
     new SdkAuthError(message, {
@@ -139,7 +157,7 @@ export async function validateSdkRequest(
     client.secret
   );
 
-  req.clientSecretAuth = secretVerified;
+  const result = { client, clientSecretAuth: secretVerified };
 
   // Filter out blocked IPs
   const ipFilter = client.project.filters.filter(
@@ -177,7 +195,7 @@ export async function validateSdkRequest(
   }
 
   if (client.ignoreCorsAndSecret) {
-    return client;
+    return result;
   }
 
   if (client.project.cors) {
@@ -192,32 +210,30 @@ export async function validateSdkRequest(
         return regex.test(origin || '');
       }
 
-      if (cleanedDomain === cleanDomain(origin || '')) {
-        return true;
-      }
+      return cleanedDomain === cleanDomain(origin || '');
     });
 
     if (domainAllowed) {
-      return client;
+      return result;
     }
 
     if (client.project.cors.includes('*') && origin) {
-      return client;
+      return result;
     }
   }
 
   if (secretVerified) {
-    return client;
+    return result;
   }
 
   throw createError('Ingestion: Invalid cors or secret');
 }
 
 export async function validateExportRequest(
-  headers: RawRequestDefaultExpression['headers']
+  headers: HeaderSource
 ): Promise<IServiceClientWithProject> {
-  const clientId = headers['openpanel-client-id'] as string;
-  const clientSecret = (headers['openpanel-client-secret'] as string) || '';
+  const clientId = header(headers, 'openpanel-client-id') ?? '';
+  const clientSecret = header(headers, 'openpanel-client-secret') || '';
 
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
@@ -241,7 +257,7 @@ export async function validateExportRequest(
     throw new Error('Export: Client is not allowed to export');
   }
 
-  if (!(await verifyPassword(clientSecret, client.secret))) {
+  if (!(await verifyClientSecret(clientId, clientSecret, client.secret))) {
     throw new Error('Export: Invalid client secret');
   }
 
@@ -249,10 +265,10 @@ export async function validateExportRequest(
 }
 
 export async function validateImportRequest(
-  headers: RawRequestDefaultExpression['headers']
+  headers: HeaderSource
 ): Promise<IServiceClientWithProject> {
-  const clientId = headers['openpanel-client-id'] as string;
-  const clientSecret = (headers['openpanel-client-secret'] as string) || '';
+  const clientId = header(headers, 'openpanel-client-id') ?? '';
+  const clientSecret = header(headers, 'openpanel-client-secret') || '';
 
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
@@ -276,7 +292,7 @@ export async function validateImportRequest(
     throw new Error('Import: Client is not allowed to import');
   }
 
-  if (!(await verifyPassword(clientSecret, client.secret))) {
+  if (!(await verifyClientSecret(clientId, clientSecret, client.secret))) {
     throw new Error('Import: Invalid client secret');
   }
 
@@ -284,10 +300,10 @@ export async function validateImportRequest(
 }
 
 export async function validateManageRequest(
-  headers: RawRequestDefaultExpression['headers']
+  headers: HeaderSource
 ): Promise<IServiceClientWithProject> {
-  const clientId = headers['openpanel-client-id'] as string;
-  const clientSecret = (headers['openpanel-client-secret'] as string) || '';
+  const clientId = header(headers, 'openpanel-client-id') ?? '';
+  const clientSecret = header(headers, 'openpanel-client-secret') || '';
 
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
@@ -313,7 +329,7 @@ export async function validateManageRequest(
     );
   }
 
-  if (!(await verifyPassword(clientSecret, client.secret))) {
+  if (!(await verifyClientSecret(clientId, clientSecret, client.secret))) {
     throw new Error('Manage: Invalid client secret');
   }
 

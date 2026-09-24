@@ -8,8 +8,8 @@
     "testing": "wrangler dev --port 9999",
     "build": "wrangler deploy --dry-run --outdir dist",
     "deploy": "wrangler deploy",
-    "cf-typegen": "wrangler types",
-    "typecheck": "tsc --noEmit"
+    "cf-typegen": "wrangler types --strict-vars false",
+    "typecheck": "wrangler types --strict-vars false >/dev/null && tsc --noEmit"
   },
   "dependencies": {
     "@openpanel/ai": "workspace:*",

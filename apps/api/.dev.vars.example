@@ -1,0 +1,19 @@
+# Copy to .dev.vars for `wrangler dev` and tests. Never commit .dev.vars.
+
+NODE_ENV=development
+
+# Direct route (queue-free writes like replay chunks and /import/events):
+# Neon's *pooled* endpoint in production (…-pooler.….neon.tech, sslmode=require).
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+
+# Signing and encryption (generate with `openssl rand -hex 32`).
+COOKIE_SECRET=change-me-to-a-long-random-string
+ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000
+
+# Optional
+# SESSION_TIMEOUT_MS=1800000
+# API_CORS_ORIGINS=http://localhost:3001
+# GITHUB_CLIENT_ID=
+# GITHUB_CLIENT_SECRET=
+# GOOGLE_CLIENT_ID=
+# GOOGLE_CLIENT_SECRET=

@@ -209,12 +209,18 @@ importers:
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
+      '@types/pg':
+        specifier: ^8.23.1
+        version: 8.23.1
       '@types/ramda':
         specifier: ^0.30.2
         version: 0.30.2
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
+      pg:
+        specifier: ^8.23.0
+        version: 8.23.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -10049,9 +10055,6 @@ packages:
   '@types/pg-pool@2.0.6':
     resolution: {integrity: sha512-TaAUE5rq2VQYxab5Ts7WZhKNmuN78Q6PiFonTDdpbx8a1H0M1vhy3rhiMjl+e2iHmogyMw7jZF4FrE6eJUy5HQ==}
 
-  '@types/pg@8.15.5':
-    resolution: {integrity: sha512-LF7lF6zWEKxuT3/OR8wAZGzkg4ENGXFNyiV/JeOt9z5B+0ZVwbql9McqX5c/WStFq1GaGso7H1AzP/qSzmlCKQ==}
-
   '@types/pg@8.23.1':
     resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
 
@@ -15889,9 +15892,6 @@ packages:
 
   pg-protocol@1.16.0:
     resolution: {integrity: sha512-sILXutLVjCLjcDuOmvhX5e2Z4cS5qG/6Bu3VkpFwdf/633ElGLpEh9bgmuI5I4sqKqkifQiGyiCcx1HdtrK7tg==}
-
-  pg-protocol@1.6.1:
-    resolution: {integrity: sha512-jPIlvgoD63hrEuihvIg+tJhoGjUsLPn6poJY9N5CnlPd91c2T18T/9zBtLxZSb1EhYxBRoZJtzScCaWlYLtktg==}
 
   pg-types@2.2.0:
     resolution: {integrity: sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==}
@@ -29852,24 +29852,18 @@ snapshots:
 
   '@types/pg-pool@2.0.6':
     dependencies:
-      '@types/pg': 8.15.5
-
-  '@types/pg@8.15.5':
-    dependencies:
-      '@types/node': 20.19.24
-      pg-protocol: 1.6.1
-      pg-types: 2.2.0
+      '@types/pg': 8.23.1
 
   '@types/pg@8.23.1':
     dependencies:
       '@types/node': 20.19.24
-      pg-protocol: 1.6.1
+      pg-protocol: 1.16.0
       pg-types: 2.2.0
 
   '@types/pg@8.6.1':
     dependencies:
       '@types/node': 20.19.24
-      pg-protocol: 1.6.1
+      pg-protocol: 1.16.0
       pg-types: 2.2.0
 
   '@types/promise.allsettled@1.0.6': {}
@@ -37569,8 +37563,6 @@ snapshots:
       pg: 8.23.0
 
   pg-protocol@1.16.0: {}
-
-  pg-protocol@1.6.1: {}
 
   pg-types@2.2.0:
     dependencies:

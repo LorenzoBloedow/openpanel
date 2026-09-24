@@ -3,7 +3,6 @@
  * attaches to error logs.
  */
 
-import type { FastifyRequest } from 'fastify';
 import { describe, expect, it } from 'vitest';
 import { buildErrorRequestContext } from './errors';
 
@@ -18,22 +17,20 @@ describe('buildErrorRequestContext', () => {
       query: {},
       headers: {},
       body: undefined,
-    } as unknown as FastifyRequest);
+    });
 
     expect(ctx.url).toBe('/mcp?token=[REDACTED]&projectId=p1');
   });
 
-  it('prefers the raw body when fastify captured one', () => {
+  it('keeps the parsed body', () => {
     const ctx = buildErrorRequestContext({
       id: 'req-2',
       url: '/track',
       method: 'POST',
-      query: {},
       headers: {},
-      rawBody: '{"type":"track"}',
       body: { type: 'track' },
-    } as unknown as FastifyRequest);
+    });
 
-    expect(ctx.body).toBe('{"type":"track"}');
+    expect(ctx.body).toEqual({ type: 'track' });
   });
 });

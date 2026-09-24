@@ -1,33 +1,39 @@
 # Session E2E
 
-Two harnesses over a shared foundation (`lib.ts`), both driving the **real stack**
-over HTTP and asserting state in **both ClickHouse and Redis**:
+Two harnesses over a shared foundation (`lib.ts`). Both drive the **real stack**
+(`openpanel-api` + `openpanel-worker` under `wrangler dev`) over HTTP and assert
+the resulting state in **Postgres** (`analytics.*`):
 
 - `session-e2e.ts` (`e2e:sessions`) — **correctness**: the full lifecycle for one
-  session per scenario (open/extend/close via reaper + boundary, replay, identify),
-  including Redis cleanup.
+  session per scenario (open/extend/close via reaper + boundary, replay,
+  identify, duplicate suppression), including live-session cleanup.
 - `session-stress.ts` (`e2e:sessions:stress`) — **volume + drain**: ramps out many
-  sessions, then drives reaper + buffer flushes until *everything* has drained
-  (every `session_end` emitted, Redis cleaned, session buffer empty) and reconciles
-  the ClickHouse counts. Exits only when nothing is left open.
+  sessions, then drives the reaper until *everything* has drained (every
+  `session_end` emitted, no live session left) and reconciles the event counts.
 
 ## What it covers
 
 | Scenario | Asserts |
 |----------|---------|
-| Single session → reaper close | session blob + wallclock + projects-set in Redis; one `session_start` + N events in CH; after the reaper closes it: one `session_end`, a collapsed `sessions` row, and Redis fully cleaned (blob + wallclock gone, idempotency claim present). |
-| Boundary split | a >idle-window gap opens a NEW session id and emits a `session_end` for the first + a `session_start` for the second. |
-| Replay | a replay chunk lands in `session_replay_chunks` under the echoed session id. |
-| Identify | `session:profile:{pid}:{profileId}` pointer written; events carry the identified `profile_id`. |
+| Single session → reaper close | a `live_sessions` row with the returned id; one `session_start` + N events; after the reaper closes it: one `session_end`, the `sessions` row, the live row gone, and no second `session_end` on the next run. |
+| Boundary split | a >idle-window gap opens a NEW session id and emits exactly one `session_end` for the first + a `session_start` for the second. |
+| Non-screen_view first | a custom event opens a session that closes as a bounce with `screen_view_count` 0. |
+| Replay | a replay chunk lands in `session_replay_chunks` under the echoed session id (written synchronously on the direct route). |
+| Identify | the live session and the events carry the profile id; identify upserts the profile. |
+| Duplicate | of two identical concurrent browser requests, one is answered `Duplicate event`. |
 
 ## Running
 
-Sessions idle out after 30 min by default. Shrink that and start the stack with
-the **same** value the harness uses, then run the harness:
+Sessions idle out after 30 min by default. Shrink that in both workers'
+`.dev.vars` (`SESSION_TIMEOUT_MS=4000`, see `.dev.vars.example`) and start the
+stack against a migrated database (`pnpm migrate:deploy`, or a copy of the test
+template):
 
 ```bash
-# 1. Start the stack with a short idle window (Docker must be up: pnpm dock:up)
-SESSION_TIMEOUT_MS=4000 pnpm dev
+# 1. API (Hyperdrive → local Postgres) and worker (queues, crons)
+CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://postgres:postgres@localhost:5432/openpanel_dev \
+  pnpm --filter @openpanel/api exec wrangler dev --port 3333
+pnpm --filter @openpanel/worker exec wrangler dev --port 9999 --test-scheduled
 
 # 2. In another terminal, run the harness with the SAME timeout
 SESSION_TIMEOUT_MS=4000 pnpm --filter @openpanel/api e2e:sessions
@@ -36,19 +42,20 @@ SESSION_TIMEOUT_MS=4000 pnpm --filter @openpanel/api e2e:sessions
 SESSION_TIMEOUT_MS=4000 pnpm --filter @openpanel/api e2e:sessions:stress
 ```
 
+The two `wrangler dev` sessions find each other through the local dev
+registry: the API's queue feeds the worker's consumer, and the worker publishes
+to the API's LiveHub. The harness runs the reaper on demand through the
+worker's `/__scheduled` endpoint (`--test-scheduled`), so it never waits for
+the minute cron.
+
 Stress tunables (env): `E2E_SESSIONS` (500), `E2E_CONCURRENCY` (25),
 `E2E_EVENTS_PER_SESSION` (3), `E2E_DRAIN_TIMEOUT_MS` (120000).
 
-It exits non-zero if any check fails and prints a summary. Total run is ~30–60s
-with a 4s window (each close waits roughly one idle window).
-
-The harness triggers the reaper on demand via the worker's `/debug/cron`
-endpoint, so it never waits for the 5-minute reaper cron.
-
 ### Notes
-- Uses a dedicated, isolated project (`e2e-sessions`) and a throwaway client
-  (`ignoreCorsAndSecret`), created/upserted automatically under org `openpanel-dev`.
+- Uses a dedicated project (`e2e-sessions`) and a throwaway client
+  (`ignoreCorsAndSecret`), created automatically under org `openpanel-dev`.
 - Each run uses fresh device IPs, so reruns don't collide with prior state.
-- Overridable: `E2E_API_URL` (default `:3333`), `E2E_WORKER_URL` (default `:9999`).
+- Overridable: `E2E_API_URL` (default `:3333`), `E2E_WORKER_URL` (default
+  `:9999`), `E2E_DATABASE_URL` (default the local `openpanel_dev` database).
 - The harness and the stack **must share the same `SESSION_TIMEOUT_MS`** — the
   harness derives its idle waits from it.

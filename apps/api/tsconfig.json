@@ -5,9 +5,26 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "customConditions": ["workerd"],
     "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo.json",
     "strictNullChecks": true
   },
-  "include": [".", "../../test"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "test", "worker-configuration.d.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    // Fastify modules not ported to Hono yet.
+    "src/agents",
+    "src/controllers",
+    "src/routes/*.router.ts",
+    "src/routes/*.router.test.ts",
+    "src/utils/image-proxy.ts",
+    "src/utils/image-proxy.test.ts",
+    "src/utils/observability.ts",
+    "src/utils/parse-zod-query-string.ts",
+    "src/utils/parseUrlMeta.ts",
+    "src/utils/rate-limiter.ts",
+    "src/utils/rate-limiter.test.ts",
+    "src/utils/safe-fetch.ts"
+  ]
 }

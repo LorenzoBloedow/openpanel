@@ -125,17 +125,29 @@ export function extendSession(
 
   if (eventTimeMs >= endMs) {
     current.ended_at = eventDate;
-    if (payload.path) current.exit_path = payload.path;
-    if (payload.origin) current.exit_origin = payload.origin;
+    if (payload.path) {
+      current.exit_path = payload.path;
+    }
+    if (payload.origin) {
+      current.exit_origin = payload.origin;
+    }
   }
 
   if (eventTimeMs < startMs) {
     current.created_at = eventDate;
-    if (payload.path) current.entry_path = payload.path;
-    if (payload.origin) current.entry_origin = payload.origin;
+    if (payload.path) {
+      current.entry_path = payload.path;
+    }
+    if (payload.origin) {
+      current.entry_origin = payload.origin;
+    }
   } else {
-    if (!current.entry_path && payload.path) current.entry_path = payload.path;
-    if (!current.entry_origin && payload.origin) current.entry_origin = payload.origin;
+    if (!current.entry_path && payload.path) {
+      current.entry_path = payload.path;
+    }
+    if (!current.entry_origin && payload.origin) {
+      current.entry_origin = payload.origin;
+    }
   }
 
   current.duration =

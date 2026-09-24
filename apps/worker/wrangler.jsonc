@@ -1,0 +1,62 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // openpanel-worker: the op-events ingest consumer, the op-jobs consumer,
+  // crons and Workflows. Everything here is background work, so it talks to
+  // Neon over the direct route only (DATABASE_URL: Neon's *pooled*
+  // endpoint) — no Hyperdrive binding. Ids are placeholders that
+  // scripts/cloudflare/setup.ts fills in; no account_id is committed.
+  "name": "openpanel-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "upload_source_maps": true,
+  // No HTTP surface: queues, crons and Workflows only.
+  "workers_dev": false,
+  "preview_urls": false,
+  // Queue batches and crons can use more than the 30 s default.
+  "limits": { "cpu_ms": 300000 },
+
+  "queues": {
+    "consumers": [
+      {
+        // One Postgres transaction per batch.
+        "queue": "op-events",
+        "max_batch_size": 100,
+        "max_batch_timeout": 2,
+        "max_retries": 10,
+        "max_concurrency": 5,
+        "dead_letter_queue": "op-events-dlq"
+      },
+      {
+        "queue": "op-jobs",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 5,
+        "dead_letter_queue": "op-jobs-dlq"
+      }
+    ],
+    "producers": [{ "binding": "JOBS_QUEUE", "queue": "op-jobs" }]
+  },
+
+  // The LiveHub lives in openpanel-api; the worker publishes to it.
+  "durable_objects": {
+    "bindings": [
+      { "name": "LIVE_HUB", "class_name": "LiveHub", "script_name": "openpanel-api" }
+    ]
+  },
+
+  "triggers": {
+    "crons": [
+      // Session reaper.
+      "* * * * *"
+    ]
+  },
+
+  "vars": {
+    "NODE_ENV": "production",
+    "SELF_HOSTED": "true",
+    "API_URL": "http://localhost:3333",
+    "DASHBOARD_URL": "http://localhost:3000"
+  }
+}

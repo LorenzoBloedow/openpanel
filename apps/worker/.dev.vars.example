@@ -1,0 +1,13 @@
+# Copy to .dev.vars for `wrangler dev` and tests. Never commit .dev.vars.
+
+NODE_ENV=development
+
+# The worker's only database route: Neon's *pooled* endpoint in production
+# (…-pooler.….neon.tech, sslmode=require).
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+
+ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000
+
+# Optional
+# SESSION_TIMEOUT_MS=1800000
+# SESSION_REAPER=0

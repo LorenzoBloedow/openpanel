@@ -59,7 +59,8 @@ let fallbackEnv: RuntimeEnv | undefined;
 let fallbackScope: Scope | undefined;
 
 export interface RunWithScopeOptions {
-  env: RuntimeEnv;
+  /** The Worker's env (any bindings interface; read back through getEnv). */
+  env: object;
   ctx?: WaitUntilContext;
   route: DbRoute;
 }
@@ -76,7 +77,7 @@ export async function runWithScope<T>(
   fn: () => T | Promise<T>,
 ): Promise<T> {
   const scope: Scope = {
-    env: options.env,
+    env: options.env as RuntimeEnv,
     ctx: options.ctx,
     route: options.route,
     state: createState(),
@@ -188,7 +189,8 @@ export function waitUntil(promise: Promise<unknown>): void {
     return;
   }
   scope.state.pending.add(observed);
-  void observed.finally(() => scope.state.pending.delete(observed));
+  // `observed` never rejects, so neither does this chain.
+  observed.finally(() => scope.state.pending.delete(observed));
   scope.ctx?.waitUntil(observed);
 }
 

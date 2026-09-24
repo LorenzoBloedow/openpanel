@@ -95,7 +95,9 @@ export async function seedGoldenConfig() {
         name: cohort.name,
         projectId: GOLDEN_PROJECTS.sthlm.id,
         isStatic: true,
-        definition: {},
+        // Static cohorts never evaluate their definition; keep the column's
+        // default so captured rows compare equal on a fresh database.
+        definition: {} as PrismaJson.IPrismaCohortDefinition,
       },
       update: {},
     });
@@ -122,6 +124,7 @@ export function toComparable(value: unknown): Json {
   }
   if (typeof value === 'string') {
     // ClickHouse pads empty FixedString(2) countries with NUL bytes.
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: that's the point
     return value.replace(/\u0000/g, '');
   }
   if (typeof value === 'boolean') {
@@ -206,7 +209,7 @@ export function findDifference(
       : `${path}: expected ${expected}, got ${actual}`;
   }
   if (Array.isArray(expected) || Array.isArray(actual)) {
-    if (!Array.isArray(expected) || !Array.isArray(actual)) {
+    if (!(Array.isArray(expected) && Array.isArray(actual))) {
       return `${path}: expected ${JSON.stringify(expected)?.slice(0, 200)}, got ${JSON.stringify(actual)?.slice(0, 200)}`;
     }
     if (expected.length !== actual.length) {

@@ -1,4 +1,3 @@
-import type { FastifyRequest } from 'fastify';
 import { sanitizeUrl } from './sanitize-url';
 
 export class LogError extends Error {
@@ -99,15 +98,20 @@ export function normalizeError(error: unknown): NormalizedError {
  * objects, so the logger redacts sensitive entries by key; the URL is a
  * string and has to be filtered here.
  */
-export function buildErrorRequestContext(request: FastifyRequest) {
+export function buildErrorRequestContext(request: {
+  id: string;
+  url: string;
+  method: string;
+  query?: unknown;
+  headers: Record<string, string>;
+  body?: unknown;
+}) {
   return {
     id: request.id,
     url: sanitizeUrl(request.url),
     method: request.method,
     query: request.query,
     headers: request.headers,
-    body:
-      (request as FastifyRequest & { rawBody?: string }).rawBody ??
-      request.body,
+    body: request.body,
   };
 }

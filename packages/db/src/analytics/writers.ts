@@ -192,6 +192,14 @@ export function toStringMap(
 
 const json = (rows: unknown[]) => JSON.stringify(rows);
 
+/** bigint columns: JSON numbers past 2^53 are neither exact nor in range. */
+function toBigintValue(value: number | undefined): number {
+  if (value === undefined || !Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.round(value)));
+}
+
 /** Insert events; returns the ids that were new (redeliveries are skipped). */
 export async function insertEvents(
   rows: EventWriteRow[],
@@ -215,8 +223,8 @@ export async function insertEvents(
     referrer: row.referrer ?? '',
     referrer_name: row.referrer_name ?? '',
     referrer_type: row.referrer_type ?? '',
-    revenue: Math.max(0, Math.round(row.revenue ?? 0)),
-    duration: Math.max(0, Math.round(row.duration ?? 0)),
+    revenue: toBigintValue(row.revenue),
+    duration: toBigintValue(row.duration),
     properties: toStringMap(row.properties ?? {}),
     created_at: toUtcIso(row.created_at),
     country: row.country ?? '',
@@ -485,7 +493,7 @@ export async function insertReplayChunk(
       ) VALUES (
         ${row.project_id}, ${row.session_id}, ${toUtcIso(row.started_at)}::timestamptz,
         ${row.chunk_index}, ${toUtcIso(row.ended_at)}::timestamptz,
-        ${row.events_count}, ${row.is_full_snapshot}, ${row.payload}
+        ${row.events_count}, ${row.is_full_snapshot}, ${row.payload.replaceAll('\u0000', '')}
       )
       ON CONFLICT DO NOTHING
     `,
