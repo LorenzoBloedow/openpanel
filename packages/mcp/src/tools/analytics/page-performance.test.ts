@@ -6,10 +6,7 @@ const mockGetSettingsForProject = vi.hoisted(() =>
 );
 
 vi.mock('@openpanel/db', () => ({
-  PagesService: vi.fn().mockImplementation(() => ({
-    getTopPages: mockGetTopPages,
-  })),
-  ch: {},
+  pagesService: { getTopPages: mockGetTopPages },
   getSettingsForProject: mockGetSettingsForProject,
   resolveClientProjectId: vi.fn(({ clientProjectId }: { clientProjectId: string }) => Promise.resolve(clientProjectId)),
 }));

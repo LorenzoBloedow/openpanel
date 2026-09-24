@@ -1,18 +1,16 @@
-import { flatten, map, pipe, prop, sort, uniq } from 'ramda';
-import sqlstring from 'sqlstring';
+import { pipe, sort, uniq } from 'ramda';
 import { z } from 'zod';
 
 import {
-  chQuery,
-  createSqlBuilder,
   getProfileById,
   getProfileList,
   getProfileListCount,
   getProfileMetrics,
   getProfiles,
   isProfileColumn,
-  TABLE_NAMES,
 } from '@openpanel/db';
+import { anQuery } from '@openpanel/db/src/analytics/client';
+import { ident, sql } from '@openpanel/db/src/analytics/sql';
 import { zChartEventFilter } from '@openpanel/validation';
 
 import { TRPCBadRequestError } from '../errors';
@@ -34,36 +32,60 @@ export const profileRouter = createTRPCRouter({
   activity: protectedProcedure
     .input(z.object({ profileId: z.string(), projectId: z.string() }))
     .query(async ({ input: { profileId, projectId } }) => {
-      return chQuery<{ count: number; date: string }>(
-        `SELECT count(*) as count, toStartOfDay(created_at) as date FROM ${TABLE_NAMES.events} WHERE project_id = ${sqlstring.escape(projectId)} and profile_id = ${sqlstring.escape(profileId)} GROUP BY date ORDER BY date DESC`,
-      );
+      // UTC days, as ClickHouse's toStartOfDay without a session time zone.
+      return anQuery<{ count: number; date: string }>(sql`
+        SELECT count(*) AS count, to_char(e.day, 'YYYY-MM-DD HH24:MI:SS') AS date
+        FROM (
+          SELECT date_trunc('day', created_at AT TIME ZONE 'UTC') AS day
+          FROM analytics.events
+          WHERE project_id = ${projectId} AND profile_id = ${profileId}
+        ) AS e
+        GROUP BY e.day
+        ORDER BY e.day DESC
+      `);
     }),
 
   mostEvents: protectedProcedure
     .input(z.object({ profileId: z.string(), projectId: z.string() }))
     .query(async ({ input: { profileId, projectId } }) => {
-      return chQuery<{ count: number; name: string }>(
-        `SELECT count(*) as count, name FROM ${TABLE_NAMES.events} WHERE name NOT IN ('screen_view', 'session_start', 'session_end') AND project_id = ${sqlstring.escape(projectId)} and profile_id = ${sqlstring.escape(profileId)} GROUP BY name ORDER BY count DESC`,
-      );
+      return anQuery<{ count: number; name: string }>(sql`
+        SELECT count(*) AS count, name
+        FROM analytics.events
+        WHERE name NOT IN ('screen_view', 'session_start', 'session_end')
+          AND project_id = ${projectId}
+          AND profile_id = ${profileId}
+        GROUP BY name
+        ORDER BY count DESC
+      `);
     }),
 
   popularRoutes: protectedProcedure
     .input(z.object({ profileId: z.string(), projectId: z.string() }))
     .query(async ({ input: { profileId, projectId } }) => {
-      return chQuery<{ count: number; path: string }>(
-        `SELECT count(*) as count, path FROM ${TABLE_NAMES.events} WHERE name = 'screen_view' AND project_id = ${sqlstring.escape(projectId)} and profile_id = ${sqlstring.escape(profileId)} GROUP BY path ORDER BY count DESC LIMIT 10`,
-      );
+      return anQuery<{ count: number; path: string }>(sql`
+        SELECT count(*) AS count, path
+        FROM analytics.events
+        WHERE name = 'screen_view'
+          AND project_id = ${projectId}
+          AND profile_id = ${profileId}
+        GROUP BY path
+        ORDER BY count DESC
+        LIMIT 10
+      `);
     }),
 
   properties: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input: { projectId } }) => {
-      const events = await chQuery<{ keys: string[] }>(
-        `SELECT distinct mapKeys(properties) as keys from ${TABLE_NAMES.profiles} where project_id = ${sqlstring.escape(projectId)};`,
-      );
+      const keys = await anQuery<{ key: string }>(sql`
+        SELECT DISTINCT k.key
+        FROM analytics.profiles AS p
+        CROSS JOIN LATERAL jsonb_object_keys(p.properties) AS k(key)
+        WHERE p.project_id = ${projectId}
+      `);
 
-      const properties = events
-        .flatMap((event) => event.keys)
+      const properties = keys
+        .map((row) => row.key)
         .map((item) => item.replace(/\.([0-9]+)\./g, '.*.'))
         .map((item) => item.replace(/\.([0-9]+)/g, '[*]'))
         .map((item) => `properties.${item}`);
@@ -110,17 +132,15 @@ export const profileRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input: { projectId, cursor, take } }) => {
-      const res = await chQuery<{ profile_id: string; count: number }>(
-        `
-        SELECT profile_id, count(*) as count 
-        FROM ${TABLE_NAMES.events} 
-        WHERE 
-          profile_id != '' 
-          AND project_id = ${sqlstring.escape(projectId)} 
-          GROUP BY profile_id 
-          ORDER BY count() DESC 
-          LIMIT ${take} ${cursor ? `OFFSET ${cursor * take}` : ''}`,
-      );
+      const res = await anQuery<{ profile_id: string; count: number }>(sql`
+        SELECT profile_id, count(*) AS count
+        FROM analytics.events
+        WHERE profile_id <> ''
+          AND project_id = ${projectId}
+        GROUP BY profile_id
+        ORDER BY count DESC
+        LIMIT ${take} OFFSET ${(cursor ?? 0) * take}
+      `);
       const profiles = await getProfiles(
         res.map((r) => r.profile_id),
         projectId,
@@ -153,30 +173,34 @@ export const profileRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input: { property, projectId } }) => {
-      const { sb, getSql } = createSqlBuilder();
-      sb.from = TABLE_NAMES.profiles;
-      sb.where.project_id = `project_id = ${sqlstring.escape(projectId)}`;
-      if (property.startsWith('properties.')) {
-        sb.select.values = `distinct arrayMap(x -> trim(x), mapValues(mapExtractKeyLike(properties, ${sqlstring.escape(
-          property.replace(/^properties\./, '').replace('.*.', '.%.'),
-        )}))) as values`;
-      } else {
-        // The property is an identifier and cannot be escaped; only real
-        // profile columns are accepted (GHSA-4j6c-j6vc-xq96).
-        if (!isProfileColumn(property)) {
-          throw new TRPCBadRequestError(`Unknown profile property: ${property}`);
-        }
-        sb.select.values = `${property.replace(/^profile\./, '')} as values`;
+      const isProperty = property.startsWith('properties.');
+      // A column name is an identifier; only real profile columns are
+      // accepted (GHSA-4j6c-j6vc-xq96).
+      if (!(isProperty || isProfileColumn(property))) {
+        throw new TRPCBadRequestError(`Unknown profile property: ${property}`);
       }
-
-      const profiles = await chQuery<{ values: string[] }>(getSql());
+      // A property reads every flattened key matching the pattern
+      // (mapExtractKeyLike), trimmed.
+      const query = isProperty
+        ? sql`
+            SELECT DISTINCT btrim(kv.value) AS value
+            FROM analytics.profiles AS p
+            CROSS JOIN LATERAL jsonb_each_text(p.properties) AS kv(key, value)
+            WHERE p.project_id = ${projectId}
+              AND kv.key LIKE ${property.replace(/^properties\./, '').replace('.*.', '.%.')}::text
+          `
+        : sql`
+            SELECT DISTINCT ${ident(property.replace(/^profile\./, ''))} AS value
+            FROM analytics.profiles
+            WHERE project_id = ${projectId}
+          `;
+      const rows = await anQuery<{ value: string }>(query);
 
       const values = pipe(
-        (data: typeof profiles) => map(prop('values'), data),
-        flatten,
+        (data: typeof rows) => data.map((row) => row.value),
         uniq,
         sort((a, b) => a.length - b.length),
-      )(profiles);
+      )(rows);
 
       return {
         values,
