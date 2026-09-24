@@ -3,18 +3,21 @@ import { cacheable } from '@openpanel/redis';
 import type { IChartEventFilter } from '@openpanel/validation';
 import { uniq } from 'ramda';
 import sqlstring from 'sqlstring';
+import { anQuery, anQueryOne } from '../analytics/client';
 import {
-  ch,
-  chQuery,
   convertClickhouseDateToJs,
-  TABLE_NAMES,
   toNullIfDefaultMinDate,
-} from '../clickhouse/client';
-import { clix } from '../clickhouse/query-builder';
-import { type SqlBuilderObject, createSqlBuilder } from '../sql-builder';
+} from '../analytics/dates';
+import { prefixedFilterClauses } from '../analytics/filters';
+import { eventRow, profileRow, sessionRow } from '../analytics/rows';
+import { type Sql, and, empty, or, raw, sql } from '../analytics/sql';
 import type { IClickhouseEvent } from './event.service';
-import { buildFilterWhere } from './filter-where.service';
 import type { IClickhouseSession } from './session.service';
+
+/** The list queries of this service ran in UTC (ClickHouse `clix(ch)`). */
+const UTC = { timezone: 'UTC' } as const;
+
+const DAY_MS = 86_400_000;
 
 export interface IProfileMetrics {
   lastSeen: Date | null;
@@ -31,82 +34,98 @@ export interface IProfileMetrics {
   avgTimeBetweenSessions: number;
   revenue: number;
 }
+
+/**
+ * ClickHouse `round(x, digits)` on a Float64: `nearbyint(x * 10^digits) /
+ * 10^digits`, ties to even — which is what Postgres' `round(float8)` does.
+ */
+function roundTo(value: Sql, digits: number): Sql {
+  const scale = raw(String(10 ** digits));
+  return sql`(round((${value}) * ${scale}) / ${scale})`;
+}
+
 /**
  * SQL for the profile metrics panel: one point-read of the profile row
  * (first/last seen) plus ONE conditional-aggregate scan of the profile's
- * events.
+ * events. Exported for SQL-shape tests.
  *
- * Previously every metric lived in its own CTE, so the same
- * `profile_id = X AND project_id = Y` slice of the events table was scanned
- * eight times per profile view. All of those metrics are plain aggregates
- * over the same rows, so they collapse into a single pass with
- * countIf/avgIf/sumIf — identical values, one scan.
- *
- * Exported for SQL-shape tests.
+ * Reproduces the ClickHouse arithmetic: Float64 averages, round() ties to
+ * even, quantileExactInclusive(0.9) (R-7) for the p90, and
+ * dateDiff('second') (whole-second boundaries) between first and last seen.
+ * `bounceRate` compares `__bounce` with '1' while sessions store
+ * 'true'/'false', so it is 0 whenever there are session_end events — as it
+ * always was.
  */
-export function buildProfileMetricsSql(
-  profileId: string,
-  projectId: string
-): string {
-  const pid = sqlstring.escape(projectId);
-  const uid = sqlstring.escape(profileId);
-  return `
-    WITH profileSeen AS (
-      SELECT created_at as firstSeen, last_seen_at as lastSeen
-      FROM ${TABLE_NAMES.profiles} FINAL
-      WHERE id = ${uid} AND project_id = ${pid}
+export function buildProfileMetricsSql(profileId: string, projectId: string): Sql {
+  const durations = raw('stats.session_durations');
+  const size = sql`cardinality(${durations})`;
+  // quantileExactInclusive: h = level * (n - 1) + 1, interpolate between
+  // the h-th and the next value.
+  const p90 = sql`(SELECT CASE
+      WHEN q.k >= ${size} THEN ${durations}[${size}]::double precision
+      ELSE ${durations}[q.k]::double precision + (q.h - q.k) * (${durations}[q.k + 1] - ${durations}[q.k])::double precision
+    END
+    FROM (SELECT h, floor(h)::integer AS k FROM (SELECT 0.9::double precision * (${size} - 1) + 1 AS h) AS l) AS q)`;
+  const secondsBetween = sql`COALESCE(
+      floor(extract(epoch from (SELECT last_seen FROM profile_seen)))
+        - floor(extract(epoch from (SELECT first_seen FROM profile_seen))),
+      0
+    )::double precision`;
+
+  return sql`
+    WITH profile_seen AS (
+      SELECT created_at AS first_seen, last_seen_at AS last_seen
+      FROM analytics.profiles
+      WHERE project_id = ${projectId} AND id = ${profileId}
       LIMIT 1
     ),
-    eventStats AS (
+    stats AS (
       SELECT
-        countIf(name = 'screen_view') as screenViews,
-        countIf(name = 'session_start') as sessions,
-        round(avgIf(duration, name = 'session_end' AND duration != 0) / 1000 / 60, 2) as durationAvg,
-        round(quantilesExactInclusiveIf(0.9)(duration, name = 'session_end' AND duration != 0)[1] / 1000 / 60, 2) as durationP90,
-        count(*) as totalEvents,
-        count(DISTINCT toDate(created_at)) as uniqueDaysActive,
-        round(avgIf(properties['__bounce'] = '1', name = 'session_end') * 100, 4) as bounceRate,
-        countIf(name NOT IN ('screen_view', 'session_start', 'session_end')) as conversionEvents,
-        sumIf(revenue, name = 'revenue') as revenue
-      FROM ${TABLE_NAMES.events}
-      WHERE profile_id = ${uid} AND project_id = ${pid}
+        count(*) FILTER (WHERE name = 'screen_view') AS screen_views,
+        count(*) FILTER (WHERE name = 'session_start') AS sessions,
+        avg(duration::double precision) FILTER (WHERE name = 'session_end' AND duration <> 0) AS duration_avg,
+        array_agg(duration ORDER BY duration) FILTER (WHERE name = 'session_end' AND duration <> 0) AS session_durations,
+        count(*) AS total_events,
+        count(DISTINCT (created_at AT TIME ZONE 'UTC')::date) AS unique_days_active,
+        avg(CASE WHEN COALESCE(properties ->> '__bounce', '') = '1' THEN 1 ELSE 0 END::double precision) FILTER (WHERE name = 'session_end') AS bounce_avg,
+        count(*) FILTER (WHERE name NOT IN ('screen_view', 'session_start', 'session_end')) AS conversion_events,
+        COALESCE(sum(revenue) FILTER (WHERE name = 'revenue'), 0) AS revenue
+      FROM analytics.events
+      WHERE project_id = ${projectId} AND profile_id = ${profileId}
     )
     SELECT
-      (SELECT lastSeen FROM profileSeen) as lastSeen,
-      (SELECT firstSeen FROM profileSeen) as firstSeen,
-      screenViews,
-      sessions,
-      durationAvg,
-      durationP90,
-      totalEvents,
-      uniqueDaysActive,
-      bounceRate,
-      round(totalEvents / nullIf(sessions, 0), 2) as avgEventsPerSession,
-      conversionEvents,
+      (SELECT last_seen FROM profile_seen) AS "lastSeen",
+      (SELECT first_seen FROM profile_seen) AS "firstSeen",
+      stats.screen_views AS "screenViews",
+      stats.sessions AS "sessions",
+      ${roundTo(sql`stats.duration_avg / 1000 / 60`, 2)} AS "durationAvg",
+      ${roundTo(sql`${p90} / 1000 / 60`, 2)} AS "durationP90",
+      stats.total_events AS "totalEvents",
+      stats.unique_days_active AS "uniqueDaysActive",
+      ${roundTo(sql`stats.bounce_avg * 100`, 4)} AS "bounceRate",
+      ${roundTo(sql`stats.total_events::double precision / NULLIF(stats.sessions, 0)`, 2)} AS "avgEventsPerSession",
+      stats.conversion_events AS "conversionEvents",
       CASE
-        WHEN sessions <= 1 THEN 0
-        ELSE round(dateDiff('second', (SELECT firstSeen FROM profileSeen), (SELECT lastSeen FROM profileSeen)) / nullIf(sessions - 1, 0), 1)
-      END as avgTimeBetweenSessions,
-      revenue
-    FROM eventStats
+        WHEN stats.sessions <= 1 THEN 0
+        ELSE ${roundTo(sql`${secondsBetween} / NULLIF(stats.sessions - 1, 0)`, 1)}
+      END AS "avgTimeBetweenSessions",
+      stats.revenue AS "revenue"
+    FROM stats
   `;
 }
 
-export function getProfileMetrics(profileId: string, projectId: string) {
-  return chQuery<
+export async function getProfileMetrics(profileId: string, projectId: string) {
+  const data = await anQueryOne<
     Omit<IProfileMetrics, 'lastSeen' | 'firstSeen'> & {
-      lastSeen: string;
-      firstSeen: string;
+      lastSeen: string | null;
+      firstSeen: string | null;
     }
-  >(buildProfileMetricsSql(profileId, projectId))
-    .then((data) => data[0]!)
-    .then((data) => {
-      return {
-        ...data,
-        lastSeen: toNullIfDefaultMinDate(data.lastSeen),
-        firstSeen: toNullIfDefaultMinDate(data.firstSeen),
-      };
-    });
+  >(buildProfileMetricsSql(profileId, projectId));
+  return {
+    ...data!,
+    lastSeen: toNullIfDefaultMinDate(data!.lastSeen),
+    firstSeen: toNullIfDefaultMinDate(data!.firstSeen),
+  };
 }
 
 export async function getProfileById(id: string, projectId: string) {
@@ -114,12 +133,12 @@ export async function getProfileById(id: string, projectId: string) {
     return null;
   }
 
-  const [profile] = await chQuery<IClickhouseProfile>(
-    `SELECT ${PROFILE_COLUMNS}
-    FROM ${TABLE_NAMES.profiles} FINAL
-    WHERE id = ${sqlstring.escape(String(id))} AND project_id = ${sqlstring.escape(projectId)}
-    LIMIT 1`
-  );
+  const profile = await anQueryOne<IClickhouseProfile>(sql`
+    SELECT ${profileRow()}
+    FROM analytics.profiles
+    WHERE project_id = ${projectId} AND id = ${String(id)}
+    LIMIT 1
+  `);
 
   if (!profile) {
     return null;
@@ -137,16 +156,50 @@ interface GetProfileListOptions {
   isExternal?: boolean;
 }
 
+function searchTokens(search: string | null | undefined): string[] {
+  return (search ?? '').trim().split(/\s+/).filter(Boolean).slice(0, 5);
+}
+
 /**
- * Build a profile search predicate that handles multi-token queries like
- * "John Smith" — splits on whitespace, requires every token to match SOME
- * profile field (id/email/first/last/full name), case-insensitively. Pasting a
- * full profile id matches on `id`. Returns `null` when the search string is
- * empty.
+ * A profile search predicate that handles multi-token queries like
+ * "John Smith": splits on whitespace, and every token (at most five) has to
+ * match SOME profile field (id/email/first/last/full name),
+ * case-insensitively. Pasting a full profile id matches on `id`. The tokens
+ * are LIKE patterns as typed (`%` and `_` keep their meaning), as before.
+ * Returns `null` when the search string is empty.
+ */
+export function profileSearchWhere(
+  search: string | null | undefined,
+  alias?: string,
+): Sql | null {
+  const tokens = searchTokens(search);
+  if (tokens.length === 0) {
+    return null;
+  }
+  const column = (name: string) => raw(alias ? `${alias}.${name}` : name);
+  return and(
+    tokens.map((token) => {
+      const like = sql`${`%${token}%`}::text`;
+      return or([
+        sql`${column('id')} ILIKE ${like}`,
+        sql`${column('email')} ILIKE ${like}`,
+        sql`${column('first_name')} ILIKE ${like}`,
+        sql`${column('last_name')} ILIKE ${like}`,
+        sql`concat(${column('first_name')}, ' ', ${column('last_name')}) ILIKE ${like}`,
+      ]);
+    }),
+  );
+}
+
+/**
+ * @deprecated ClickHouse text for cohort.service.ts until it is ported; the
+ * Postgres queries use {@link profileSearchWhere}.
  */
 export function profileSearchSql(search: string | null | undefined): string | null {
-  const tokens = (search ?? '').trim().split(/\s+/).filter(Boolean).slice(0, 5);
-  if (tokens.length === 0) return null;
+  const tokens = searchTokens(search);
+  if (tokens.length === 0) {
+    return null;
+  }
   const perToken = tokens.map((token) => {
     const like = sqlstring.escape(`%${token}%`);
     return `(id ILIKE ${like} OR email ILIKE ${like} OR first_name ILIKE ${like} OR last_name ILIKE ${like} OR concat(first_name, ' ', last_name) ILIKE ${like})`;
@@ -161,14 +214,11 @@ export async function getProfiles(ids: string[], projectId: string) {
     return [];
   }
 
-  const data = await chQuery<IClickhouseProfile>(
-    `SELECT ${PROFILE_COLUMNS}
-    FROM ${TABLE_NAMES.profiles} FINAL
-    WHERE
-      project_id = ${sqlstring.escape(projectId)} AND
-      id IN (${filteredIds.map((id) => sqlstring.escape(id)).join(',')})
-    `
-  );
+  const data = await anQuery<IClickhouseProfile>(sql`
+    SELECT ${profileRow()}
+    FROM analytics.profiles
+    WHERE project_id = ${projectId} AND id = ANY(${filteredIds}::text[])
+  `);
 
   return data.map(transformProfile);
 }
@@ -178,66 +228,49 @@ export const getProfilesCached = cacheable(getProfiles, 60 * 5);
 type ProfileListFilterOptions = Omit<GetProfileListOptions, 'cursor' | 'take'>;
 
 /** Where clause shared by the profile list and its count, so the two agree. */
-function applyProfileListWhere(
-  sb: SqlBuilderObject,
-  { projectId, filters, search, isExternal }: ProfileListFilterOptions,
-) {
-  sb.where.project_id = `project_id = ${sqlstring.escape(projectId)}`;
-  const searchClause = profileSearchSql(search);
-  if (searchClause) {
-    sb.where.search = searchClause;
-  }
-  if (isExternal !== undefined) {
-    sb.where.external = `is_external = ${isExternal ? 'true' : 'false'}`;
-  }
-  if (filters?.length) {
-    Object.assign(
-      sb.where,
-      buildFilterWhere(filters, projectId, {
-        selfTable: 'profiles',
-        profileIdExpr: 'id',
-        groupsExpr: 'groups',
-      }),
-    );
-  }
+function profileListWhere({
+  projectId,
+  filters,
+  search,
+  isExternal,
+}: ProfileListFilterOptions): Sql {
+  return and([
+    sql`project_id = ${projectId}`,
+    profileSearchWhere(search),
+    isExternal === undefined ? null : sql`is_external = ${raw(isExternal ? 'true' : 'false')}`,
+    // Only cohort / group.* / profile.* filters apply to profiles; plain
+    // `properties.*` names are event filters and are dropped.
+    ...prefixedFilterClauses(filters ?? [], { ...UTC, projectId, table: 'profiles' }),
+  ]);
 }
 
-export function buildProfileListSql({
-  take,
-  cursor,
-  ...options
-}: GetProfileListOptions) {
-  const { sb, getSql } = createSqlBuilder();
-  sb.from = `${TABLE_NAMES.profiles} FINAL`;
-  sb.select.all = '*';
-  sb.limit = take;
-  sb.offset = Math.max(0, (cursor ?? 0) * take);
-  sb.orderBy.created_at = 'created_at DESC';
-  applyProfileListWhere(sb, options);
-  return getSql();
+export function buildProfileListSql({ take, cursor, ...options }: GetProfileListOptions): Sql {
+  const offset = Math.max(0, (cursor ?? 0) * take);
+  return sql`
+    SELECT ${profileRow()}
+    FROM analytics.profiles
+    WHERE ${profileListWhere(options)}
+    ORDER BY created_at DESC
+    ${take ? sql`LIMIT ${take}` : empty}
+    ${offset ? sql`OFFSET ${offset}` : empty}
+  `;
 }
 
-export function buildProfileListCountSql(options: ProfileListFilterOptions) {
-  const { sb, getSql } = createSqlBuilder();
-  sb.from = TABLE_NAMES.profiles;
-  // One profile is several rows until a background merge collapses them, so
-  // counting rows overcounts against the FINAL list. uniqExact deduplicates
-  // without FINAL, which cannot spill to disk on large projects.
-  sb.select.count = 'uniqExact(id) as count';
-  sb.groupBy.project_id = 'project_id';
-  applyProfileListWhere(sb, options);
-  return getSql();
+export function buildProfileListCountSql(options: ProfileListFilterOptions): Sql {
+  return sql`
+    SELECT count(*) AS count
+    FROM analytics.profiles
+    WHERE ${profileListWhere(options)}
+  `;
 }
 
 export async function getProfileList(options: GetProfileListOptions) {
-  const data = await chQuery<IClickhouseProfile>(buildProfileListSql(options));
+  const data = await anQuery<IClickhouseProfile>(buildProfileListSql(options));
   return data.map(transformProfile);
 }
 
 export async function getProfileListCount(options: ProfileListFilterOptions) {
-  const data = await chQuery<{ count: number }>(
-    buildProfileListCountSql(options),
-  );
+  const data = await anQuery<{ count: number }>(buildProfileListCountSql(options));
   return data[0]?.count ?? 0;
 }
 
@@ -249,7 +282,7 @@ export interface IServiceProfile {
   lastName: string;
   /** First time this profile was seen — preserved across upserts. */
   createdAt: Date;
-  /** Most recent activity. ReplacingMergeTree version column. */
+  /** Most recent activity. */
   lastSeenAt: Date;
   isExternal: boolean;
   projectId: string;
@@ -282,7 +315,7 @@ export interface IClickhouseProfile {
   is_external: boolean;
   /** First time this profile was seen — preserved across upserts. */
   created_at: string;
-  /** Most recent activity. ReplacingMergeTree version column. */
+  /** Most recent activity. */
   last_seen_at: string;
   groups: string[];
 }
@@ -344,112 +377,106 @@ export interface FindProfilesInput {
   limit?: number;
 }
 
+/** `now()` of the database, at the JS clock (second precision, like ClickHouse). */
+function nowSeconds(): number {
+  return Math.floor(Date.now() / 1000) * 1000;
+}
+
 export function findProfilesCore(
-  input: FindProfilesInput
+  input: FindProfilesInput,
 ): Promise<IClickhouseProfile[]> {
-  const pid = sqlstring.escape(input.projectId);
-  const conditions: string[] = [`project_id = ${pid}`];
+  const pid = input.projectId;
+  const property = (key: string, value: string) =>
+    sql`COALESCE(properties ->> ${key}::text, '') = ${value}::text`;
+  const conditions: (Sql | null)[] = [sql`project_id = ${pid}`];
 
   if (input.email) {
-    conditions.push(`email ILIKE ${sqlstring.escape(`%${input.email}%`)}`);
+    conditions.push(sql`email ILIKE ${`%${input.email}%`}::text`);
   }
   if (input.name) {
-    const nameClause = profileSearchSql(input.name);
-    if (nameClause) conditions.push(nameClause);
+    conditions.push(profileSearchWhere(input.name));
   }
   if (input.country) {
-    conditions.push(
-      `properties['country'] = ${sqlstring.escape(input.country)}`
-    );
+    conditions.push(property('country', input.country));
   }
   if (input.city) {
-    conditions.push(`properties['city'] = ${sqlstring.escape(input.city)}`);
+    conditions.push(property('city', input.city));
   }
   if (input.device) {
-    conditions.push(`properties['device'] = ${sqlstring.escape(input.device)}`);
+    conditions.push(property('device', input.device));
   }
   if (input.browser) {
-    conditions.push(
-      `properties['browser'] = ${sqlstring.escape(input.browser)}`
-    );
+    conditions.push(property('browser', input.browser));
   }
 
   if (input.inactiveDays !== undefined) {
     const days = Math.floor(input.inactiveDays);
-    conditions.push(`id NOT IN (
-      SELECT DISTINCT profile_id FROM ${TABLE_NAMES.events}
+    const since = new Date(nowSeconds() - days * DAY_MS).toISOString();
+    conditions.push(sql`id NOT IN (
+      SELECT profile_id FROM analytics.events
       WHERE project_id = ${pid}
-        AND profile_id != ''
-        AND created_at >= now() - INTERVAL ${days} DAY
+        AND profile_id <> ''
+        AND created_at >= ${since}::timestamptz
     )`);
   }
 
   if (input.minSessions !== undefined) {
     const min = Math.floor(input.minSessions);
-    conditions.push(`id IN (
-      SELECT profile_id FROM ${TABLE_NAMES.sessions}
+    conditions.push(sql`id IN (
+      SELECT profile_id FROM analytics.sessions
       WHERE project_id = ${pid}
-        AND sign = 1
-        AND profile_id != ''
+        AND profile_id <> ''
       GROUP BY profile_id
-      HAVING count() >= ${min}
+      HAVING count(*) >= ${min}
     )`);
   }
 
   if (input.performedEvent) {
-    conditions.push(`id IN (
-      SELECT DISTINCT profile_id FROM ${TABLE_NAMES.events}
+    conditions.push(sql`id IN (
+      SELECT profile_id FROM analytics.events
       WHERE project_id = ${pid}
-        AND name = ${sqlstring.escape(input.performedEvent)}
+        AND name = ${input.performedEvent}::text
     )`);
   }
 
-  if (input.filters?.length) {
-    const filterClauses = buildFilterWhere(input.filters, input.projectId, {
-      selfTable: 'profiles',
-      profileIdExpr: 'id',
-      groupsExpr: 'groups',
-    });
-    conditions.push(...Object.values(filterClauses));
-  }
+  conditions.push(
+    ...prefixedFilterClauses(input.filters ?? [], { ...UTC, projectId: pid, table: 'profiles' }),
+  );
 
-  const orderDir = input.sortOrder === 'asc' ? 'ASC' : 'DESC';
-  const limit = Math.min(input.limit ?? 20, 100);
+  const orderDir = raw(input.sortOrder === 'asc' ? 'ASC' : 'DESC');
+  const limit = Math.trunc(Math.min(input.limit ?? 20, 100));
 
-  const sql = `
-    SELECT ${PROFILE_COLUMNS}
-    FROM ${TABLE_NAMES.profiles} FINAL
-    WHERE ${conditions.join(' AND ')}
+  return anQuery<IClickhouseProfile>(sql`
+    SELECT ${profileRow()}
+    FROM analytics.profiles
+    WHERE ${and(conditions)}
     ORDER BY created_at ${orderDir}
     LIMIT ${limit}
-  `;
-
-  return chQuery<IClickhouseProfile>(sql);
+  `);
 }
 
 export async function getProfileWithEvents(
   projectId: string,
   profileId: string,
-  eventLimit = 10
+  eventLimit = 10,
 ): Promise<{
   profile: IClickhouseProfile | null;
   recent_events: IClickhouseEvent[];
 }> {
   const [profiles, recent_events] = await Promise.all([
-    chQuery<IClickhouseProfile>(`
-      SELECT ${PROFILE_COLUMNS}
-      FROM ${TABLE_NAMES.profiles} FINAL
-      WHERE project_id = ${sqlstring.escape(projectId)} AND id = ${sqlstring.escape(profileId)}
+    anQuery<IClickhouseProfile>(sql`
+      SELECT ${profileRow()}
+      FROM analytics.profiles
+      WHERE project_id = ${projectId} AND id = ${profileId}
       LIMIT 1
     `),
-    clix(ch)
-      .select<IClickhouseEvent>([])
-      .from(TABLE_NAMES.events)
-      .where('project_id', '=', projectId)
-      .where('profile_id', '=', profileId)
-      .orderBy('created_at', 'DESC')
-      .limit(eventLimit)
-      .execute(),
+    anQuery<IClickhouseEvent>(sql`
+      SELECT ${eventRow()}
+      FROM analytics.events
+      WHERE project_id = ${projectId} AND profile_id = ${profileId}
+      ORDER BY created_at DESC
+      LIMIT ${Math.trunc(eventLimit)}
+    `),
   ]);
 
   return { profile: profiles[0] ?? null, recent_events };
@@ -458,17 +485,15 @@ export async function getProfileWithEvents(
 export function getProfileSessionsCore(
   projectId: string,
   profileId: string,
-  limit = 20
+  limit = 20,
 ): Promise<IClickhouseSession[]> {
-  return clix(ch)
-    .select<IClickhouseSession>([])
-    .from(TABLE_NAMES.sessions)
-    .where('project_id', '=', projectId)
-    .where('profile_id', '=', profileId)
-    .where('sign', '=', 1)
-    .orderBy('created_at', 'DESC')
-    .limit(limit)
-    .execute();
+  return anQuery<IClickhouseSession>(sql`
+    SELECT ${sessionRow()}
+    FROM analytics.sessions
+    WHERE project_id = ${projectId} AND profile_id = ${profileId}
+    ORDER BY created_at DESC
+    LIMIT ${Math.trunc(limit)}
+  `);
 }
 
 export async function getProfileMetricsCore(input: {
@@ -498,25 +523,17 @@ export async function getProfileMetricsCore(input: {
 }
 
 /**
- * Every distinct key present in any external profile's `properties` map.
- *
- * Aggregated across all profiles rather than sampled — a `LIMIT n` sample with
- * no `ORDER BY` returns whichever rows ClickHouse's scheduler happens to
- * produce, so the key set varied between requests and properties set on a small
- * fraction of profiles were usually missing from the picker entirely.
- *
- * `FINAL` isn't needed: older row versions can only contribute keys that
- * genuinely existed at some point.
+ * Every distinct key present in any external profile's `properties` map,
+ * sorted.
  */
 export async function getProfilePropertyKeys(
   projectId: string,
 ): Promise<string[]> {
-  const rows = await clix(ch)
-    .select<{ key: string }>(['DISTINCT arrayJoin(mapKeys(properties)) as key'])
-    .from(TABLE_NAMES.profiles)
-    .where('project_id', '=', projectId)
-    .where('is_external', '=', true)
-    .execute();
+  const rows = await anQuery<{ key: string }>(sql`
+    SELECT DISTINCT jsonb_object_keys(properties) AS key
+    FROM analytics.profiles
+    WHERE project_id = ${projectId} AND is_external = true
+  `);
   return rows.map((r) => r.key).sort();
 }
 

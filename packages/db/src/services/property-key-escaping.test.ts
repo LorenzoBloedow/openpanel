@@ -10,20 +10,6 @@
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-const { capturedSql } = vi.hoisted(() => ({ capturedSql: [] as string[] }));
-
-vi.mock('../clickhouse/client', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('../clickhouse/client')>();
-  return {
-    ...actual,
-    chQuery: (sql: string) => {
-      capturedSql.push(sql);
-      return Promise.resolve([]);
-    },
-  };
-});
-
 import { createSqlBuilder } from '../sql-builder';
 import {
   collectProfilePropertyKeys,
@@ -33,7 +19,6 @@ import {
   profilePropertiesCteSelect,
   rewriteProfilePropertyRefs,
 } from './chart.service';
-import { getEventList, getEventsCount } from './event.service';
 
 const getChartSql: (input: any) => Promise<string> = _getChartSql as any;
 const getAggregateChartSql: (input: any) => Promise<string> =
@@ -185,42 +170,8 @@ describe('chart SQL with a hostile property key', () => {
   });
 });
 
-describe('event SQL with a hostile property key', () => {
-  const filters = [
-    {
-      id: 'f1',
-      name: BREAKOUT_PROPERTY,
-      operator: 'is' as const,
-      value: ['pro'],
-    },
-  ];
-
-  it('keeps the project scope in the event list query', async () => {
-    capturedSql.length = 0;
-    await getEventList({
-      projectId: PROJECT_ID,
-      take: 10,
-      cursor: 0,
-      filters,
-      startDate: new Date(START),
-      endDate: new Date(END),
-    } as any);
-    expect(capturedSql).toHaveLength(1);
-    expectNoInjectedPredicate(capturedSql[0]!);
-  });
-
-  it('keeps the project scope in the event count query', async () => {
-    capturedSql.length = 0;
-    await getEventsCount({
-      projectId: PROJECT_ID,
-      filters,
-      startDate: new Date(START),
-      endDate: new Date(END),
-    } as any);
-    expect(capturedSql).toHaveLength(1);
-    expectNoInjectedPredicate(capturedSql[0]!);
-  });
-});
+// The event list and count are Postgres queries now: see
+// list-queries-sql.test.ts.
 
 describe('profile-property narrowing with a quoted key', () => {
   const key = "pl'an";

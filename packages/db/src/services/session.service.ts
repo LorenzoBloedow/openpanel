@@ -1,19 +1,23 @@
 import { getSafeJson } from '@openpanel/json';
 import { cacheable } from '@openpanel/redis';
 import type { IChartEventFilter } from '@openpanel/validation';
-import sqlstring from 'sqlstring';
-import {
-  ch,
-  chQuery,
-  convertClickhouseDateToJs,
-  formatClickhouseDate,
-  TABLE_NAMES,
-} from '../clickhouse/client';
-import { clix } from '../clickhouse/query-builder';
-import { createSqlBuilder } from '../sql-builder';
+import { anQuery } from '../analytics/client';
+import { convertClickhouseDateToJs } from '../analytics/dates';
+import { prefixedFilterClauses } from '../analytics/filters';
+import { clix } from '../analytics/query-builder';
+import { sessionRow } from '../analytics/rows';
+import { type Sql, and, join, or, raw, sql } from '../analytics/sql';
+import { resolveDateRange } from './date.service';
 import { resolveMaxLookbackDays } from './lookback';
-import { buildFilterWhere } from './filter-where.service';
 import { getProfilesCached, type IServiceProfile } from './profile.service';
+
+/**
+ * The session queries ran in UTC (no session_timezone): day boundaries of
+ * the date filters are UTC days.
+ */
+const UTC = { timezone: 'UTC' } as const;
+
+const DAY_MS = 86_400_000;
 
 export interface IClickhouseSession {
   id: string;
@@ -154,6 +158,58 @@ export function transformSession(session: IClickhouseSession): IServiceSession {
   };
 }
 
+/** An instant truncated to whole seconds (ClickHouse's DateTime text). */
+function toSecond(date: Date): number {
+  return Math.floor(date.getTime() / 1000) * 1000;
+}
+
+const iso = (ms: number) => new Date(ms).toISOString();
+
+/**
+ * `toDate(created_at) BETWEEN toDate(start) AND toDate(end)` with the UTC
+ * days of the bounds, as an index-friendly range.
+ */
+function createdOnDays(startDate: Date, endDate: Date): Sql {
+  const day = (date: Date) => date.toISOString().slice(0, 10);
+  return sql`created_at >= ${day(startDate)}::date::timestamp AT TIME ZONE 'UTC'
+    AND created_at < (${day(endDate)}::date + 1)::timestamp AT TIME ZONE 'UTC'`;
+}
+
+/** The list search: entry/exit path and referrer, as typed (LIKE pattern). */
+function sessionSearch(search: string): Sql {
+  const like = sql`${`%${search}%`}::text`;
+  return or([
+    sql`entry_path ILIKE ${like}`,
+    sql`exit_path ILIKE ${like}`,
+    sql`referrer ILIKE ${like}`,
+    sql`referrer_name ILIKE ${like}`,
+  ]);
+}
+
+const LIST_COLUMNS = [
+  'created_at',
+  'ended_at',
+  'id',
+  'profile_id',
+  'entry_path',
+  'exit_path',
+  'duration',
+  'is_bounce',
+  'referrer_name',
+  'referrer',
+  'country',
+  'city',
+  'os',
+  'browser',
+  'brand',
+  'model',
+  'device',
+  'screen_view_count',
+  'event_count',
+  'revenue',
+  'groups',
+] as const;
+
 export async function getSessionList(options: GetSessionListOptions) {
   const {
     cursor,
@@ -167,12 +223,6 @@ export async function getSessionList(options: GetSessionListOptions) {
     dateIntervalInDays = 0.5,
   } = options;
 
-  const { sb, getSql } = createSqlBuilder();
-
-  sb.from = `${TABLE_NAMES.sessions} FINAL`;
-  sb.limit = take;
-  sb.where.projectId = `project_id = ${sqlstring.escape(projectId)}`;
-
   // Deployment-tunable ceiling for the empty-result lookback (see lookback.ts).
   const MAX_DATE_INTERVAL_IN_DAYS = resolveMaxLookbackDays(
     'SESSION_LIST_MAX_LOOKBACK_DAYS',
@@ -181,87 +231,64 @@ export async function getSessionList(options: GetSessionListOptions) {
   // Cap the date interval to prevent infinity
   const safeDateIntervalInDays = Math.min(
     dateIntervalInDays,
-    MAX_DATE_INTERVAL_IN_DAYS
+    MAX_DATE_INTERVAL_IN_DAYS,
   );
+  // ClickHouse truncated `INTERVAL 0.5 DAY` to 0 days: the first window is
+  // empty, then 1, 2, 4, … days.
+  const windowMs = Math.trunc(safeDateIntervalInDays) * DAY_MS;
+
+  const where: (Sql | null)[] = [sql`project_id = ${projectId}`];
+  let hasCursorWindow = false;
 
   if (cursor instanceof Date) {
-    sb.where.cursorWindow = `created_at >= toDateTime64(${sqlstring.escape(formatClickhouseDate(cursor))}, 3) - INTERVAL ${safeDateIntervalInDays} DAY`;
-    sb.where.cursor = `created_at < ${sqlstring.escape(formatClickhouseDate(cursor))}`;
+    const at = toSecond(cursor);
+    where.push(sql`created_at >= ${iso(at - windowMs)}::timestamptz`);
+    where.push(sql`created_at < ${iso(at)}::timestamptz`);
+    hasCursorWindow = true;
   }
 
   if (!(cursor || (startDate && endDate))) {
-    sb.where.cursorWindow = `created_at >= toDateTime64(${sqlstring.escape(formatClickhouseDate(new Date()))}, 3) - INTERVAL ${safeDateIntervalInDays} DAY`;
+    where.push(sql`created_at >= ${iso(toSecond(new Date()) - windowMs)}::timestamptz`);
+    hasCursorWindow = true;
   }
 
   if (startDate && endDate) {
-    sb.where.created_at = `toDate(created_at) BETWEEN toDate('${formatClickhouseDate(startDate)}') AND toDate('${formatClickhouseDate(endDate)}')`;
+    where.push(createdOnDays(startDate, endDate));
   }
-
-  sb.orderBy.created_at = 'created_at DESC';
 
   if (profileId) {
-    sb.where.profileId = `profile_id = ${sqlstring.escape(profileId)}`;
+    where.push(sql`profile_id = ${profileId}`);
   }
   if (search) {
-    const s = sqlstring.escape(`%${search}%`);
-    sb.where.search = `(entry_path ILIKE ${s} OR exit_path ILIKE ${s} OR referrer ILIKE ${s} OR referrer_name ILIKE ${s})`;
+    where.push(sessionSearch(search));
   }
   if (filters?.length) {
-    Object.assign(
-      sb.where,
-      buildFilterWhere(filters, projectId, {
-        selfTable: 'sessions',
-        profileIdExpr: 'profile_id',
-        groupsExpr: 'groups',
+    where.push(
+      ...prefixedFilterClauses(filters, {
+        ...UTC,
+        projectId,
+        table: 'sessions',
         startDate,
         endDate,
-      })
+      }),
     );
   }
 
-  const columns = [
-    'created_at',
-    'ended_at',
-    'id',
-    'profile_id',
-    'entry_path',
-    'exit_path',
-    'duration',
-    'is_bounce',
-    'referrer_name',
-    'referrer',
-    'country',
-    'city',
-    'os',
-    'browser',
-    'brand',
-    'model',
-    'device',
-    'screen_view_count',
-    'event_count',
-    'revenue',
-    'groups',
-  ];
-
-  columns.forEach((column) => {
-    sb.select[column] = column;
-  });
-
-  sb.select.has_replay = `toBool(src.session_id != '') as hasReplay`;
-  sb.joins.has_replay = `LEFT JOIN (SELECT DISTINCT session_id FROM ${TABLE_NAMES.session_replay_chunks} WHERE project_id = ${sqlstring.escape(projectId)} AND started_at > now() - INTERVAL ${safeDateIntervalInDays} DAY) AS src ON src.session_id = id`;
-
-  const sql = getSql();
-  const data = await chQuery<
-    IClickhouseSession & {
-      latestCreatedAt: string;
-      hasReplay: boolean;
-    }
-  >(sql);
+  // The ClickHouse query also joined the replay chunks for `hasReplay`, but
+  // selected it under a name the transform never read: the list has never
+  // returned it, so the join is gone.
+  const data = await anQuery<IClickhouseSession>(sql`
+    SELECT ${join(LIST_COLUMNS.map((column) => raw(column)))}
+    FROM analytics.sessions
+    WHERE ${and(where)}
+    ORDER BY created_at DESC
+    ${take ? sql`LIMIT ${take}` : sql``}
+  `);
 
   // If no results and we haven't reached the max window, retry with a larger interval
   if (
     data.length === 0 &&
-    sb.where.cursorWindow &&
+    hasCursorWindow &&
     safeDateIntervalInDays < MAX_DATE_INTERVAL_IN_DAYS
   ) {
     return getSessionList({
@@ -270,7 +297,8 @@ export async function getSessionList(options: GetSessionListOptions) {
     });
   }
 
-  // Profile hydration (unchanged)
+  // `device_id` isn't selected, so every profile id is looked up (anonymous
+  // devices have profile rows too).
   const profileIds = data
     .filter((e) => e.device_id !== e.profile_id)
     .map((e) => e.profile_id);
@@ -312,41 +340,35 @@ export async function getSessionsCount({
   endDate,
   search,
 }: Omit<GetSessionListOptions, 'take' | 'cursor'>) {
-  const { sb, getSql } = createSqlBuilder();
-
-  sb.select.count = 'count(*) as count';
-  sb.where.projectId = `project_id = ${sqlstring.escape(projectId)}`;
-  sb.where.sign = 'sign = 1';
+  const where: (Sql | null)[] = [sql`project_id = ${projectId}`];
 
   if (profileId) {
-    sb.where.profileId = `profile_id = ${sqlstring.escape(profileId)}`;
+    where.push(sql`profile_id = ${profileId}`);
   }
 
   if (startDate && endDate) {
-    sb.where.created_at = `toDate(created_at) BETWEEN toDate('${formatClickhouseDate(startDate)}') AND toDate('${formatClickhouseDate(endDate)}')`;
+    where.push(createdOnDays(startDate, endDate));
   }
 
   if (search) {
-    const s = sqlstring.escape(`%${search}%`);
-    sb.where.search = `(entry_path ILIKE ${s} OR exit_path ILIKE ${s} OR referrer ILIKE ${s} OR referrer_name ILIKE ${s})`;
+    where.push(sessionSearch(search));
   }
 
   if (filters && filters.length > 0) {
-    Object.assign(
-      sb.where,
-      buildFilterWhere(filters, projectId, {
-        selfTable: 'sessions',
-        profileIdExpr: 'profile_id',
-        groupsExpr: 'groups',
+    where.push(
+      ...prefixedFilterClauses(filters, {
+        ...UTC,
+        projectId,
+        table: 'sessions',
         startDate,
         endDate,
-      })
+      }),
     );
   }
 
-  sb.from = TABLE_NAMES.sessions;
-
-  const result = await chQuery<{ count: number }>(getSql());
+  const result = await anQuery<{ count: number }>(sql`
+    SELECT count(*) AS count FROM analytics.sessions WHERE ${and(where)}
+  `);
   return result[0]?.count ?? 0;
 }
 
@@ -365,17 +387,16 @@ const REPLAY_CHUNKS_PAGE_SIZE = 40;
 export async function getSessionReplayChunksFrom(
   sessionId: string,
   projectId: string,
-  fromIndex: number
+  fromIndex: number,
 ) {
-  const rows = await chQuery<{ chunk_index: number; payload: string }>(
-    `SELECT chunk_index, payload
-     FROM ${TABLE_NAMES.session_replay_chunks}
-     WHERE session_id = ${sqlstring.escape(sessionId)}
-       AND project_id = ${sqlstring.escape(projectId)}
-     ORDER BY started_at, ended_at, chunk_index
-     LIMIT ${REPLAY_CHUNKS_PAGE_SIZE + 1}
-     OFFSET ${fromIndex}`
-  );
+  const rows = await anQuery<{ chunk_index: number; payload: string }>(sql`
+    SELECT chunk_index, payload
+    FROM analytics.session_replay_chunks
+    WHERE project_id = ${projectId} AND session_id = ${sessionId}
+    ORDER BY started_at, ended_at, chunk_index
+    LIMIT ${REPLAY_CHUNKS_PAGE_SIZE + 1}
+    OFFSET ${Math.max(0, Math.trunc(fromIndex))}
+  `);
 
   return {
     data: rows
@@ -407,45 +428,40 @@ export type SessionDistinctField = (typeof SESSION_DISTINCT_FIELDS)[number];
 export async function getSessionDistinctValues(
   projectId: string,
   field: SessionDistinctField,
-  limit = 200
+  limit = 200,
 ): Promise<string[]> {
-  const sql = `
-    SELECT ${field} AS value, count() AS cnt
-    FROM ${TABLE_NAMES.sessions}
-    WHERE project_id = ${sqlstring.escape(projectId)}
-      AND ${field} != ''
-      AND sign = 1
-      AND created_at > now() - INTERVAL 90 DAY
-    GROUP BY value
+  if (!SESSION_DISTINCT_FIELDS.includes(field)) {
+    throw new Error(`Unsupported session field: ${JSON.stringify(field)}`);
+  }
+  const column = raw(field);
+  const since = new Date(toSecond(new Date()) - 90 * DAY_MS).toISOString();
+  const results = await anQuery<{ value: string }>(sql`
+    SELECT ${column} AS value, count(*) AS cnt
+    FROM analytics.sessions
+    WHERE project_id = ${projectId}
+      AND ${column} <> ''
+      AND created_at > ${since}::timestamptz
+    GROUP BY ${column}
     ORDER BY cnt DESC
-    LIMIT ${limit}
-  `;
-  const results = await chQuery<{ value: string }>(sql);
+    LIMIT ${Math.trunc(limit)}
+  `);
   return results.map((r) => r.value).filter(Boolean);
 }
 
 class SessionService {
-  private readonly client: typeof ch;
-  constructor(client: typeof ch) {
-    this.client = client;
-  }
-
   async byId(sessionId: string, projectId: string) {
     const [sessionRows, hasReplayRows] = await Promise.all([
-      clix(this.client)
-        .select<IClickhouseSession>(['*'])
-        .from(TABLE_NAMES.sessions, true)
-        .where('id', '=', sessionId)
-        .where('project_id', '=', projectId)
-        .where('sign', '=', 1)
-        .execute(),
-      chQuery<{ n: number }>(
-        `SELECT 1 AS n
-         FROM ${TABLE_NAMES.session_replay_chunks}
-         WHERE session_id = ${sqlstring.escape(sessionId)}
-           AND project_id = ${sqlstring.escape(projectId)}
-         LIMIT 1`
-      ),
+      anQuery<IClickhouseSession>(sql`
+        SELECT ${sessionRow()}
+        FROM analytics.sessions
+        WHERE project_id = ${projectId} AND id = ${sessionId}
+      `),
+      anQuery<{ n: number }>(sql`
+        SELECT 1 AS n
+        FROM analytics.session_replay_chunks
+        WHERE project_id = ${projectId} AND session_id = ${sessionId}
+        LIMIT 1
+      `),
     ]);
 
     if (!sessionRows[0]) {
@@ -461,9 +477,7 @@ class SessionService {
   }
 }
 
-export const sessionService = new SessionService(ch);
-
-import { resolveDateRange } from './date.service';
+export const sessionService = new SessionService();
 
 export interface QuerySessionsInput {
   projectId: string;
@@ -483,53 +497,33 @@ export interface QuerySessionsInput {
 }
 
 export async function querySessionsCore(
-  input: QuerySessionsInput
+  input: QuerySessionsInput,
 ): Promise<IClickhouseSession[]> {
-  const builder = clix(ch)
-    .select<IClickhouseSession>([])
-    .from(TABLE_NAMES.sessions)
-    .where('project_id', '=', input.projectId)
-    .where('sign', '=', 1);
+  const builder = clix(UTC.timezone)
+    .select<IClickhouseSession>([sessionRow()])
+    .from('analytics.sessions')
+    .rawWhere(sql`project_id = ${input.projectId}`);
 
-  if (input.profileId) {
-    builder.where('profile_id', '=', input.profileId);
-  }
-
-  if (input.referrer) {
-    builder.where('referrer', '=', input.referrer);
-  }
-
-  if (input.referrerName) {
-    builder.where('referrer_name', '=', input.referrerName);
-  }
-
-  if (input.referrerType) {
-    builder.where('referrer_type', '=', input.referrerType);
-  }
-
-  if (input.device) {
-    builder.where('device', '=', input.device);
-  }
-
-  if (input.country) {
-    builder.where('country', '=', input.country);
-  }
-
-  if (input.city) {
-    builder.where('city', '=', input.city);
-  }
-
-  if (input.os) {
-    builder.where('os', '=', input.os);
-  }
-
-  if (input.browser) {
-    builder.where('browser', '=', input.browser);
+  const equals: [column: string, value: string | undefined][] = [
+    ['profile_id', input.profileId],
+    ['referrer', input.referrer],
+    ['referrer_name', input.referrerName],
+    ['referrer_type', input.referrerType],
+    ['device', input.device],
+    ['country', input.country],
+    ['city', input.city],
+    ['os', input.os],
+    ['browser', input.browser],
+  ];
+  for (const [column, value] of equals) {
+    if (value) {
+      builder.rawWhere(sql`${raw(column)} = ${value}::text`);
+    }
   }
 
   const { startDate: start, endDate: end } = resolveDateRange(
     input.startDate,
-    input.endDate
+    input.endDate,
   );
 
   builder.where('created_at', 'BETWEEN', [
@@ -538,14 +532,13 @@ export async function querySessionsCore(
   ]);
 
   if (input.filters?.length) {
-    const filterClauses = buildFilterWhere(input.filters, input.projectId, {
-      selfTable: 'sessions',
-      profileIdExpr: 'profile_id',
-      groupsExpr: 'groups',
+    for (const clause of prefixedFilterClauses(input.filters, {
+      ...UTC,
+      projectId: input.projectId,
+      table: 'sessions',
       startDate: new Date(start),
       endDate: new Date(end),
-    });
-    for (const clause of Object.values(filterClauses)) {
+    })) {
       builder.rawWhere(clause);
     }
   }
