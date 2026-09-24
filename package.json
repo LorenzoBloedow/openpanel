@@ -34,7 +34,6 @@
     "pre-push": "[ -n \"$SKIP_HOOKS\" ] || (pnpm typecheck && pnpm test)"
   },
   "dependencies": {
-    "@hyperdx/node-opentelemetry": "catalog:",
     "dotenv-cli": "^7.3.0",
     "semver": "^7.5.4",
     "typescript": "catalog:"

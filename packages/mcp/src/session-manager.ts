@@ -1,29 +1,33 @@
 import { randomUUID } from 'node:crypto';
 import { createLogger } from '@openpanel/logger';
-import { getRedisCache } from '@openpanel/redis';
 import type { McpAuthContext } from './auth';
 
 const logger = createLogger({ name: 'mcp:sessions' });
 
-const SESSION_TTL_SECONDS = 30 * 60; // 30 minutes
+const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
-function redisKey(id: string) {
-  return `mcp:session:${id}`;
+interface StoredSession {
+  context: McpAuthContext;
+  expiresAt: number;
 }
 
 /**
- * Stateless session manager — auth context lives only in Redis.
+ * Session auth contexts, kept in process memory with a sliding TTL.
  *
- * No in-process state: any API instance can handle any request for any session.
- * No sticky sessions required.
+ * They used to live in Redis so any API instance could serve any session.
+ * Redis is gone on this branch and MCP isn't served on Cloudflare yet, so
+ * this is the single-process stand-in; a multi-instance deployment needs a
+ * shared store again (a Durable Object or a Postgres table).
  */
 export class SessionManager {
+  private readonly sessions = new Map<string, StoredSession>();
+
   generateId(): string {
     return randomUUID();
   }
 
   async setContext(id: string, context: McpAuthContext): Promise<void> {
-    await getRedisCache().setJson(redisKey(id), SESSION_TTL_SECONDS, context);
+    this.sessions.set(id, { context, expiresAt: Date.now() + SESSION_TTL_MS });
     logger.info(
       {
         sessionId: id,
@@ -35,16 +39,27 @@ export class SessionManager {
     );
   }
 
-  getContext(id: string): Promise<McpAuthContext | null> {
-    return getRedisCache().getJson<McpAuthContext>(redisKey(id));
+  async getContext(id: string): Promise<McpAuthContext | null> {
+    const session = this.sessions.get(id);
+    if (!session) {
+      return null;
+    }
+    if (session.expiresAt <= Date.now()) {
+      this.sessions.delete(id);
+      return null;
+    }
+    return session.context;
   }
 
   async touchContext(id: string): Promise<void> {
-    await getRedisCache().expire(redisKey(id), SESSION_TTL_SECONDS);
+    const session = this.sessions.get(id);
+    if (session) {
+      session.expiresAt = Date.now() + SESSION_TTL_MS;
+    }
   }
 
   async deleteContext(id: string): Promise<void> {
-    await getRedisCache().del(redisKey(id));
+    this.sessions.delete(id);
     logger.info({ sessionId: id }, 'MCP session deleted');
   }
 
@@ -53,6 +68,6 @@ export class SessionManager {
   }
 
   async destroy(): Promise<void> {
-    // No-op: sessions are in Redis, not in-process
+    this.sessions.clear();
   }
 }

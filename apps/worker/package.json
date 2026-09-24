@@ -12,14 +12,11 @@
     "typecheck": "wrangler types --strict-vars false >/dev/null && tsc --noEmit"
   },
   "dependencies": {
-    "@openpanel/ai": "workspace:*",
     "@openpanel/common": "workspace:*",
     "@openpanel/db": "workspace:*",
     "@openpanel/email": "workspace:*",
-    "@openpanel/integrations": "workspace:^",
     "@openpanel/json": "workspace:*",
     "@openpanel/logger": "workspace:*",
-    "@openpanel/payments": "workspace:*",
     "@openpanel/queue": "workspace:*",
     "@openpanel/redis": "workspace:*",
     "@openpanel/runtime": "workspace:*",

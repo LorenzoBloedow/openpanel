@@ -3,7 +3,6 @@ import * as faker from '@faker-js/faker';
 import { generateId } from '@openpanel/common';
 import { hashPassword } from '@openpanel/common/server';
 import { ClientType, db } from '@openpanel/db';
-import { getRedisCache } from '@openpanel/redis';
 import { v4 as uuidv4 } from 'uuid';
 
 const DOMAIN_COUNT = 5;
@@ -261,8 +260,6 @@ function insertFakeEvents(events: Event[]) {
 }
 
 async function simultaneousRequests() {
-  await getRedisCache().flushdb();
-  await new Promise((resolve) => setTimeout(resolve, 1000));
   const sessions: {
     ip: string;
     referrer: string;
