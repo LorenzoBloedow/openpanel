@@ -54,6 +54,38 @@ export function fromLocal(wallClock: string | Sql, ctx: TimeCtx): Sql {
 }
 
 /**
+ * {@link fromLocal}, except for the wall-clock times a DST change skips or
+ * repeats: ClickHouse's `toDateTime('…')` read those as the earlier of the
+ * two candidate instants, Postgres reads them as the later one. In
+ * Stockholm, 02:30 on the spring-forward day (skipped) and on the fall-back
+ * day (repeated) are both 00:30 UTC here and 01:30 UTC with fromLocal.
+ * Every other time is the same instant as fromLocal.
+ *
+ * `later` is Postgres' reading; `shift` is how far the earlier candidate
+ * lies before it: in a gap, how far `later` overshoots the wall clock; in an
+ * overlap, how much the offset dropped since the day before (only taken when
+ * that instant shows the same wall clock).
+ */
+export function fromLocalEarliest(wallClock: string | Sql, ctx: TimeCtx): Sql {
+  return sql`(SELECT CASE
+      WHEN _c.later AT TIME ZONE _c.zone <> _c.w OR (_c.later - _c.shift) AT TIME ZONE _c.zone = _c.w
+        THEN _c.later - _c.shift
+      ELSE _c.later
+    END
+    FROM (
+      SELECT _l.w, _l.zone, _l.later, greatest(
+        _l.later AT TIME ZONE _l.zone - _l.w,
+        ((_l.later - interval '1 day') AT TIME ZONE _l.zone - (_l.later - interval '1 day') AT TIME ZONE 'UTC')
+          - (_l.later AT TIME ZONE _l.zone - _l.later AT TIME ZONE 'UTC')
+      ) AS shift
+      FROM (
+        SELECT _v.w, _v.zone, _v.w AT TIME ZONE _v.zone AS later
+        FROM (SELECT (${wallClock})::timestamp AS w, ${ctx.timezone}::text AS zone) AS _v
+      ) AS _l
+    ) AS _c)`;
+}
+
+/**
  * Start of the `unit` containing `instant`, as project wall-clock time —
  * ClickHouse's toStartOfMinute/Hour/Day/Week(…, 1)/Month under the session
  * time zone. Weeks start on Monday (ISO), as `toStartOfWeek(x, 1)` did.

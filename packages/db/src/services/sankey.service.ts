@@ -1,10 +1,10 @@
 import { chartColors } from '@openpanel/constants';
 import { type IChartEventFilter, zChartEvent } from '@openpanel/validation';
-import sqlstring from 'sqlstring';
 import { z } from 'zod';
-import { TABLE_NAMES, ch } from '../clickhouse/client';
-import { clix } from '../clickhouse/query-builder';
-import { getEventFiltersWhereClause } from './chart.service';
+import { anQueryOne } from '../analytics/client';
+import { eventFilterClauses } from '../analytics/filters';
+import { type Sql, and, join, raw, sql } from '../analytics/sql';
+import { EVENTS, dateRange } from './funnel-query';
 
 export const zGetSankeyInput = z.object({
   projectId: z.string(),
@@ -22,32 +22,66 @@ export type IGetSankeyInput = z.infer<typeof zGetSankeyInput> & {
   timezone: string;
 };
 
-export class SankeyService {
-  constructor(private client: typeof ch) {}
+interface SankeyEntry {
+  entry_event: string;
+  count: number;
+}
 
-  getRawWhereClause(type: 'events' | 'sessions', filters: IChartEventFilter[]) {
-    const where = getEventFiltersWhereClause(
-      filters.map((item) => {
-        if (type === 'sessions') {
-          if (item.name === 'path') {
-            return { ...item, name: 'entry_path' };
-          }
-          if (item.name === 'origin') {
-            return { ...item, name: 'entry_origin' };
-          }
-          if (item.name.startsWith('properties.__query.utm_')) {
-            return {
-              ...item,
-              name: item.name.replace('properties.__query.utm_', 'utm_'),
-            };
-          }
-          return item;
+interface SankeyTransition {
+  source: string;
+  target: string;
+  step: number;
+  value: number;
+}
+
+/**
+ * The path slice of a session: its deduplicated event names are
+ * `events_deduped`, and `_first.start_index` is the 1-based position of the
+ * first start event (0 when absent) where a mode needs it.
+ */
+const DEDUPED = raw('events_deduped');
+const START_INDEX = raw('_first.start_index');
+
+export class SankeyService {
+  // biome-ignore lint/complexity/noUselessConstructor: callers still pass the ClickHouse client
+  constructor(_client?: unknown) {
+    // Ignored: the queries run on the analytics pool of the current scope.
+  }
+
+  /**
+   * Report filters as a WHERE fragment on the events table (alias `e`), or
+   * on the sessions table with the entry and UTM columns mapped.
+   */
+  getRawWhereClause(
+    type: 'events' | 'sessions',
+    filters: IChartEventFilter[],
+    scope: { projectId: string; timezone: string; alias?: string },
+  ): Sql {
+    const mapped = filters.map((item) => {
+      if (type === 'sessions') {
+        if (item.name === 'path') {
+          return { ...item, name: 'entry_path' };
+        }
+        if (item.name === 'origin') {
+          return { ...item, name: 'entry_origin' };
+        }
+        if (item.name.startsWith('properties.__query.utm_')) {
+          return {
+            ...item,
+            name: item.name.replace('properties.__query.utm_', 'utm_'),
+          };
         }
         return item;
+      }
+      return item;
+    });
+    return and(
+      eventFilterClauses(mapped, {
+        alias: EVENTS,
+        ...scope,
+        table: type,
       }),
     );
-
-    return Object.values(where).join(' AND ');
   }
 
   private buildEventNameFilter(
@@ -55,43 +89,41 @@ export class SankeyService {
     exclude: string[],
     startEventName: string | undefined,
     endEventName: string | undefined,
-  ) {
+  ): Sql | null {
     if (include && include.length > 0) {
-      const eventNames = [...include, startEventName, endEventName]
-        .filter((item) => item !== undefined)
-        .map((e) => sqlstring.escape(e))
-        .join(', ');
-      return `name IN (${eventNames})`;
+      const eventNames = [...include, startEventName, endEventName].filter(
+        (item): item is string => item !== undefined,
+      );
+      return sql`${raw(EVENTS)}.name = ANY(${eventNames}::text[])`;
     }
     if (exclude.length > 0) {
-      const excludedNames = exclude
-        .map((e) => sqlstring.escape(e))
-        .join(', ');
-      return `name NOT IN (${excludedNames})`;
+      return sql`${raw(EVENTS)}.name <> ALL(${exclude}::text[])`;
     }
     return null;
   }
 
+  /** Sessions with at least one `event` (its filters applied) in range. */
   private buildSessionEventCTE(
     event: z.infer<typeof zChartEvent>,
     projectId: string,
-    startDate: string,
-    endDate: string,
+    range: Sql,
     timezone: string,
-  ): ReturnType<typeof clix> {
-    return clix(this.client, timezone)
-      .select<{ session_id: string }>(['session_id'])
-      .from(TABLE_NAMES.events)
-      .where('project_id', '=', projectId)
-      .where('name', '=', event.name)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .rawWhere(this.getRawWhereClause('events', event.filters))
-      .groupBy(['session_id']);
+  ): Sql {
+    return sql`SELECT DISTINCT ${raw(EVENTS)}.session_id
+      FROM analytics.events AS ${raw(EVENTS)}
+      WHERE ${raw(EVENTS)}.project_id = ${projectId}
+        AND ${raw(EVENTS)}.name = ${event.name}::text
+        AND ${range}
+        AND ${this.getRawWhereClause('events', event.filters, { projectId, timezone })}`;
   }
 
+  /**
+   * Which sessions a mode keeps and which part of their path it shows —
+   * ClickHouse's `arraySlice` over the deduplicated path:
+   * - after: `steps` events from the first start event;
+   * - before: up to `steps` events ending with the first start event;
+   * - between (and without a start event): the first `steps` events.
+   */
   private getModeConfig(
     mode: 'after' | 'before' | 'between',
     startEvent: z.infer<typeof zChartEvent> | undefined,
@@ -99,243 +131,87 @@ export class SankeyService {
     hasStartEventCTE: boolean,
     hasEndEventCTE: boolean,
     steps: number,
-  ): { sessionFilter: string; eventsSliceExpr: string } {
-    const defaultSliceExpr = `arraySlice(events_deduped, 1, ${steps})`;
+  ): { sessionFilter: Sql; eventsSliceExpr: Sql; needsStartIndex: boolean } {
+    const stepCount = sql`${steps}::int`;
+    const defaultSliceExpr = sql`${DEDUPED}[1 : ${stepCount}]`;
+    const inStartSessions = raw('session_id IN (SELECT session_id FROM start_event_sessions)');
+    const inEndSessions = raw('session_id IN (SELECT session_id FROM end_event_sessions)');
+    const pathHas = (event: z.infer<typeof zChartEvent>) =>
+      sql`${event.name}::text = ANY(${DEDUPED})`;
 
     if (mode === 'after' && startEvent) {
-      const escapedStartEvent = sqlstring.escape(startEvent.name);
-      const sessionFilter = hasStartEventCTE
-        ? 'session_id IN (SELECT session_id FROM start_event_sessions)'
-        : `arrayExists(x -> x = ${escapedStartEvent}, events_deduped)`;
-      const eventsSliceExpr = `arraySlice(events_deduped, arrayFirstIndex(x -> x = ${escapedStartEvent}, events_deduped), ${steps})`;
-      return { sessionFilter, eventsSliceExpr };
+      return {
+        sessionFilter: hasStartEventCTE ? inStartSessions : pathHas(startEvent),
+        // arraySlice from index 0 (no start event on the path) is empty.
+        eventsSliceExpr: sql`CASE WHEN ${START_INDEX} = 0 THEN '{}'::text[]
+          ELSE ${DEDUPED}[${START_INDEX} : ${START_INDEX} + ${stepCount} - 1] END`,
+        needsStartIndex: true,
+      };
     }
 
     if (mode === 'before' && startEvent) {
-      const escapedStartEvent = sqlstring.escape(startEvent.name);
-      const sessionFilter = hasStartEventCTE
-        ? 'session_id IN (SELECT session_id FROM start_event_sessions)'
-        : `arrayExists(x -> x = ${escapedStartEvent}, events_deduped)`;
-      const eventsSliceExpr = `arraySlice(
-        events_deduped,
-        greatest(1, arrayFirstIndex(x -> x = ${escapedStartEvent}, events_deduped) - ${steps} + 1),
-        arrayFirstIndex(x -> x = ${escapedStartEvent}, events_deduped) - greatest(1, arrayFirstIndex(x -> x = ${escapedStartEvent}, events_deduped) - ${steps} + 1) + 1
-      )`;
-      return { sessionFilter, eventsSliceExpr };
+      return {
+        sessionFilter: hasStartEventCTE ? inStartSessions : pathHas(startEvent),
+        eventsSliceExpr: sql`${DEDUPED}[greatest(1, ${START_INDEX} - ${stepCount} + 1) : ${START_INDEX}]`,
+        needsStartIndex: true,
+      };
     }
 
     if (mode === 'between' && startEvent && endEvent) {
-      const escapedStartEvent = sqlstring.escape(startEvent.name);
-      const escapedEndEvent = sqlstring.escape(endEvent.name);
-      let sessionFilter = '';
-      if (hasStartEventCTE && hasEndEventCTE) {
-        sessionFilter =
-          'session_id IN (SELECT session_id FROM start_event_sessions) AND session_id IN (SELECT session_id FROM end_event_sessions)';
-      } else if (hasStartEventCTE) {
-        sessionFilter = `session_id IN (SELECT session_id FROM start_event_sessions) AND arrayExists(x -> x = ${escapedEndEvent}, events_deduped)`;
-      } else if (hasEndEventCTE) {
-        sessionFilter = `arrayExists(x -> x = ${escapedStartEvent}, events_deduped) AND session_id IN (SELECT session_id FROM end_event_sessions)`;
-      } else {
-        sessionFilter = `arrayExists(x -> x = ${escapedStartEvent}, events_deduped) AND arrayExists(x -> x = ${escapedEndEvent}, events_deduped)`;
-      }
-      return { sessionFilter, eventsSliceExpr: defaultSliceExpr };
+      return {
+        sessionFilter: and([
+          hasStartEventCTE ? inStartSessions : pathHas(startEvent),
+          hasEndEventCTE ? inEndSessions : pathHas(endEvent),
+        ]),
+        eventsSliceExpr: defaultSliceExpr,
+        needsStartIndex: false,
+      };
     }
 
-    return { sessionFilter: '', eventsSliceExpr: defaultSliceExpr };
+    return {
+      sessionFilter: raw('TRUE'),
+      eventsSliceExpr: defaultSliceExpr,
+      needsStartIndex: false,
+    };
   }
 
-  private async executeBetweenMode(
-    sessionPathsQuery: ReturnType<typeof clix>,
-    startEvent: z.infer<typeof zChartEvent>,
-    endEvent: z.infer<typeof zChartEvent>,
-    steps: number,
-    COLORS: string[],
-    timezone: string,
-  ): Promise<{
-    nodes: Array<{
-      id: string;
-      label: string;
-      nodeColor: string;
-      percentage?: number;
-      value?: number;
-      step?: number;
-    }>;
-    links: Array<{ source: string; target: string; value: number }>;
-  }> {
-    // Find sessions where startEvent comes before endEvent
-    const betweenSessionsQuery = clix(this.client, timezone)
-      .with('session_paths', sessionPathsQuery)
-      .select<{
-        session_id: string;
-        events: string[];
-        start_index: number;
-        end_index: number;
-      }>([
-        'session_id',
-        'events',
-        `arrayFirstIndex(x -> x = ${sqlstring.escape(startEvent.name)}, events) as start_index`,
-        `arrayFirstIndex(x -> x = ${sqlstring.escape(endEvent.name)}, events) as end_index`,
-      ])
-      .from('session_paths')
-      .having('start_index', '>', 0)
-      .having('end_index', '>', 0)
-      .rawHaving('start_index < end_index');
-
-    // Get the slice between start and end
-    const betweenPathsQuery = clix(this.client, timezone)
-      .with('between_sessions', betweenSessionsQuery)
-      .select<{
-        session_id: string;
-        events: string[];
-        entry_event: string;
-      }>([
-        'session_id',
-        'arraySlice(events, start_index, end_index - start_index + 1) as events',
-        'events[start_index] as entry_event',
-      ])
-      .from('between_sessions');
-
-    // Get top entry events
-    const topEntriesQuery = clix(this.client, timezone)
-      .with('session_paths', betweenPathsQuery)
-      .select<{ entry_event: string; count: number }>([
-        'entry_event',
-        'count() as count',
-      ])
-      .from('session_paths')
-      .groupBy(['entry_event'])
-      .orderBy('count', 'DESC')
-      .limit(3);
-
-    const topEntries = await topEntriesQuery.execute();
-
-    if (topEntries.length === 0) {
-      return { nodes: [], links: [] };
-    }
-
-    const topEntryEvents = topEntries.map((e) => e.entry_event);
-    const totalSessions = topEntries.reduce((sum, e) => sum + e.count, 0);
-
-    // Get transitions for between mode
-    const transitionsQuery = clix(this.client, timezone)
-      .with('between_sessions', betweenSessionsQuery)
-      .with(
-        'session_paths',
-        clix(this.client, timezone)
-          .select([
-            'session_id',
-            'arraySlice(events, start_index, end_index - start_index + 1) as events',
-          ])
-          .from('between_sessions')
-          .having('events[1]', 'IN', topEntryEvents),
-      )
-      .select<{
-        source: string;
-        target: string;
-        step: number;
-        value: number;
-      }>([
-        'pair.1 as source',
-        'pair.2 as target',
-        'pair.3 as step',
-        'count() as value',
-      ])
-      .from(
-        clix.exp(
-          '(SELECT arrayJoin(arrayMap(i -> (events[i], events[i + 1], i), range(1, length(events)))) as pair FROM session_paths WHERE length(events) >= 2)',
-        ),
-      )
-      .groupBy(['source', 'target', 'step'])
-      .orderBy('step', 'ASC')
-      .orderBy('value', 'DESC');
-
-    const transitions = await transitionsQuery.execute();
-
-    return this.buildSankeyFromTransitions(
-      transitions,
-      topEntries,
-      totalSessions,
-      steps,
-      COLORS,
-    );
-  }
-
-  private async executeSimpleMode(
-    sessionPathsQuery: ReturnType<typeof clix>,
-    steps: number,
-    COLORS: string[],
-    timezone: string,
-  ): Promise<{
-    nodes: Array<{
-      id: string;
-      label: string;
-      nodeColor: string;
-      percentage?: number;
-      value?: number;
-      step?: number;
-    }>;
-    links: Array<{ source: string; target: string; value: number }>;
-  }> {
-    // Get top entry events
-    const topEntriesQuery = clix(this.client, timezone)
-      .with('session_paths', sessionPathsQuery)
-      .select<{ entry_event: string; count: number }>([
-        'entry_event',
-        'count() as count',
-      ])
-      .from('session_paths')
-      .groupBy(['entry_event'])
-      .orderBy('count', 'DESC')
-      .limit(3);
-
-    const topEntries = await topEntriesQuery.execute();
-
-    if (topEntries.length === 0) {
-      return { nodes: [], links: [] };
-    }
-
-    const topEntryEvents = topEntries.map((e) => e.entry_event);
-    const totalSessions = topEntries.reduce((sum, e) => sum + e.count, 0);
-
-    // Get transitions
-    const transitionsQuery = clix(this.client, timezone)
-      .with('session_paths_base', sessionPathsQuery)
-      .with(
-        'session_paths',
-        clix(this.client, timezone)
-          .select(['session_id', 'events'])
-          .from('session_paths_base')
-          .having('events[1]', 'IN', topEntryEvents),
-      )
-      .select<{
-        source: string;
-        target: string;
-        step: number;
-        value: number;
-      }>([
-        'pair.1 as source',
-        'pair.2 as target',
-        'pair.3 as step',
-        'count() as value',
-      ])
-      .from(
-        clix.exp(
-          '(SELECT arrayJoin(arrayMap(i -> (events[i], events[i + 1], i), range(1, length(events)))) as pair FROM session_paths WHERE length(events) >= 2)',
-        ),
-      )
-      .groupBy(['source', 'target', 'step'])
-      .orderBy('step', 'ASC')
-      .orderBy('value', 'DESC');
-
-    const transitions = await transitionsQuery.execute();
-
-    return this.buildSankeyFromTransitions(
-      transitions,
-      topEntries,
-      totalSessions,
-      steps,
-      COLORS,
-    );
+  /**
+   * The flow's top entry events (at most three, by sessions) and the
+   * transitions of the paths starting with one of them, from `paths`
+   * (`events`, `entry_event`), in one round trip.
+   */
+  private async queryFlow(
+    ctes: Sql[],
+    paths: string,
+  ): Promise<{ entries: SankeyEntry[]; transitions: SankeyTransition[] }> {
+    const from = raw(paths);
+    const row = await anQueryOne<{
+      entries: SankeyEntry[];
+      transitions: SankeyTransition[];
+    }>(sql`WITH ${join([
+      ...ctes,
+      // ClickHouse broke count ties arbitrarily; these break them by name.
+      sql`top_entries AS (
+        SELECT entry_event, count(*) AS count FROM ${from}
+        GROUP BY entry_event
+        ORDER BY count DESC, entry_event COLLATE "C"
+        LIMIT 3
+      )`,
+      sql`transitions AS (
+        SELECT _path.events[_pair.i] AS source, _path.events[_pair.i + 1] AS target,
+          _pair.i AS step, count(*) AS value
+        FROM ${from} AS _path
+        CROSS JOIN LATERAL generate_series(1, cardinality(_path.events) - 1) AS _pair(i)
+        WHERE _path.events[1] IN (SELECT entry_event FROM top_entries)
+        GROUP BY 1, 2, 3
+      )`,
+    ])}
+    SELECT
+      COALESCE((SELECT json_agg(json_build_object('entry_event', entry_event, 'count', count)
+        ORDER BY count DESC, entry_event COLLATE "C") FROM top_entries), '[]') AS entries,
+      COALESCE((SELECT json_agg(json_build_object('source', source, 'target', target, 'step', step, 'value', value)
+        ORDER BY step, value DESC, source COLLATE "C", target COLLATE "C") FROM transitions), '[]') AS transitions`);
+    return { entries: row?.entries ?? [], transitions: row?.transitions ?? [] };
   }
 
   async getSankey({
@@ -361,6 +237,7 @@ export class SankeyService {
     links: Array<{ source: string; target: string; value: number }>;
   }> {
     const COLORS = chartColors.map((color) => color.main);
+    const range = dateRange(startDate, endDate, { timezone });
 
     // 1. Build event name filter
     const eventNameFilter = this.buildEventNameFilter(
@@ -370,140 +247,114 @@ export class SankeyService {
       endEvent?.name,
     );
 
-    // 2. Build ordered events query
-    // For screen_view events, use the path instead of the event name for more meaningful flow visualization
-    const orderedEventsQuery = clix(this.client, timezone)
-      .select<{
-        session_id: string;
-        event_name: string;
-        created_at: string;
-      }>([
-        'session_id',
-        // "if(name = 'screen_view', path, name) as event_name",
-        'name as event_name',
-        'created_at',
-      ])
-      .from(TABLE_NAMES.events)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .orderBy('session_id', 'ASC')
-      .orderBy('created_at', 'ASC');
-
-    if (eventNameFilter) {
-      orderedEventsQuery.rawWhere(eventNameFilter);
-    }
-
-    // 3. Build session event CTEs
+    // 2. Build session event CTEs
     const startEventCTE = startEvent
-      ? this.buildSessionEventCTE(
-          startEvent,
-          projectId,
-          startDate,
-          endDate,
-          timezone,
-        )
+      ? this.buildSessionEventCTE(startEvent, projectId, range, timezone)
       : null;
     const endEventCTE =
       mode === 'between' && endEvent
-        ? this.buildSessionEventCTE(
-            endEvent,
-            projectId,
-            startDate,
-            endDate,
-            timezone,
-          )
+        ? this.buildSessionEventCTE(endEvent, projectId, range, timezone)
         : null;
 
-    // 4. Build deduped events CTE
-    const eventsDedupedCTE = clix(this.client, timezone)
-      .with('ordered_events', orderedEventsQuery)
-      .select<{
-        session_id: string;
-        events_deduped: string[];
-      }>([
-        'session_id',
-        `arrayFilter(
-          (x, i) -> i = 1 OR x != events_raw[i - 1],
-          groupArray(event_name) as events_raw,
-          arrayEnumerate(events_raw)
-        ) as events_deduped`,
-      ])
-      .from('ordered_events')
-      .groupBy(['session_id']);
-
-    // 5. Get mode-specific config
-    const { sessionFilter, eventsSliceExpr } = this.getModeConfig(
-      mode,
-      startEvent,
-      endEvent,
-      startEventCTE !== null,
-      endEventCTE !== null,
-      steps,
-    );
-
-    // 6. Build truncate expression (for 'after' mode)
-    const truncateAtRepeatExpr = `if(
-      arrayFirstIndex(x -> x > 1, arrayEnumerateUniq(events_sliced)) = 0,
-      events_sliced,
-      arraySlice(
-        events_sliced,
-        1,
-        arrayFirstIndex(x -> x > 1, arrayEnumerateUniq(events_sliced)) - 1
-      )
-    )`;
-    const eventsExpr =
-      mode === 'before' ? 'events_sliced' : truncateAtRepeatExpr;
-
-    // 7. Build session paths query with conditional CTEs
-    const eventCTEs: Array<{ name: string; query: ReturnType<typeof clix> }> =
-      [];
-    if (startEventCTE) {
-      eventCTEs.push({ name: 'start_event_sessions', query: startEventCTE });
-    }
-    if (endEventCTE) {
-      eventCTEs.push({ name: 'end_event_sessions', query: endEventCTE });
-    }
-
-    const sessionPathsQuery = eventCTEs
-      .reduce(
-        (builder, cte) => builder.with(cte.name, cte.query),
-        clix(this.client, timezone),
-      )
-      .with('events_deduped_cte', eventsDedupedCTE)
-      .with(
-        'events_sliced_cte',
-        clix(this.client, timezone)
-          .select<{
-            session_id: string;
-            events_sliced: string[];
-          }>(['session_id', `${eventsSliceExpr} as events_sliced`])
-          .from('events_deduped_cte')
-          .rawHaving(sessionFilter || '1 = 1'),
-      )
-      .select<{
-        session_id: string;
-        entry_event: string;
-        events: string[];
-      }>(['session_id', `${eventsExpr} as events`, 'events[1] as entry_event'])
-      .from('events_sliced_cte')
-      .having('length(events)', '>=', 2);
-
-    // 8. Execute mode-specific logic
-    if (mode === 'between' && startEvent && endEvent) {
-      return this.executeBetweenMode(
-        sessionPathsQuery,
+    // 3. Get mode-specific config
+    const { sessionFilter, eventsSliceExpr, needsStartIndex } =
+      this.getModeConfig(
+        mode,
         startEvent,
         endEvent,
+        startEventCTE !== null,
+        endEventCTE !== null,
         steps,
-        COLORS,
-        timezone,
       );
+
+    // 4. Paths are cut at the first event that repeats, except in 'before'
+    // mode (ClickHouse's arrayEnumerateUniq check).
+    const firstRepeat = raw(
+      '(SELECT min(_u.i) FROM unnest(events_sliced) WITH ORDINALITY AS _u(x, i) WHERE _u.x = ANY(events_sliced[1 : _u.i - 1]))',
+    );
+    const eventsExpr =
+      mode === 'before'
+        ? raw('events_sliced')
+        : sql`COALESCE(events_sliced[1 : ${firstRepeat} - 1], events_sliced)`;
+
+    // 5. The session paths: events ordered by time with consecutive
+    // duplicates removed (ClickHouse's arrayFilter over groupArray), sliced
+    // per mode, at least two events long.
+    const ctes: Sql[] = [];
+    if (startEventCTE) {
+      ctes.push(sql`start_event_sessions AS (${startEventCTE})`);
+    }
+    if (endEventCTE) {
+      ctes.push(sql`end_event_sessions AS (${endEventCTE})`);
+    }
+    ctes.push(
+      sql`ordered_events AS (
+        SELECT ${raw(EVENTS)}.session_id, ${raw(EVENTS)}.name AS event_name, ${raw(EVENTS)}.created_at,
+          lag(${raw(EVENTS)}.name) OVER (PARTITION BY ${raw(EVENTS)}.session_id ORDER BY ${raw(EVENTS)}.created_at, ${raw(EVENTS)}.name) AS previous_name
+        FROM analytics.events AS ${raw(EVENTS)}
+        WHERE ${and([sql`${raw(EVENTS)}.project_id = ${projectId}`, range, eventNameFilter])}
+      )`,
+      sql`events_deduped_cte AS (
+        SELECT session_id, array_agg(event_name ORDER BY created_at, event_name) AS events_deduped
+        FROM ordered_events
+        WHERE previous_name IS NULL OR previous_name <> event_name
+        GROUP BY session_id
+      )`,
+      sql`events_sliced_cte AS (
+        SELECT session_id, ${eventsSliceExpr} AS events_sliced
+        FROM events_deduped_cte
+        ${needsStartIndex && startEvent ? sql`CROSS JOIN LATERAL (SELECT COALESCE(array_position(${DEDUPED}, ${startEvent.name}::text), 0) AS start_index) AS _first` : raw('')}
+        WHERE ${sessionFilter}
+      )`,
+      sql`session_paths AS (
+        SELECT session_id, events, events[1] AS entry_event
+        FROM (SELECT session_id, ${eventsExpr} AS events FROM events_sliced_cte) AS _paths
+        WHERE cardinality(events) >= 2
+      )`,
+    );
+
+    // 6. Execute mode-specific logic
+    let paths = 'session_paths';
+    if (mode === 'between' && startEvent && endEvent) {
+      // Sessions where the start event comes before the end event, cut to
+      // the part between them.
+      ctes.push(
+        sql`between_sessions AS (
+          SELECT * FROM (
+            SELECT session_id, events,
+              COALESCE(array_position(events, ${startEvent.name}::text), 0) AS start_index,
+              COALESCE(array_position(events, ${endEvent.name}::text), 0) AS end_index
+            FROM session_paths
+          ) AS _positions
+          WHERE start_index > 0 AND end_index > 0 AND start_index < end_index
+        )`,
+        // ClickHouse read the entry event as `events[start_index]` of the
+        // already sliced path (the alias shadowed the column), which is the
+        // start event only when it opens the path; otherwise no transition
+        // starts with the entries found and the flow comes back empty.
+        sql`between_paths AS (
+          SELECT session_id, events, COALESCE(events[start_index], '') AS entry_event
+          FROM (
+            SELECT session_id, start_index, events[start_index : end_index] AS events
+            FROM between_sessions
+          ) AS _between
+        )`,
+      );
+      paths = 'between_paths';
     }
 
-    return this.executeSimpleMode(sessionPathsQuery, steps, COLORS, timezone);
+    const { entries, transitions } = await this.queryFlow(ctes, paths);
+    if (entries.length === 0) {
+      return { nodes: [], links: [] };
+    }
+    const totalSessions = entries.reduce((sum, e) => sum + e.count, 0);
+    return this.buildSankeyFromTransitions(
+      transitions,
+      entries,
+      totalSessions,
+      steps,
+      COLORS,
+    );
   }
 
   private buildSankeyFromTransitions(
@@ -781,7 +632,7 @@ export class SankeyService {
   }
 }
 
-export const sankeyService = new SankeyService(ch);
+export const sankeyService = new SankeyService();
 
 import { getSettingsForProject } from './organization.service';
 

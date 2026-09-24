@@ -4,27 +4,28 @@ import type {
   IChartEvent,
   IReportInput,
 } from '@openpanel/validation';
-import { last, reverse, uniq } from 'ramda';
-import sqlstring from 'sqlstring';
-import { ch } from '../clickhouse/client';
-import { TABLE_NAMES } from '../clickhouse/client';
-import { clix } from '../clickhouse/query-builder';
-import { createSqlBuilder } from '../sql-builder';
+import { last, reverse } from 'ramda';
+import { fetchCohortsMetadata } from '../analytics/cohorts';
 import {
-  buildInlineCohortJoin,
   collectBreakdownCohortIds,
-  collectProfilePropertyKeys,
   extractCohortId,
-  fetchCohortsMetadata,
-  getEventFiltersWhereClause,
-  getSelectPropertyKey,
   isAllCohortsBreakdown,
   isKnownEventField,
-  profilePropertiesCteSelect,
-  rewriteProfilePropertyRefs,
-} from './chart.service';
+  resolveProfileField,
+} from '../analytics/fields';
+import {
+  type EventFilterScope,
+  eventFilterClauses,
+  eventPropertyExpr,
+} from '../analytics/filters';
+import { clix } from '../analytics/query-builder';
+import { type Sql, and, empty, join, or, raw, sql } from '../analytics/sql';
+import {
+  millisecondsInterval,
+  windowFunnelCtes,
+} from '../analytics/window-funnel';
+import { EVENTS, dateRange, eventJoins } from './funnel-query';
 import { mergeGlobalFilters, onlyReportEvents } from './reports.service';
-import { profileJoinColumns } from './filter-where.service';
 
 /** Display label for null/empty breakdown values (e.g. property not set). */
 export const EMPTY_BREAKDOWN_LABEL = 'Not set';
@@ -37,8 +38,24 @@ function normalizeBreakdownValue(value: unknown): string {
   return s === '' ? EMPTY_BREAKDOWN_LABEL : s;
 }
 
+/**
+ * Breakdowns the funnel can render: known event fields, minus the chart's
+ * all-cohorts breakdown (bare `cohort`, which has no funnel equivalent) and
+ * `profile.*` names that are neither a profile column nor a property —
+ * ClickHouse failed on both; they are dropped, like unknown columns.
+ */
+function isFunnelBreakdown(name: string): boolean {
+  if (!isKnownEventField(name) || isAllCohortsBreakdown(name)) {
+    return false;
+  }
+  return !name.startsWith('profile.') || resolveProfileField(name) !== null;
+}
+
 export class FunnelService {
-  constructor(private client: typeof ch) {}
+  // biome-ignore lint/complexity/noUselessConstructor: callers still pass the ClickHouse client
+  constructor(_client?: unknown) {
+    // Ignored: the queries run on the analytics pool of the current scope.
+  }
 
   /**
    * Returns the grouping strategy for the funnel.
@@ -48,27 +65,38 @@ export class FunnelService {
     return group === 'profile_id' ? 'profile_id' : 'session_id';
   }
 
-  getFunnelConditions(events: IChartEvent[] = [], projectId?: string): string[] {
-    return events.map((event) => {
-      const { sb, getWhere } = createSqlBuilder();
-      // Qualify with 'events' so event-level `properties[...]` becomes
-      // `events.properties[...]` — required because the funnel CTE may join
-      // the profiles table (which also exposes a `properties` column).
-      // Without the qualifier ClickHouse fails with "ambiguous identifier
-      // 'properties'" whenever a step filters on properties.X while another
-      // step filters on profile.properties.Y.
-      sb.where = getEventFiltersWhereClause(event.filters, projectId, 'events');
-      sb.where.name = `events.name = ${sqlstring.escape(event.name)}`;
-      return getWhere().replace('WHERE ', '');
-    });
+  /** Each step's condition on the events row: its name and its filters. */
+  getFunnelConditions(events: IChartEvent[], scope: EventFilterScope): Sql[] {
+    return events.map((event) =>
+      and([
+        sql`${raw(EVENTS)}.name = ${event.name}::text`,
+        ...eventFilterClauses(event.filters ?? [], scope),
+      ]),
+    );
   }
 
   /**
-   * Builds the funnel CTE.
-   * - When group === 'session_id': windowFunnel is computed per session_id.
-   *   profile_id is resolved via argMax to handle identity changes mid-session.
-   * - When group === 'profile_id': windowFunnel is computed directly per profile_id.
-   *   This correctly handles cross-session funnel completions.
+   * The funnel CTEs, to register in order:
+   *
+   * - `funnel_rows`: one row per event (per group, with a group join) that
+   *   matches at least one step — the other rows can't advance the funnel —
+   *   with `step_<n>` flags, `created_at`, the group key, `profile_id` and
+   *   the raw `b_<i>` breakdown values;
+   * - `funnel_step_<n>` / `funnel_levels`: ClickHouse's
+   *   `windowFunnel(window, 'strict_increase')` per group key (see
+   *   analytics/window-funnel.ts);
+   * - `session_funnel`: one row per group key with its level (0 when the
+   *   first step never happened). With `group === 'session_id'` the
+   *   session's `profile_id` is the one of its latest row (argMax), so a
+   *   mid-session identify counts as the identified profile.
+   *
+   * Breakdowns are attributed to the value at the group's FIRST step-1 row
+   * (argMinIf), not grouped by: grouping the sequence by a per-row value
+   * splits a user's steps across buckets whenever the value isn't the same
+   * on every step (e.g. an experiment tag set on the entry event only), and
+   * the later steps then show 0. `group.*` breakdowns are the exception:
+   * each event is fanned out per group, and a user in three groups belongs
+   * in all three funnels, so they stay part of the group key.
    */
   buildFunnelCte({
     projectId,
@@ -77,10 +105,10 @@ export class FunnelService {
     eventSeries,
     funnelWindowMilliseconds,
     timezone,
-    additionalSelects = [],
-    additionalGroupBy = [],
     group = 'session_id',
-    profilePropertyKeys = [],
+    joins = empty,
+    scope,
+    breakdownExpressions = [],
   }: {
     projectId: string;
     startDate: string;
@@ -88,15 +116,36 @@ export class FunnelService {
     eventSeries: IChartEvent[];
     funnelWindowMilliseconds: number;
     timezone: string;
-    additionalSelects?: string[];
-    additionalGroupBy?: string[];
     group?: 'session_id' | 'profile_id';
-    profilePropertyKeys?: string[];
-  }) {
-    const funnels = this.getFunnelConditions(eventSeries, projectId).map((c) =>
-      rewriteProfilePropertyRefs(c, profilePropertyKeys),
-    );
-    const primaryKey = group === 'profile_id' ? 'profile_id' : 'session_id';
+    joins?: Sql;
+    scope: EventFilterScope;
+    breakdownExpressions?: { expression: Sql; perRow: boolean }[];
+  }): { name: string; query: Sql }[] {
+    const conditions = this.getFunnelConditions(eventSeries, scope);
+    const steps = conditions.map((_, index) => `step_${index + 1}`);
+    const breakdownColumns = breakdownExpressions.map((b, index) => ({
+      ...b,
+      column: `b_${index}`,
+    }));
+    const groupKey = [group, ...breakdownColumns.filter((b) => b.perRow).map((b) => b.column)];
+    const names = [...new Set(eventSeries.map((event) => event.name))];
+    const e = raw(EVENTS);
+
+    const rowColumns: Sql[] = [
+      sql`${e}.${raw(group)}`,
+      ...(group === 'session_id' ? [sql`${e}.profile_id`] : []),
+      sql`${e}.created_at`,
+      ...conditions.map((condition, index) => sql`(${condition}) AS ${raw(steps[index]!)}`),
+      ...breakdownColumns.map((b) => sql`${b.expression} AS ${raw(b.column)}`),
+    ];
+    const rows = sql`SELECT ${join(rowColumns)}
+      FROM analytics.events AS ${e} ${joins}
+      WHERE ${and([
+        sql`${e}.project_id = ${projectId}`,
+        dateRange(startDate, endDate, { timezone }),
+        sql`${e}.name = ANY(${names}::text[])`,
+        or(conditions),
+      ])}`;
 
     // windowFunnel's 'strict_increase' mode requires every step's timestamp
     // to be strictly greater than the previous step's, so same-timestamp
@@ -107,36 +156,49 @@ export class FunnelService {
     const nonStrictOrdering =
       process.env.FUNNEL_NON_STRICT_ORDERING === '1' ||
       process.env.FUNNEL_NON_STRICT_ORDERING === 'true';
-    const windowFunnelMode = nonStrictOrdering ? '' : ", 'strict_increase'";
+    const funnel = windowFunnelCtes({
+      source: 'funnel_rows',
+      partitionBy: groupKey,
+      time: 'created_at',
+      steps,
+      window: millisecondsInterval(funnelWindowMilliseconds),
+      strictIncrease: !nonStrictOrdering,
+      prefix: 'funnel',
+    });
 
-    return clix(this.client, timezone)
-      .select([
-        primaryKey,
-        `windowFunnel(${funnelWindowMilliseconds}${windowFunnelMode})(toUInt64(toUnixTimestamp64Milli(created_at)), ${funnels.join(', ')}) AS level`,
-        ...(group === 'session_id'
-          ? ['argMax(profile_id, created_at) AS profile_id']
-          : []),
-        ...additionalSelects,
-      ])
-      .from(TABLE_NAMES.events, false)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ])
-      .where(
-        'events.name',
-        'IN',
-        eventSeries.map((e) => e.name),
-      )
-      // Only rows matching at least one step can advance windowFunnel, so
-      // rows that share a step's event name but fail its filters are dead
-      // weight — with filtered steps (e.g. screen_view + a path filter) they
-      // can be the vast majority of what the name IN(...) lets through.
-      // Dropping them here shrinks the aggregation input; windowFunnel
-      // ignores non-matching rows either way, so levels are unchanged.
-      .rawWhere(`(${funnels.map((f) => `(${f})`).join(' OR ')})`)
-      .groupBy([primaryKey, ...additionalGroupBy]);
+    const aggregates: Sql[] = [
+      ...groupKey.map((column) => raw(column)),
+      ...(group === 'session_id'
+        ? [raw('(array_agg(profile_id ORDER BY created_at DESC))[1] AS profile_id')]
+        : []),
+      ...breakdownColumns
+        .filter((b) => !b.perRow)
+        .map((b) => raw(`(array_agg(${b.column} ORDER BY created_at) FILTER (WHERE step_1))[1] AS ${b.column}`)),
+    ];
+    // Group-breakdown values may be NULL; the group key column never is.
+    const sameGroup = groupKey.map((column, index) =>
+      index === 0
+        ? raw(`_lv.${column} = _f.${column}`)
+        : raw(`_lv.${column} IS NOT DISTINCT FROM _f.${column}`),
+    );
+    const funnelColumns: Sql[] = [
+      raw(`_f.${group}`),
+      raw('COALESCE(_lv.level, 0) AS level'),
+      ...(group === 'session_id' ? [raw('_f.profile_id')] : []),
+      ...breakdownColumns.map((b) => raw(`_f.${b.column}`)),
+    ];
+    const sessionFunnel = sql`SELECT ${join(funnelColumns)}
+      FROM (
+        SELECT ${join(aggregates)} FROM funnel_rows
+        GROUP BY ${join(groupKey.map((column) => raw(column)))}
+      ) AS _f
+      LEFT JOIN ${raw(funnel.levels)} AS _lv ON ${join(sameGroup, ' AND ')}`;
+
+    return [
+      { name: 'funnel_rows', query: rows },
+      ...funnel.ctes,
+      { name: 'session_funnel', query: sessionFunnel },
+    ];
   }
 
   buildSessionsCte({
@@ -150,14 +212,11 @@ export class FunnelService {
     endDate: string;
     timezone: string;
   }) {
-    return clix(this.client, timezone)
-      .select(['profile_id as pid', 'id as sid'])
-      .from(TABLE_NAMES.sessions)
-      .where('project_id', '=', projectId)
-      .where('created_at', 'BETWEEN', [
-        clix.datetime(startDate, 'toDateTime'),
-        clix.datetime(endDate, 'toDateTime'),
-      ]);
+    return clix(timezone)
+      .select(['profile_id AS pid', 'id AS sid'])
+      .from('analytics.sessions')
+      .rawWhere(sql`project_id = ${projectId}::text`)
+      .rawWhere(dateRange(startDate, endDate, { timezone }, raw('created_at')));
   }
 
   private fillFunnel(
@@ -254,14 +313,31 @@ export class FunnelService {
 
   /**
    * Builds everything the funnel chart and the funnel profile list share: the
-   * normalized event series and breakdowns, the `session_funnel` CTE with all
-   * of its joins wired up, and the outer query those CTEs are registered on.
+   * normalized event series and breakdowns, and a query with the funnel CTEs
+   * (joins wired up for the filters and breakdowns) registered on it. Callers
+   * add their own `funnel` CTE and final projection on top, e.g.
    *
-   * This exists because the two used to be written out twice and drifted. A
-   * breakdown expression only works if the join it references was added, and
-   * the joins depend on the breakdowns — so building the selects in one place
-   * and the joins in another is exactly the bug waiting to happen. Callers add
-   * their own `funnel` CTE and final projection on top.
+   *   query.with('funnel', 'SELECT * FROM session_funnel WHERE level != 0');
+   *   query.select(['DISTINCT profile_id']).from('funnel');
+   *   query.rawWhere(sql`level >= ${targetLevel}`);
+   *
+   * `session_funnel` — one row per group key — has these columns:
+   * - `session_id` (the default grouping) or `profile_id` (funnelGroup
+   *   'profile_id'): the group key;
+   * - `level` (integer): the deepest step reached, 0 when the group has
+   *   rows for later steps only (callers filter `level != 0`);
+   * - `profile_id` (text): with session grouping, the profile of the
+   *   session's latest step row; with profile grouping it is the key;
+   * - `b_0` … `b_<n-1>`: one per returned `breakdowns` entry, in order —
+   *   the value at the group's first step-1 row, or per row (and part of the
+   *   key) for `group.*` breakdowns. Text for property, profile, group,
+   *   cohort and has_profile breakdowns (a wildcard property is `text[]`),
+   *   the column's own type for plain event columns; '' or NULL when unset
+   *   (both shown as EMPTY_BREAKDOWN_LABEL).
+   *
+   * This exists because the two used to be written out twice and drifted: a
+   * breakdown expression only works if the join it reads was added, and the
+   * joins depend on the breakdowns.
    */
   async buildFunnelBase({
     projectId,
@@ -284,19 +360,7 @@ export class FunnelService {
     funnelGroup?: string;
     timezone: string;
   }) {
-    // Drop breakdowns that don't resolve to a known events column, properties
-    // path, profile path, group path, or specific cohort. The funnel CTE
-    // inlines each breakdown's name directly via getSelectPropertyKey, so
-    // anything that doesn't resolve leaks into the SQL verbatim.
-    //
-    // `isKnownEventField` accepts the bare `cohort` breakdown because the
-    // chart's all-cohorts feature uses it, but the funnel has no equivalent —
-    // it renders as `cohort as b_0 FROM events`, which fails with
-    // UNKNOWN_IDENTIFIER for the chart and the profile list alike. Exclude it
-    // explicitly rather than relying on the generic check.
-    const breakdowns = initialBreakdowns.filter(
-      (b) => isKnownEventField(b.name) && !isAllCohortsBreakdown(b.name),
-    );
+    const breakdowns = initialBreakdowns.filter((b) => isFunnelBreakdown(b.name));
 
     const eventSeries = onlyReportEvents(
       mergeGlobalFilters(series, globalFilters),
@@ -308,150 +372,48 @@ export class FunnelService {
 
     const funnelWindowMilliseconds = funnelWindow * 3600 * 1000;
     const group = this.getFunnelGroup(funnelGroup);
+    const filters = eventSeries.flatMap((e) => e.filters ?? []);
+    const needsGroupJoin =
+      funnelGroup === 'group' ||
+      filters.some((f) => f.name.startsWith('group.')) ||
+      breakdowns.some((b) => b.name.startsWith('group.'));
 
-    const profileFilters = this.getProfileFilters(eventSeries);
-    const anyFilterOnProfile = profileFilters.length > 0;
-    const profileBreakdowns = breakdowns.filter((b) =>
-      b.name.startsWith('profile.'),
+    const cohortMetadata = await fetchCohortsMetadata(
+      collectBreakdownCohortIds(breakdowns),
     );
-    const anyFilterOnGroup = eventSeries.some((e) =>
-      e.filters?.some((f) => f.name.startsWith('group.')),
-    );
-    const anyBreakdownOnGroup = breakdowns.some((b) =>
-      b.name.startsWith('group.'),
-    );
-    const needsGroupArrayJoin =
-      anyFilterOnGroup || anyBreakdownOnGroup || funnelGroup === 'group';
-
-    const cohortIds = collectBreakdownCohortIds(breakdowns);
-    const cohortMetadata = await fetchCohortsMetadata(cohortIds);
-
-    // Attribute each breakdown to its value at the user's FIRST funnel step,
-    // as a per-group aggregate (argMinIf) — not by adding it to the
-    // windowFunnel GROUP BY. Grouping the sequence by a per-row value splits
-    // a user's steps across buckets whenever the value isn't identical on
-    // every step (e.g. an experiment tag set on the entry event but absent
-    // on the conversion event): the later step lands in a separate bucket,
-    // the windowFunnel sequence never connects, and downstream steps show 0.
-    // Reading the entry-step value keeps each sequence intact in one bucket
-    // and matches standard funnel-breakdown semantics (segment by entry
-    // attribute).
-    //
-    // `group.*` breakdowns are the exception: their ARRAY JOIN fans each
-    // event out per group, and grouping by the group value is intentional —
-    // a user in three groups should appear in all three funnels. Those keep
-    // the per-row GROUP BY.
-    // Join only the referenced profile-property keys as scalar columns
-    // instead of every profile's whole properties Map — the join hash was
-    // carrying ~1KB of Map per profile and OOMing at scale (same narrowing
-    // as the chart profile CTE). Funnel conditions and breakdown expressions
-    // are rewritten to the scalar aliases below.
-    const profileProps = collectProfilePropertyKeys([
-      ...eventSeries.flatMap((e) => e.filters ?? []),
-      ...breakdowns,
-    ]);
-
-    const firstStepCondition = rewriteProfilePropertyRefs(
-      this.getFunnelConditions(eventSeries, projectId)[0]!,
-      profileProps.keys,
-    );
-    const breakdownSelects = breakdowns.map((b, index) => {
-      const bId = extractCohortId(b.name);
-      const bName = bId ? cohortMetadata.get(bId)?.name : undefined;
-      const expr = rewriteProfilePropertyRefs(
-        getSelectPropertyKey(b.name, projectId, bId ?? undefined, bName),
-        profileProps.keys,
-      );
-      if (b.name.startsWith('group.')) {
-        return `${expr} as b_${index}`;
-      }
-      return `argMinIf(${expr}, created_at, ${firstStepCondition}) as b_${index}`;
+    const { joins, scope } = eventJoins({
+      projectId,
+      timezone,
+      filters,
+      breakdowns,
+      groups: needsGroupJoin,
     });
-    const breakdownGroupBy = breakdowns.flatMap((b, index) =>
-      b.name.startsWith('group.') ? [`b_${index}`] : [],
-    );
+    const breakdownExpressions = breakdowns.map((b) => {
+      const cohortId = extractCohortId(b.name);
+      const cohort = cohortId
+        ? { id: cohortId, name: cohortMetadata.get(cohortId)?.name }
+        : undefined;
+      return {
+        expression: eventPropertyExpr(b.name, scope, cohort),
+        perRow: b.name.startsWith('group.'),
+      };
+    });
 
-    const funnelCte = this.buildFunnelCte({
+    const query = clix(timezone);
+    for (const cte of this.buildFunnelCte({
       projectId,
       startDate,
       endDate,
       eventSeries,
       funnelWindowMilliseconds,
       timezone,
-      additionalSelects: breakdownSelects,
-      additionalGroupBy: breakdownGroupBy,
       group,
-      profilePropertyKeys: profileProps.keys,
-    });
-
-    // The profile join has to cover breakdowns as well as filters — a
-    // `profile.*` breakdown renders `profile.properties[...]` into the select,
-    // so the alias must exist in scope even when no filter touches profiles.
-    if (anyFilterOnProfile || profileBreakdowns.length > 0) {
-      // Scalar columns (email etc.) are selected as-is; the properties Map is
-      // narrowed to the referenced keys via profilePropertiesCteSelect.
-      // Column names are identifiers and cannot be escaped: only allowlisted
-      // profile columns may be selected. The properties Map is added below
-      // via profilePropertiesCteSelect instead.
-      const profileFields = new Set<string>(
-        profileJoinColumns(profileFilters).filter((c) => c !== 'properties'),
-      );
-      for (const b of profileBreakdowns) {
-        const fieldName = b.name.replace('profile.', '').split('.')[0];
-        if (
-          [
-            'email',
-            'first_name',
-            'last_name',
-            'created_at',
-            'last_seen_at',
-          ].includes(fieldName!)
-        ) {
-          profileFields.add(fieldName!);
-        }
-      }
-      const selectColumns = Array.from(profileFields);
-      const referencesProperties =
-        profileFilters.some((f) => f.startsWith('properties')) ||
-        profileBreakdowns.some((b) =>
-          b.name.startsWith('profile.properties'),
-        );
-      if (referencesProperties) {
-        selectColumns.push(
-          profilePropertiesCteSelect(
-            profileProps.keys,
-            profileProps.needsFullMap,
-          ),
-        );
-      }
-      funnelCte.leftJoin(
-        `(SELECT ${selectColumns.join(', ')} FROM ${TABLE_NAMES.profiles} FINAL
-          WHERE project_id = ${sqlstring.escape(projectId)}) as profile`,
-        'profile.id = events.profile_id',
-      );
+      joins,
+      scope,
+      breakdownExpressions,
+    })) {
+      query.with(cte.name, cte.query);
     }
-
-    if (needsGroupArrayJoin) {
-      funnelCte.rawJoin('ARRAY JOIN groups AS _group_id');
-      funnelCte.rawJoin('LEFT ANY JOIN _g ON _g.id = _group_id');
-    }
-
-    // A cohort breakdown renders `cohort_<id>.profile_id`, so every cohort
-    // referenced by a breakdown needs its join.
-    for (const cohortId of cohortIds) {
-      funnelCte.rawJoin(buildInlineCohortJoin(cohortId, projectId, 'events'));
-    }
-
-    const query = clix(this.client, timezone);
-
-    if (needsGroupArrayJoin) {
-      query.with(
-        '_g',
-        `SELECT id, name, type, properties FROM ${TABLE_NAMES.groups} FINAL WHERE project_id = ${sqlstring.escape(projectId)}`,
-      );
-    }
-
-    query.with('session_funnel', funnelCte);
 
     return { query, eventSeries, breakdowns, group };
   }
@@ -504,7 +466,7 @@ export class FunnelService {
       }>([
         'level',
         ...breakdowns.map((b, index) => `b_${index}`),
-        'count() as count',
+        'count(*) AS count',
       ])
       .from('funnel')
       .groupBy(['level', ...breakdowns.map((b, index) => `b_${index}`)])
@@ -598,7 +560,7 @@ export class FunnelService {
   }
 }
 
-export const funnelService = new FunnelService(ch);
+export const funnelService = new FunnelService();
 
 import { getSettingsForProject } from './organization.service';
 
