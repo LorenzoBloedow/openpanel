@@ -1,4 +1,3 @@
-import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
 import { getCompareData } from '@/lib/compare';
 import { getFeatureData } from '@/lib/features';
@@ -207,8 +206,11 @@ export async function GET(
     // Get background image URL
     const backgroundImageUrl = baseUrl('/ogimage-empty.png');
 
-    // Fetch Geist font files from CDN (cache fonts for better performance)
-    const [geistRegular, geistBold] = await Promise.all([
+    // next/og (satori + resvg, both WASM) is imported on first use so that
+    // only this route pays for loading it, not every Worker cold start.
+    // Geist font files come from the CDN alongside it.
+    const [{ ImageResponse }, geistRegular, geistBold] = await Promise.all([
+      import('next/og'),
       fetch(
         'https://cdn.jsdelivr.net/npm/geist@1.5.1/dist/fonts/geist-sans/Geist-Regular.ttf'
       ).then((res) => res.arrayBuffer()),

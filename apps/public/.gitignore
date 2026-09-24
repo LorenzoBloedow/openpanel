@@ -7,8 +7,10 @@
 # test & build
 /coverage
 /.next/
+/.vinext/
 /out/
 /build
+/dist
 *.tsbuildinfo
 
 # misc
@@ -22,5 +24,6 @@ yarn-error.log*
 
 # others
 .env*.local
+.dev.vars*
 .vercel
 next-env.d.ts

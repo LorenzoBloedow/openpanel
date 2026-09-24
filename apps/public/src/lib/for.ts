@@ -1,5 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { collectBySlug } from './content-json';
 
 export interface ForSeo {
   title: string;
@@ -84,31 +83,18 @@ export interface ForData {
   };
 }
 
-const contentDir = join(process.cwd(), 'content', 'for');
+const forBySlug: Map<string, ForData> = collectBySlug(
+  import.meta.glob<Omit<ForData, 'url'>>('/content/for/*.json', {
+    eager: true,
+    import: 'default',
+  }),
+  '/for',
+);
 
 export async function getForData(slug: string): Promise<ForData | null> {
-  try {
-    const filePath = join(contentDir, `${slug}.json`);
-    const fileContents = readFileSync(filePath, 'utf8');
-    const data = JSON.parse(fileContents) as ForData;
-    return {
-      ...data,
-      url: `/for/${slug}`,
-    };
-  } catch (error) {
-    console.error(`Error loading for data for ${slug}:`, error);
-    return null;
-  }
+  return forBySlug.get(slug) ?? null;
 }
 
 export async function getAllForSlugs(): Promise<string[]> {
-  try {
-    const files = readdirSync(contentDir);
-    return files
-      .filter((file) => file.endsWith('.json'))
-      .map((file) => file.replace('.json', ''));
-  } catch (error) {
-    console.error('Error reading for directory:', error);
-    return [];
-  }
+  return [...forBySlug.keys()];
 }

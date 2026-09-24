@@ -6,13 +6,14 @@ import {
 } from 'fumadocs-openapi/server';
 import { apiRefCollection } from 'collections/server';
 import { toFumadocsSource } from 'fumadocs-mdx/runtime/server';
-import path from 'node:path';
 import { cache } from 'react';
 
 const API_URL =
   process.env.NODE_ENV === 'production'
     ? 'https://api.openpanel.dev'
     : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333');
+
+const FILE_EXTENSION = /\.[^./]+$/;
 
 export const openapi = createOpenAPI({
   input: [`${API_URL}/documentation/json`],
@@ -32,7 +33,9 @@ export const getApiReferenceSource = cache(async () => {
   // OpenAPI-generated root meta.json (which only lists the tag groups).
   const staticSlugs = staticSource.files
     .filter((f): f is typeof f & { type: 'page' } => f.type === 'page')
-    .map((f) => path.basename(f.path, path.extname(f.path)));
+    .map((f) =>
+      f.path.slice(f.path.lastIndexOf('/') + 1).replace(FILE_EXTENSION, ''),
+    );
 
   // Inject static page slugs at the top of the root meta.json that
   // openapiSource generates for the tag separator groups.

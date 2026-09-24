@@ -1,19 +1,18 @@
 # public
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
-
-Run development server:
+The openpanel.dev marketing and documentation site. It is a Next.js App Router
+application built with [vinext](https://vinext.dev) (Next.js APIs on Vite) and
+deployed to Cloudflare Workers through `@cloudflare/vite-plugin`. Content comes
+from [Fumadocs](https://fumadocs.dev).
 
 ```bash
-npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+pnpm dev          # vinext dev server on http://localhost:9090 (runs in workerd)
+pnpm build        # vinext build -> dist/ (Worker + static assets)
+pnpm preview      # serve the built Worker locally
+pnpm run deploy   # build, then `wrangler deploy` the generated dist/server/wrangler.json
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+Worker settings live in `wrangler.jsonc`.
 
 ## Explore
 
@@ -41,5 +40,5 @@ resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
   features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [vinext Documentation](https://vinext.dev/docs) - what vinext supports.
 - [Fumadocs](https://fumadocs.dev) - learn about Fumadocs

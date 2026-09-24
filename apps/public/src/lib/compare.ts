@@ -1,5 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { collectBySlug } from './content-json';
 
 export interface CompareSeo {
   title: string;
@@ -200,33 +199,24 @@ export interface CompareData {
   };
 }
 
-const contentDir = join(process.cwd(), 'content', 'compare');
+const compareBySlug: Map<string, CompareData> = collectBySlug(
+  import.meta.glob<Omit<CompareData, 'url'>>('/content/compare/*.json', {
+    eager: true,
+    import: 'default',
+  }),
+  '/compare',
+);
 
 export async function getCompareData(
   slug: string,
 ): Promise<CompareData | null> {
-  try {
-    const filePath = join(contentDir, `${slug}.json`);
-    const fileContents = readFileSync(filePath, 'utf8');
-    const data = JSON.parse(fileContents) as CompareData;
-    return {
-      ...data,
-      url: `/compare/${slug}`,
-    };
-  } catch (error) {
-    console.error(`Error loading compare data for ${slug}:`, error);
-    return null;
-  }
+  return compareBySlug.get(slug) ?? null;
 }
 
 export async function getAllCompareSlugs(): Promise<string[]> {
-  try {
-    const files = readdirSync(contentDir);
-    return files
-      .filter((file) => file.endsWith('.json'))
-      .map((file) => file.replace('.json', ''));
-  } catch (error) {
-    console.error('Error reading compare directory:', error);
-    return [];
-  }
+  return [...compareBySlug.keys()];
+}
+
+export function getAllCompareData(): CompareData[] {
+  return [...compareBySlug.values()];
 }
