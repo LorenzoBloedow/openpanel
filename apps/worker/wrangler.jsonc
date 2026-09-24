@@ -4,7 +4,7 @@
   // crons and Workflows. Everything here is background work, so it talks to
   // Neon over the direct route only (DATABASE_URL: Neon's *pooled*
   // endpoint) — no Hyperdrive binding. Ids are placeholders that
-  // scripts/cloudflare/setup.ts fills in; no account_id is committed.
+  // tooling/cloudflare/src/setup.ts fills in; no account_id is committed.
   "name": "openpanel-worker",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-15",
@@ -68,7 +68,7 @@
   ],
 
   // Backups (gzipped JSONL + manifest per night). Lifecycle rules on the
-  // bucket are set by scripts/cloudflare/setup.ts.
+  // bucket are set by tooling/cloudflare/src/setup.ts.
   "r2_buckets": [{ "binding": "BACKUPS", "bucket_name": "openpanel-backups" }],
 
   // Cloudflare Email Service (digests, notification emails).

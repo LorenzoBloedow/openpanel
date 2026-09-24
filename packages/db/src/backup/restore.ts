@@ -10,7 +10,7 @@ import {
 
 /**
  * Restore a backup made by the Backup workflow into a migrated, empty
- * database (Node: scripts/cloudflare/restore.ts). Tables load in
+ * database (Node: tooling/cloudflare/src/restore.ts). Tables load in
  * foreign-key order; analytics.events replays its full export and every
  * incremental one up to the chosen date; identity/serial sequences are
  * moved past the restored rows.

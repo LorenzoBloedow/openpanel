@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   // openpanel-api: ingestion, the dashboard's tRPC API, the public API and
   // the LiveHub Durable Object. Ids below are placeholders that
-  // scripts/cloudflare/setup.ts fills in; no account_id is committed.
+  // tooling/cloudflare/src/setup.ts fills in; no account_id is committed.
   "name": "openpanel-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-15",

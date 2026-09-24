@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   // openpanel-dashboard: the TanStack Start dashboard (SSR + assets). SSR
   // reaches the API through the API service binding. No account_id or
-  // routes are committed; scripts/cloudflare/setup.ts and deploy.ts handle
+  // routes are committed; tooling/cloudflare/src/setup.ts and deploy.ts handle
   // the account and custom domains.
   "name": "openpanel-dashboard",
   "compatibility_date": "2026-09-15",

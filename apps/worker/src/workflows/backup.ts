@@ -34,7 +34,7 @@ function positiveInt(value: string | undefined, fallback: number) {
  * The nightly backup (Neon → R2): every table exported page by page, each
  * chunk of pages a durable step (a failure resumes at that chunk), then the
  * manifest, then pruning (BACKUP_RETENTION_DAYS). Restore with
- * scripts/cloudflare/restore.ts.
+ * tooling/cloudflare/src/restore.ts.
  */
 export class BackupWorkflow extends WorkflowEntrypoint<Env, BackupParams> {
   async run(event: WorkflowEvent<BackupParams>, step: WorkflowStep) {
