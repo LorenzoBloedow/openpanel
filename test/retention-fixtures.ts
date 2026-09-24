@@ -1,5 +1,5 @@
 /**
- * Deterministic ClickHouse fixture for retention-cohort tests.
+ * Deterministic Postgres fixture for retention-cohort tests.
  *
  * Unlike `test/fixtures.ts` (which anchors events to `new Date()`), this fixture
  * places every event on a FIXED absolute date so the expected cohort matrix is a
@@ -8,7 +8,8 @@
  *
  * ---------------------------------------------------------------------------
  * Dataset (all events are name `app_open` unless noted; device_id != profile_id
- * so they survive the cohort_events_mv `profile_id != device_id` filter)
+ * so they land in the profile_event_days rollup, which only keeps identified
+ * profiles)
  * ---------------------------------------------------------------------------
  *
  * DAY scenario — window 2024-03-04 .. 2024-03-06 (D0, D1, D2)
@@ -30,10 +31,18 @@
  *
  *   => single cohort (week of 2024-12-29), size 2
  *
- * Use a per-suite projectId so suites can run concurrently.
+ * Use a per-suite projectId so suites can share a database.
  */
 
-import { createClient } from '../packages/db/src/clickhouse/client';
+import type { Queryable } from '../packages/db/src/analytics/client';
+import { anQuery } from '../packages/db/src/analytics/client';
+import { rebuildRollups } from '../packages/db/src/analytics/rollups';
+import { sql } from '../packages/db/src/analytics/sql';
+import {
+  type EventWriteRow,
+  insertCohortMembers,
+  insertEvents,
+} from '../packages/db/src/analytics/writers';
 
 // ---------------------------------------------------------------------------
 // Well-known ids + absolute dates
@@ -93,7 +102,7 @@ export const RETENTION_BLUEPRINT = {
     { cohort_interval: '2024-03-05', sum: 2, values: [2, 1, 0] },
   ],
   // app_open self-retention, day, criteria on, scoped to cohort {RU1, RU4}.
-  // inCohort only needs profile_id -> stays on the fast cohort_events_mv path.
+  // inCohort only needs profile_id -> stays on the profile_event_days path.
   cohortOn: [
     { cohort_interval: '2024-03-04', sum: 1, values: [1, 1, 1] },
     { cohort_interval: '2024-03-05', sum: 1, values: [1, 1, 0] },
@@ -113,13 +122,6 @@ export const RETENTION_BLUEPRINT = {
 // Builders
 // ---------------------------------------------------------------------------
 
-type ChClient = ReturnType<typeof createClient>;
-
-function getClient(): ChClient {
-  const url = process.env.CLICKHOUSE_URL ?? 'http://localhost:8123';
-  return createClient({ url });
-}
-
 let eventSeq = 0;
 
 function buildEvent(
@@ -127,8 +129,8 @@ function buildEvent(
   profileId: string,
   name: string,
   createdAt: string,
-  overrides: Record<string, unknown> = {}
-) {
+  overrides: Partial<EventWriteRow> = {}
+): EventWriteRow {
   eventSeq += 1;
   return {
     // Deterministic, collision-free uuid in the retention namespace
@@ -141,25 +143,12 @@ function buildEvent(
     created_at: createdAt,
     path: '/',
     origin: 'https://example.com',
-    referrer: '',
-    referrer_name: '',
-    referrer_type: '',
-    revenue: 0,
-    duration: 0,
     properties: {},
-    groups: [],
     country: 'US',
-    city: '',
-    region: '',
     sdk_name: 'web',
     sdk_version: '1.0.0',
-    os: '',
-    os_version: '',
     browser: 'Chrome',
-    browser_version: '',
     device: 'desktop',
-    brand: '',
-    model: '',
     ...overrides,
   };
 }
@@ -195,10 +184,6 @@ function buildEvents(projectId: string) {
   ];
 }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
 function buildCohortMembers(projectId: string) {
   return RETENTION_FIXTURE.cohort.members.map((profileId) => ({
     project_id: projectId,
@@ -210,48 +195,49 @@ function buildCohortMembers(projectId: string) {
   }));
 }
 
-async function deleteFixtures(client: ChClient, projectId: string) {
-  await Promise.all([
-    client.command({
-      query: `DELETE FROM openpanel.events WHERE project_id = '${projectId}'`,
-    }),
-    // Materialized views are NOT touched by DELETE FROM events; mutate them too
-    // so reruns stay clean.
-    client.command({
-      query: `ALTER TABLE openpanel.cohort_events_mv DELETE WHERE project_id = '${projectId}'`,
-    }),
-    client.command({
-      query: `DELETE FROM openpanel.cohort_members WHERE project_id = '${projectId}'`,
-    }),
-  ]);
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+async function deleteFixtures(projectId: string, client?: Queryable) {
+  for (const table of ['events', 'cohort_members']) {
+    await anQuery(
+      `DELETE FROM analytics.${table} WHERE project_id = $1`,
+      [projectId],
+      client
+    );
+  }
+  // Clears the project's rollups too.
+  await rebuildRollups(projectId, client);
 }
 
-export async function setupRetentionFixtures(projectId: string): Promise<void> {
-  const client = getClient();
-  try {
-    await deleteFixtures(client, projectId);
-    await client.insert({
-      table: 'openpanel.events',
-      values: buildEvents(projectId),
-      format: 'JSONEachRow',
-    });
-    await client.insert({
-      table: 'openpanel.cohort_members',
-      values: buildCohortMembers(projectId),
-      format: 'JSONEachRow',
-    });
-  } finally {
-    await client.close();
-  }
+/**
+ * Load the fixture for `projectId` into the database of the current scope
+ * (events, the cohort, and the rollups the ingest consumer would maintain).
+ */
+export async function setupRetentionFixtures(
+  projectId: string,
+  client?: Queryable
+): Promise<void> {
+  await deleteFixtures(projectId, client);
+  await insertEvents(buildEvents(projectId), client);
+  await insertCohortMembers(buildCohortMembers(projectId), client);
+  await rebuildRollups(projectId, client);
 }
 
 export async function teardownRetentionFixtures(
-  projectId: string
+  projectId: string,
+  client?: Queryable
 ): Promise<void> {
-  const client = getClient();
-  try {
-    await deleteFixtures(client, projectId);
-  } finally {
-    await client.close();
-  }
+  await deleteFixtures(projectId, client);
+}
+
+/** The fixture's rollup rows, for tests that look beneath the engine. */
+export function profileEventDays(projectId: string, name: string) {
+  return anQuery<{ day: string; profile_id: string }>(sql`
+    SELECT day::text AS day, profile_id
+    FROM analytics.profile_event_days
+    WHERE project_id = ${projectId} AND name = ${name}
+    ORDER BY day, profile_id
+  `);
 }
