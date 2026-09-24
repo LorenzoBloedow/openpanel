@@ -167,14 +167,25 @@ export function toUtcIso(value: string | Date | null | undefined): string | null
   return `${value.replace(' ', 'T')}Z`;
 }
 
-/** ClickHouse Map(String, String) semantics: values stored as strings. */
-function toStringMap(properties: Record<string, unknown>): Record<string, string> {
+/**
+ * ClickHouse Map(String, String) semantics: every value is a string. Nested
+ * objects and arrays are kept as JSON text, the way ClickHouse's JSON input
+ * stored them (input_format_json_read_objects_as_strings).
+ */
+export function toStringMap(
+  properties: Record<string, unknown>,
+): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [key, value] of Object.entries(properties)) {
     if (value === undefined || value === null) {
       continue;
     }
-    out[key] = typeof value === 'string' ? value : String(value);
+    out[key] =
+      typeof value === 'string'
+        ? value
+        : typeof value === 'object'
+          ? JSON.stringify(value)
+          : String(value);
   }
   return out;
 }

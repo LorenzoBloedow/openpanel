@@ -1137,6 +1137,9 @@ importers:
       '@clickhouse/client':
         specifier: ^1.18.5
         version: 1.18.5
+      '@noble/hashes':
+        specifier: ^2.4.0
+        version: 2.4.0
       '@openpanel/common':
         specifier: workspace:*
         version: link:../common

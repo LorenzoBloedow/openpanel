@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@clickhouse/client": "^1.18.5",
+    "@noble/hashes": "^2.4.0",
     "@openpanel/common": "workspace:*",
     "@openpanel/constants": "workspace:*",
     "@openpanel/json": "workspace:*",
