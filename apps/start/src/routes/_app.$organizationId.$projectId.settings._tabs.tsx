@@ -7,6 +7,7 @@ import {
 import FullPageLoadingState from '@/components/full-page-loading-state';
 import { PageHeader } from '@/components/page-header';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAppContext } from '@/hooks/use-app-context';
 import { createProjectTitle, PAGE_TITLES } from '@/utils/title';
 
 export const Route = createFileRoute(
@@ -36,6 +37,7 @@ export const Route = createFileRoute(
 function ProjectDashboard() {
   const router = useRouter();
   const location = useLocation();
+  const { features } = useAppContext();
   const tab = location.pathname.split('/').pop();
 
   const settingsTabs = [
@@ -43,9 +45,9 @@ function ProjectDashboard() {
     { id: 'events', label: 'Events' },
     { id: 'clients', label: 'Clients / API keys' },
     { id: 'tracking', label: 'Tracking script' },
-    { id: 'mcp', label: 'MCP' },
+    ...(features.mcp ? [{ id: 'mcp', label: 'MCP' }] : []),
     { id: 'widgets', label: 'Widgets' },
-    { id: 'imports', label: 'Imports' },
+    ...(features.importers ? [{ id: 'imports', label: 'Imports' }] : []),
     { id: 'gsc', label: 'Google Search' },
   ];
 

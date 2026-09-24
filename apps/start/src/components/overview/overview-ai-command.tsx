@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { chatToolHandlers } from '../chat/tool-handlers';
 import { Input } from '../ui/input';
 import { useOverviewOptions } from './useOverviewOptions';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useAppParams } from '@/hooks/use-app-params';
 import {
   useEventQueryFilters,
@@ -20,9 +21,18 @@ import { cn } from '@/utils/cn';
  *
  * `className` controls layout — caller passes the width / responsive
  * visibility it wants (e.g. compact `hidden w-[280px] md:block` in a
- * page header, `w-full` inside a filter sheet).
+ * page header, `w-full` inside a filter sheet). Renders nothing on
+ * deployments without AI.
  */
 export function OverviewAICommand({ className }: { className?: string }) {
+  const { features } = useAppContext();
+  if (!features.ai) {
+    return null;
+  }
+  return <AICommandBar className={className} />;
+}
+
+function AICommandBar({ className }: { className?: string }) {
   const { projectId, organizationId } = useAppParams();
   const { range, startDate, endDate, interval } = useOverviewOptions();
   const [eventNames] = useEventQueryNamesFilter();

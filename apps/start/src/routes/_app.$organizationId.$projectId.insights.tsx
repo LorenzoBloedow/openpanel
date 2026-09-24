@@ -26,6 +26,7 @@ import { PAGE_TITLES, createProjectTitle } from '@/utils/title';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useMemo } from 'react';
 
 export const Route = createFileRoute(
@@ -103,6 +104,8 @@ function Component() {
     'direction',
     parseAsStringEnum(['all', 'up', 'down', 'flat']).withDefault('all'),
   );
+  const { features } = useAppContext();
+  // Relevance comes from AI enrichment; without AI every score is empty.
   const [sortBy, setSortBy] = useQueryState(
     'sort',
     parseAsStringEnum<SortOption>([
@@ -112,7 +115,7 @@ function Component() {
       'severity-desc',
       'severity-asc',
       'recent',
-    ]).withDefault('relevance'),
+    ]).withDefault(features.ai ? 'relevance' : 'impact-desc'),
   );
 
   const filteredAndSorted = useMemo(() => {
@@ -358,7 +361,7 @@ function Component() {
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="relevance">Relevance (AI)</SelectItem>
+            {features.ai && <SelectItem value="relevance">Relevance (AI)</SelectItem>}
             <SelectItem value="impact-desc">Impact (High → Low)</SelectItem>
             <SelectItem value="impact-asc">Impact (Low → High)</SelectItem>
             <SelectItem value="severity-desc">Severity (High → Low)</SelectItem>

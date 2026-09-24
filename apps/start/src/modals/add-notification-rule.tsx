@@ -24,6 +24,7 @@ import { ComboboxAdvanced } from '@/components/ui/combobox-advanced';
 import { ComboboxEvents } from '@/components/ui/combobox-events';
 import { SheetContent } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useAppParams } from '@/hooks/use-app-params';
 import { useEventNames } from '@/hooks/use-event-names';
 import { useEventProperties } from '@/hooks/use-event-properties';
@@ -36,7 +37,11 @@ interface Props {
 
 type IForm = z.infer<typeof zCreateNotificationRule>;
 
+/** In-app and email delivery: available on every deployment. */
+const BUILT_IN_TARGETS = new Set(['app', 'email']);
+
 export default function AddNotificationRule({ rule }: Props) {
+  const { features } = useAppContext();
   const client = useQueryClient();
   const { projectId } = useAppParams();
   const form = useForm<IForm>({
@@ -99,8 +104,11 @@ export default function AddNotificationRule({ rule }: Props) {
 
   // Only notification sinks belong in a rule — export integrations (S3/GCS)
   // come back from the same list endpoint but have nothing to deliver to.
-  const integrations = (integrationsQuery.data ?? []).filter((integration) =>
-    isKind(integration.config, 'notification'),
+  // Without integrations (Cloudflare) only the built-in targets remain.
+  const integrations = (integrationsQuery.data ?? []).filter(
+    (integration) =>
+      isKind(integration.config, 'notification') &&
+      (features.integrations || BUILT_IN_TARGETS.has(integration.config.type)),
   );
 
   return (

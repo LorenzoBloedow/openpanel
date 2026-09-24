@@ -2,6 +2,7 @@ import { countries } from '@/translations/countries';
 import type { RouterOutputs } from '@/trpc/client';
 import { cn } from '@/utils/cn';
 import type { InsightPayload } from '@openpanel/validation';
+import { useAppContext } from '@/hooks/use-app-context';
 import { pushModal } from '@/modals';
 import {
   ArrowDown,
@@ -40,6 +41,7 @@ export function InsightCard({
   className,
   onFilter,
 }: InsightCardProps) {
+  const { features } = useAppContext();
   const payload = insight.payload;
   const dimensions = payload?.dimensions;
   const availableMetrics = Object.entries(payload?.metrics ?? {});
@@ -213,12 +215,12 @@ export function InsightCard({
 
         <Button
           className="-ml-2 mt-2 h-7 self-start px-2 text-muted-foreground text-xs"
-          icon={SparklesIcon}
+          icon={features.ai ? SparklesIcon : undefined}
           onClick={() => pushModal('InsightDetails', { insight })}
           size="sm"
           variant="ghost"
         >
-          Why did this happen?
+          {features.ai ? 'Why did this happen?' : 'Details'}
         </Button>
       </div>
     </div>

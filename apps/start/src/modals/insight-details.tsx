@@ -2,6 +2,7 @@ import { DeltaChip } from '@/components/delta-chip';
 import { ReportChart } from '@/components/report-chart';
 import { Badge } from '@/components/ui/badge';
 import { SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useTRPC } from '@/integrations/trpc/react';
 import type { RouterOutputs } from '@/trpc/client';
 import { cn } from '@/utils/cn';
@@ -91,6 +92,7 @@ function buildInsightReport(insight: Insight): IReportInput | null {
  */
 export default function InsightDetails({ insight }: { insight: Insight }) {
   const trpc = useTRPC();
+  const { features } = useAppContext();
   const [explanation, setExplanation] = useState<Explanation>(null);
 
   const mutation = useMutation(
@@ -99,10 +101,13 @@ export default function InsightDetails({ insight }: { insight: Insight }) {
     }),
   );
 
-  // Fetch the explanation once when the sheet opens.
+  // Fetch the explanation once when the sheet opens (deployments without
+  // AI show the metric and trend only).
   // biome-ignore lint/correctness/useExhaustiveDependencies: run once on mount
   useEffect(() => {
-    mutation.mutate({ insightId: insight.id });
+    if (features.ai) {
+      mutation.mutate({ insightId: insight.id });
+    }
   }, []);
 
   // Primary metric (mirrors the card's selection).
@@ -179,6 +184,7 @@ export default function InsightDetails({ insight }: { insight: Insight }) {
         </div>
       )}
 
+      {features.ai && (
       <div>
         <div className="mb-2 flex items-center gap-2 font-medium text-sm">
           <SparklesIcon className="size-4" /> Why did this happen?
@@ -218,6 +224,7 @@ export default function InsightDetails({ insight }: { insight: Insight }) {
           </p>
         )}
       </div>
+      )}
     </SheetContent>
   );
 }

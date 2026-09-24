@@ -4,6 +4,7 @@ import FullPageLoadingState from '@/components/full-page-loading-state';
 import { LogoSquare } from '@/components/logo';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useLogout } from '@/hooks/use-logout';
 import { useNumber } from '@/hooks/use-numer-formatter';
 import { useTRPC } from '@/integrations/trpc/react';
@@ -53,6 +54,7 @@ function LandingPage() {
     trpc.organization.list.queryOptions()
   );
   const number = useNumber();
+  const { features } = useAppContext();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
@@ -81,8 +83,12 @@ function LandingPage() {
               </div>
               <span>
                 {number.format(org.subscriptionPeriodEventsCount)}
-                <span className="mx-1 opacity-50">/</span>
-                {number.format(org.subscriptionPeriodEventsLimit)}
+                {features.billing && (
+                  <>
+                    <span className="mx-1 opacity-50">/</span>
+                    {number.format(org.subscriptionPeriodEventsLimit)}
+                  </>
+                )}
               </span>
             </Link>
           ))}

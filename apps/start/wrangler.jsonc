@@ -23,6 +23,7 @@
     "FEATURE_AI": "false",
     "FEATURE_INTEGRATIONS": "false",
     "FEATURE_IMPORTERS": "false",
-    "FEATURE_BILLING": "false"
+    "FEATURE_BILLING": "false",
+    "FEATURE_MCP": "false"
   }
 }

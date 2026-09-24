@@ -1,6 +1,6 @@
 import { IMPORT_PROVIDERS } from '@openpanel/importer/providers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
 import {
   CheckCircleIcon,
@@ -36,6 +36,12 @@ export const Route = createFileRoute(
   '/_app/$organizationId/$projectId/settings/_tabs/imports'
 )({
   component: ImportsSettings,
+  beforeLoad: ({ context, params }) => {
+    // Importers aren't available on this deployment.
+    if (!context.features?.importers) {
+      throw redirect({ to: '/$organizationId/$projectId/settings/details', params });
+    }
+  },
 });
 
 function ImportsSettings() {

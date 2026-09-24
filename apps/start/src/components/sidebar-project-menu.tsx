@@ -35,6 +35,7 @@ import {
 } from './ui/dropdown-menu';
 import { useChatState } from '@/components/chat/chat-context';
 import { SidebarChatComposer } from '@/components/chat/sidebar-chat-composer';
+import { useAppContext } from '@/hooks/use-app-context';
 import { pushModal } from '@/modals';
 import { cn } from '@/utils/cn';
 
@@ -45,9 +46,10 @@ interface SidebarProjectMenuProps {
 export default function SidebarProjectMenu({
   dashboards,
 }: SidebarProjectMenuProps) {
+  const { features } = useAppContext();
   return (
     <>
-      <SidebarChatComposer />
+      {features.ai && <SidebarChatComposer />}
       <div className="mb-2 font-medium text-muted-foreground text-sm">
         Analytics
       </div>
@@ -86,12 +88,14 @@ export default function SidebarProjectMenu({
         icon={BellIcon}
         label="Notifications"
       />
-      <SidebarLink
-        exact={false}
-        href={'/integrations'}
-        icon={WorkflowIcon}
-        label="Integrations"
-      />
+      {features.integrations && (
+        <SidebarLink
+          exact={false}
+          href={'/integrations'}
+          icon={WorkflowIcon}
+          label="Integrations"
+        />
+      )}
       <SidebarLink href={'..'} icon={UndoDotIcon} label="Back to workspace" />
     </>
   );
@@ -100,6 +104,7 @@ export default function SidebarProjectMenu({
 export function ActionCTAButton() {
   const navigate = useNavigate();
   const { openChatForContext } = useChatState();
+  const { features } = useAppContext();
 
   const ACTIONS = [
     {
@@ -116,11 +121,15 @@ export function ActionCTAButton() {
       icon: BookOpenIcon,
       onClick: () => pushModal('AddReference'),
     },
-    {
-      label: 'Ask AI',
-      icon: SparklesIcon,
-      onClick: () => openChatForContext(),
-    },
+    ...(features.ai
+      ? [
+          {
+            label: 'Ask AI',
+            icon: SparklesIcon,
+            onClick: () => openChatForContext(),
+          },
+        ]
+      : []),
     {
       label: 'Create dashboard',
       icon: LayoutDashboardIcon,

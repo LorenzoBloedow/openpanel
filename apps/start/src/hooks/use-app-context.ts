@@ -1,4 +1,13 @@
 import { useRouteContext } from '@tanstack/react-router';
+import type { PlatformFeatures } from '@/server/get-envs';
+
+const NO_FEATURES: PlatformFeatures = {
+  ai: false,
+  integrations: false,
+  importers: false,
+  billing: false,
+  mcp: false,
+};
 
 export function useAppContext() {
   const params = useRouteContext({
@@ -18,5 +27,6 @@ export function useAppContext() {
     isSelfHosted: params.isSelfHosted,
     isMaintenance: params.isMaintenance ?? false,
     isDemo: params.isDemo ?? false,
+    features: params.features ?? NO_FEATURES,
   };
 }

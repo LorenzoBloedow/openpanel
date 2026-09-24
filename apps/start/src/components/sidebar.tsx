@@ -78,7 +78,7 @@ export function SidebarContainer({
 }: SidebarContainerProps) {
   const [active, setActive] = useState(false);
   const location = useLocation();
-  const { isSelfHosted } = useAppContext();
+  const { isSelfHosted, features } = useAppContext();
   const { projectId } = useParams({ strict: false });
   const { isOpen: chatOpen, openChatForContext, closeChat } = useChatState();
 
@@ -145,7 +145,7 @@ export function SidebarContainer({
               >
                 Docs
               </a>
-              {projectId && (
+              {projectId && features.ai && (
                 <button
                   type="button"
                   onClick={() =>

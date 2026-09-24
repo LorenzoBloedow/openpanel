@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 import { ExternalLinkIcon, PlusIcon } from 'lucide-react';
 import CopyInput from '@/components/forms/copy-input';
 import Syntax from '@/components/syntax';
@@ -17,6 +17,12 @@ export const Route = createFileRoute(
   '/_app/$organizationId/$projectId/settings/_tabs/mcp',
 )({
   component: Component,
+  beforeLoad: ({ context, params }) => {
+    // MCP isn't served on this deployment.
+    if (!context.features?.mcp) {
+      throw redirect({ to: '/$organizationId/$projectId/settings/details', params });
+    }
+  },
 });
 
 const TOKEN_PLACEHOLDER = 'BASE64_TOKEN';

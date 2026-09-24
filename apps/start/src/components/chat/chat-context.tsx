@@ -15,6 +15,7 @@ import {
   isValidModelId,
   MODEL_STORAGE_KEY,
 } from '@/agents/models';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useTRPC } from '@/integrations/trpc/react';
 
 /**
@@ -115,16 +116,19 @@ export function ChatStateProvider({ children }: { children: ReactNode }) {
   // `chat.models` query already filters by which provider keys are set, so
   // an empty `models` array means no OpenAI/Anthropic key and we render the
   // setup-instructions empty state. No need to leak env vars to the client.
+  const { features } = useAppContext();
   const modelsQuery = useQuery(
     trpc.chat.models.queryOptions(undefined, {
-      enabled: !!session?.session,
+      // Deployments without AI (Cloudflare) never ask.
+      enabled: features.ai && !!session?.session,
     })
   );
   const models = modelsQuery.data?.models ?? [];
   const defaultModelId = modelsQuery.data?.defaultModelId ?? null;
-  const isAiEnabled: boolean | null = modelsQuery.isPending
-    ? null
-    : models.length > 0;
+  let isAiEnabled: boolean | null = false;
+  if (features.ai) {
+    isAiEnabled = modelsQuery.isPending ? null : models.length > 0;
+  }
   // URL is the source of truth for the active conversation + drawer
   // open state. `chatParam`:
   //   - null         → drawer closed

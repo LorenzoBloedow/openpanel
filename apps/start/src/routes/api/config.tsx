@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { getServerEnvs } from '@/server/get-envs';
+import { type PlatformFeatures, getServerEnvs } from '@/server/get-envs';
 
 export interface ConfigResonse {
   apiUrl: string;
@@ -7,6 +7,7 @@ export interface ConfigResonse {
   isSelfHosted: boolean;
   isMaintenance: boolean;
   isDemo: boolean;
+  features: PlatformFeatures;
 }
 // Nothing sensitive here, its client environment variables which is good for debugging
 export const Route = createFileRoute('/api/config')({

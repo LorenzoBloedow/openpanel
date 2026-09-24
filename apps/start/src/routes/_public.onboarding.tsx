@@ -7,6 +7,7 @@ import { SignInGithub } from '@/components/auth/sign-in-github';
 import { SignInGoogle } from '@/components/auth/sign-in-google';
 import { SignUpEmailForm } from '@/components/auth/sign-up-email-form';
 import FullPageLoadingState from '@/components/full-page-loading-state';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useTRPC } from '@/integrations/trpc/react';
 import { createEntityTitle, PAGE_TITLES } from '@/utils/title';
 
@@ -44,6 +45,7 @@ export const Route = createFileRoute('/_public/onboarding')({
 });
 
 function Component() {
+  const { features } = useAppContext();
   const { inviteId } = Route.useSearch();
   const trpc = useTRPC();
   const { data: providers } = useSuspenseQuery(
@@ -143,9 +145,11 @@ function Component() {
                 <SignInGoogle inviteId={inviteId} type="sign-up" />
               )}
             </div>
-            <p className="text-center text-muted-foreground text-xs">
-              No credit card required · Free 30-day trial · Cancel anytime
-            </p>
+            {features.billing && (
+              <p className="text-center text-muted-foreground text-xs">
+                No credit card required · Free 30-day trial · Cancel anytime
+              </p>
+            )}
 
             <Or className="my-6" />
           </>

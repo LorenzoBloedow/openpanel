@@ -2,16 +2,18 @@ import { CopyIcon, DownloadIcon, RocketIcon } from 'lucide-react';
 import CopyInput from '../forms/copy-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { useAppContext } from '@/hooks/use-app-context';
 import { isRealClientSecret } from '@/hooks/use-client-secret';
 import { clipboard } from '@/utils/clipboard';
 
 type Props = { id: string; secret: string; type?: 'read' | 'write' | 'root' };
 
 export function CreateClientSuccess({ id, secret, type }: Props) {
+  const { features } = useAppContext();
   // Only derive credentials from a real secret — the '[CLIENT_SECRET]'
   // placeholder is truthy and would render a valid-looking but broken token.
   const hasSecret = isRealClientSecret(secret);
-  const mcpToken = hasSecret ? btoa(`${id}:${secret}`) : null;
+  const mcpToken = hasSecret && features.mcp ? btoa(`${id}:${secret}`) : null;
   const showMcpToken = !!mcpToken && (type === 'root' || type === 'read');
 
   const credentials = [

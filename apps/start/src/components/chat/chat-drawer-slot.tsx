@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { useAppContext } from '@/hooks/use-app-context';
 
 /**
  * Client-only mount wrapper for the chat drawer.
@@ -24,12 +25,17 @@ const ChatDrawer = lazy(() =>
 );
 
 export function ChatDrawerSlot() {
+  const { features } = useAppContext();
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) return null;
+  // Without AI on this deployment there is no drawer, no ⌘J and no
+  // ?chat= deep link.
+  if (!(mounted && features.ai)) {
+    return null;
+  }
   return (
     <Suspense fallback={null}>
       <ChatDrawer />

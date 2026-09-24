@@ -20,6 +20,13 @@ export const Route = createFileRoute('/_app/$organizationId/billing')({
     };
   },
   beforeLoad: async ({ params, context }) => {
+    // Self-hosted deployments have no billing.
+    if (!context.features?.billing) {
+      throw redirect({
+        to: '/$organizationId',
+        params: { organizationId: params.organizationId },
+      });
+    }
     const access = await context.queryClient.fetchQuery(
       context.trpc.organization.myAccess.queryOptions({
         organizationId: params.organizationId,

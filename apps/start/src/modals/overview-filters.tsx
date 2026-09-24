@@ -22,6 +22,7 @@ import { OriginFilter } from '@/components/overview/filters/origin-filter';
 import { OverviewAICommand } from '@/components/overview/overview-ai-command';
 import { PropertiesCombobox } from '@/components/report/sidebar/PropertiesCombobox';
 import { ComboboxEvents } from '@/components/ui/combobox-events';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useAppParams } from '@/hooks/use-app-params';
 import { cn } from '@/utils/cn';
 import { ModalHeader } from './Modal/Container';
@@ -48,6 +49,7 @@ export default function OverviewFilters({
   mode,
 }: OverviewFiltersProps) {
   const { projectId } = useAppParams();
+  const { features } = useAppContext();
   const [filters, setFilter, setFilters, removeFilter] =
     useEventQueryFilters(nuqsOptions);
   const [event, setEvent] = useEventQueryNamesFilter(nuqsOptions);
@@ -77,9 +79,13 @@ export default function OverviewFilters({
     <SheetContent className="[&>button.absolute]:hidden">
       <ModalHeader title="Filters" />
       <div className="flex flex-col gap-4">
-        <Heading icon={SparklesIcon} title="Ask AI" />
-        <OverviewAICommand className="w-full" />
-        <Seperator />
+        {features.ai && (
+          <>
+            <Heading icon={SparklesIcon} title="Ask AI" />
+            <OverviewAICommand className="w-full" />
+            <Seperator />
+          </>
+        )}
         <Heading icon={GlobeIcon} title="Origins" />
         <OriginFilter />
         <Seperator />

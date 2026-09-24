@@ -7,6 +7,7 @@ import { FullPageEmptyState } from '@/components/full-page-empty-state';
 import FullPageLoadingState from '@/components/full-page-loading-state';
 import ConnectWeb from '@/components/onboarding/connect-web';
 import { Button, LinkButton } from '@/components/ui/button';
+import { useAppContext } from '@/hooks/use-app-context';
 import { isRealClientSecret, useClientSecret } from '@/hooks/use-client-secret';
 import { useTRPC } from '@/integrations/trpc/react';
 import { clipboard } from '@/utils/clipboard';
@@ -42,6 +43,7 @@ function Component() {
   );
   const client = project?.clients[0];
   const [secret] = useClientSecret();
+  const { features } = useAppContext();
 
   if (!client) {
     return (
@@ -57,7 +59,8 @@ function Component() {
   // store a hash server-side). Never derive the MCP token — or print secret
   // lines — from the placeholder: that produces valid-looking broken values.
   const hasSecret = isRealClientSecret(secret);
-  const mcpToken = hasSecret ? btoa(`${client.id}:${secret}`) : null;
+  // No MCP server on deployments without it, so no token to hand out.
+  const mcpToken = hasSecret && features.mcp ? btoa(`${client.id}:${secret}`) : null;
   const credentials = [
     `CLIENT_ID=${client.id}`,
     hasSecret && `CLIENT_SECRET=${secret}`,
