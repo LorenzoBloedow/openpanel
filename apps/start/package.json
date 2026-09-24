@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm with-env vite dev --port 3000",
+    "testing": "pnpm dev",
     "preview": "vite preview",
     "deploy": "pnpm build && npx wrangler deploy",
     "cf-typegen": "wrangler types --strict-vars false",
