@@ -54,6 +54,33 @@ export function fromLocal(wallClock: string | Sql, ctx: TimeCtx): Sql {
 }
 
 /**
+ * {@link fromLocal}, except for the wall-clock times a DST change skips or
+ * repeats: ClickHouse's `toDateTime('…')` read those as the earlier of the
+ * two candidate instants, Postgres reads them as the later one. In
+ * Stockholm, 02:30 on the spring-forward day (skipped) and on the fall-back
+ * day (repeated) are both 00:30 UTC here and 01:30 UTC with fromLocal.
+ * Every other time is the same instant as fromLocal.
+ *
+ * The candidates are the wall clock read with the offset of the day before,
+ * its own day (Postgres' reading) and the day after. The result is the
+ * earliest one that shows the wall clock again in the zone; in a gap none
+ * does, and the earlier of the offsets around it wins. A plain expression,
+ * not a subquery, so the planner still sees the bound's value.
+ */
+export function fromLocalEarliest(wallClock: string | Sql, ctx: TimeCtx): Sql {
+  const local = sql`(${wallClock})::timestamp`;
+  const zone = sql`${ctx.timezone}::text`;
+  const withDayBefore = sql`(((${local} - interval '1 day') AT TIME ZONE ${zone}) + interval '1 day')`;
+  const withOwnDay = sql`(${local} AT TIME ZONE ${zone})`;
+  const withDayAfter = sql`(((${local} + interval '1 day') AT TIME ZONE ${zone}) - interval '1 day')`;
+  const ifShowsWallClock = (instant: Sql) =>
+    sql`CASE WHEN (${instant} AT TIME ZONE ${zone}) = ${local} THEN ${instant} END`;
+  return sql`COALESCE(
+    LEAST(${ifShowsWallClock(withDayBefore)}, ${ifShowsWallClock(withOwnDay)}),
+    LEAST(${withDayBefore}, ${withDayAfter}))`;
+}
+
+/**
  * Start of the `unit` containing `instant`, as project wall-clock time —
  * ClickHouse's toStartOfMinute/Hour/Day/Week(…, 1)/Month under the session
  * time zone. Weeks start on Monday (ISO), as `toStartOfWeek(x, 1)` did.
