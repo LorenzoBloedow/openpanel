@@ -1,8 +1,12 @@
 import { getSubscriptionState } from '@openpanel/payments/subscription-state';
-import { PrismaClient } from './generated/prisma/client';
+import { type DbRoute, getRoute, getScopedResource } from '@openpanel/runtime';
+import { PrismaPg } from '@prisma/adapter-pg';
+// Node or workerd build of the same schema; see "imports" in package.json.
+import { PrismaClient } from '#prisma-generated';
 import { logger } from './logger';
+import { getPool } from './pool';
 
-export * from './generated/prisma/client';
+export * from '#prisma-generated';
 
 const subscriptionStateNeeds = {
   subscriptionStatus: true,
@@ -11,10 +15,11 @@ const subscriptionStateNeeds = {
   subscriptionPauseAtPeriodEnd: true,
 } as const;
 
-const getPrismaClient = () => {
-  // emit: 'event' keeps the engine from writing prisma:error lines straight
-  // to stderr, so they flow through pino to the OTLP pipeline instead.
+const createPrismaClient = (route: DbRoute) => {
+  // emit: 'event' keeps the client from writing prisma:error lines straight
+  // to stderr, so they flow through the structured logger instead.
   const client = new PrismaClient({
+    adapter: new PrismaPg(getPool(route)),
     log: [
       { emit: 'event', level: 'error' },
       { emit: 'event', level: 'warn' },
@@ -216,12 +221,31 @@ const getPrismaClient = () => {
   return prisma;
 };
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: ReturnType<typeof getPrismaClient>;
-};
+export type Database = ReturnType<typeof createPrismaClient>;
 
-export const db = globalForPrisma.prisma ?? getPrismaClient();
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = db;
+/** The Prisma client of the current scope and route, created on first use. */
+export function getPrismaClient(route: DbRoute = getRoute()): Database {
+  return getScopedResource(
+    `prisma:${route}`,
+    () => createPrismaClient(route),
+    (client) => client.$disconnect(),
+  );
 }
+
+/**
+ * `db` keeps its old shape — `db.project.findMany(…)`, `db.$transaction(…)` —
+ * but resolves the client lazily for the current invocation scope and its
+ * connection route: Hyperdrive in API request handlers, the direct pooled
+ * connection in queue consumers, crons and workflows (see db-routing.ts for
+ * the exceptions). In Node there is one client for the process.
+ */
+export const db: Database = new Proxy({} as Database, {
+  get(_target, property) {
+    const client = getPrismaClient();
+    const value = Reflect.get(client, property, client);
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+  has(_target, property) {
+    return property in getPrismaClient();
+  },
+});

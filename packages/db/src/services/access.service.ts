@@ -1,4 +1,4 @@
-import type { AccessLevel } from '../generated/prisma/client';
+import type { AccessLevel } from '#prisma-generated';
 import { cacheable } from '@openpanel/redis';
 import { db } from '../prisma-client';
 import { getProjectById } from './project.service';

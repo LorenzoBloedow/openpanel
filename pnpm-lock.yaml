@@ -1879,6 +1879,9 @@ importers:
       '@openpanel/common':
         specifier: workspace:*
         version: link:../common
+      '@openpanel/db':
+        specifier: workspace:*
+        version: link:../db
       '@openpanel/email':
         specifier: workspace:*
         version: link:../email

@@ -188,7 +188,11 @@ function replaceJsonValueInFileForModel(
 
 function main() {
   const schemaPath = join(__dirname, '../prisma/schema.prisma');
-  const generatedDir = join(__dirname, '../src/generated/prisma');
+  // Both generator outputs (Node and workerd) get the same Json types.
+  const generatedDirs = [
+    join(__dirname, '../src/generated/prisma'),
+    join(__dirname, '../src/generated/prisma-workerd'),
+  ];
 
   console.log('Parsing schema for Json type mappings...');
   const mappings = parseSchemaForJsonTypes(schemaPath);
@@ -201,8 +205,10 @@ function main() {
     return;
   }
 
-  console.log('Processing generated files...');
-  processGeneratedFiles(generatedDir, mappings);
+  for (const generatedDir of generatedDirs) {
+    console.log(`Processing generated files in ${generatedDir}...`);
+    processGeneratedFiles(generatedDir, mappings);
+  }
 
   console.log('Post-codegen script completed!');
 }

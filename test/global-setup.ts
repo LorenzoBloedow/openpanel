@@ -1,3 +1,4 @@
+import { ensureTemplateDatabase } from '../packages/db/src/testing/database';
 import { setupPostgresFixtures, teardownPostgresFixtures } from './fixtures';
 
 export { FIXTURE } from './fixtures';
@@ -14,6 +15,8 @@ function setEnvDefaults() {
 
 export async function setup() {
   setEnvDefaults();
+  // Migrated template that createTestDatabase() clones per test file.
+  await ensureTemplateDatabase();
   await setupPostgresFixtures(TEST_PROJECT_ID, TEST_ORG_ID);
 }
 

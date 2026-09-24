@@ -1,12 +1,28 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+// Engine-less clients (query compiler + @prisma/adapter-pg). The same schema
+// is generated twice: `prisma` for Node (tests, scripts, migrations) and
+// `prisma-workerd` for the Workers. src/prisma-client.ts picks one through
+// the `#prisma-generated` import in package.json.
 generator client {
   provider               = "prisma-client"
   output                 = "../src/generated/prisma"
   moduleFormat           = "esm"
   generatedFileExtension = "ts"
   importFileExtension    = "ts"
+  engineType             = "client"
+  runtime                = "nodejs"
+}
+
+generator workerd {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma-workerd"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "ts"
+  engineType             = "client"
+  runtime                = "workerd"
 }
 
 // generator json {
@@ -793,4 +809,36 @@ model EmailUnsubscribe {
 
   @@unique([email, category])
   @@map("email_unsubscribes")
+}
+
+/// Escalating lockout for the rate-limited tRPC procedures (sign-in, sign-up,
+/// password reset, …). The Workers rate-limit bindings count requests; a row
+/// only exists once a (procedure, client) pair has been blocked.
+model RateLimitBlock {
+  path            String
+  fingerprint     String
+  strikes         Int      @default(1)
+  blockedUntil    DateTime
+  /// Strikes decay after a quiet day; every new strike pushes this out.
+  strikeExpiresAt DateTime
+  /// Knocking while blocked escalates at most once per cooldown.
+  cooldownUntil   DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  @@id([path, fingerprint])
+  @@index([strikeExpiresAt])
+  @@map("rate_limit_blocks")
+}
+
+/// One row per dispatched (cron job, schedule slot), so a cron trigger that
+/// fires twice for the same slot enqueues its work once.
+model CronRun {
+  name      String
+  slot      DateTime
+  createdAt DateTime @default(now())
+
+  @@id([name, slot])
+  @@index([createdAt])
+  @@map("cron_runs")
 }

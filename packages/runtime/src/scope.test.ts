@@ -128,4 +128,28 @@ describe('runtime scope', () => {
     await finished;
     expect(String(lateError)).toMatch(/already closed/);
   });
+
+  it('treats withRoute views as the same scope once it closed', async () => {
+    const { ctx, settle } = createCtx();
+    let lateError: unknown;
+    let done!: () => void;
+    const finished = new Promise<void>((resolve) => {
+      done = resolve;
+    });
+    await runWithScope({ env: {}, ctx, route: 'hyperdrive' }, () => {
+      withRoute('direct', () => {
+        setTimeout(() => {
+          try {
+            getScopedResource('late-direct', () => 1);
+          } catch (error) {
+            lateError = error;
+          }
+          done();
+        }, 20);
+      });
+    });
+    await settle();
+    await finished;
+    expect(String(lateError)).toMatch(/already closed/);
+  });
 });

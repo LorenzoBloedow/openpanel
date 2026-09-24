@@ -23,16 +23,8 @@
  */
 
 import { createClient } from '../packages/db/src/clickhouse/client';
-import { PrismaClient } from '../packages/db/src/generated/prisma/client';
-
-// Lazily create a Prisma client so DATABASE_URL is read at call time,
-// not at module-import time (globalSetup runs before env is configured).
-function getDb() {
-  const url =
-    process.env.DATABASE_URL ??
-    'postgresql://postgres:postgres@localhost:5432/postgres?schema=public';
-  return new PrismaClient({ datasources: { db: { url } } });
-}
+import { db } from '../packages/db/src/prisma-client';
+import { disposeFallbackScope } from '../packages/runtime/index';
 
 // ---------------------------------------------------------------------------
 // Well-known fixture IDs — import these in tests instead of hard-coding strings
@@ -398,7 +390,8 @@ export async function setupPostgresFixtures(
   projectId: string,
   orgId: string
 ): Promise<void> {
-  const db = getDb();
+  // `db` reads DATABASE_URL when first used, not at import time (globalSetup
+  // sets it before calling in).
   try {
     await db.organization.upsert({
       where: { id: orgId },
@@ -411,7 +404,7 @@ export async function setupPostgresFixtures(
       update: {},
     });
   } finally {
-    await db.$disconnect();
+    await disposeFallbackScope();
   }
 }
 
@@ -419,12 +412,11 @@ export async function teardownPostgresFixtures(
   projectId: string,
   orgId: string
 ): Promise<void> {
-  const db = getDb();
   try {
     await db.project.deleteMany({ where: { id: projectId } });
     await db.organization.deleteMany({ where: { id: orgId } });
   } finally {
-    await db.$disconnect();
+    await disposeFallbackScope();
   }
 }
 

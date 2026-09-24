@@ -43,3 +43,5 @@ export * from './src/services/user.service';
 export * from './src/session-context';
 export * from './src/sql-builder';
 export * from './src/types';
+export * from './src/db-routing';
+export * from './src/pool';

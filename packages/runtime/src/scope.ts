@@ -34,14 +34,23 @@ interface ScopeResource {
   dispose?: Disposer;
 }
 
-interface Scope {
-  env: RuntimeEnv;
-  ctx: WaitUntilContext | undefined;
-  route: DbRoute;
+/** Lifetime state shared by a scope and the `withRoute` views of it. */
+interface ScopeState {
   resources: Map<string, ScopeResource>;
   /** Promises registered through `waitUntil` — resources outlive them. */
   pending: Set<Promise<unknown>>;
   closed: boolean;
+}
+
+interface Scope {
+  env: RuntimeEnv;
+  ctx: WaitUntilContext | undefined;
+  route: DbRoute;
+  state: ScopeState;
+}
+
+function createState(): ScopeState {
+  return { resources: new Map(), pending: new Set(), closed: false };
 }
 
 const storage = new AsyncLocalStorage<Scope>();
@@ -70,15 +79,13 @@ export async function runWithScope<T>(
     env: options.env,
     ctx: options.ctx,
     route: options.route,
-    resources: new Map(),
-    pending: new Set(),
-    closed: false,
+    state: createState(),
   };
 
   try {
     return await storage.run(scope, fn);
   } finally {
-    const closing = closeScopeWhenSettled(scope);
+    const closing = closeWhenSettled(scope.state);
     if (scope.ctx) {
       scope.ctx.waitUntil(closing);
     } else {
@@ -87,22 +94,22 @@ export async function runWithScope<T>(
   }
 }
 
-async function closeScopeWhenSettled(scope: Scope) {
+async function closeWhenSettled(state: ScopeState) {
   // Anything registered with waitUntil may still use scoped resources, so
   // wait for it (and for work it registers in turn) before closing them.
-  while (scope.pending.size > 0) {
-    await Promise.allSettled([...scope.pending]);
+  while (state.pending.size > 0) {
+    await Promise.allSettled([...state.pending]);
   }
-  await closeScope(scope);
+  await closeState(state);
 }
 
-async function closeScope(scope: Scope) {
-  if (scope.closed) {
+async function closeState(state: ScopeState) {
+  if (state.closed) {
     return;
   }
-  scope.closed = true;
-  const resources = [...scope.resources.values()].reverse();
-  scope.resources.clear();
+  state.closed = true;
+  const resources = [...state.resources.values()].reverse();
+  state.resources.clear();
   await Promise.allSettled(
     resources.map(async (resource) => {
       await resource.dispose?.();
@@ -134,7 +141,7 @@ export function setFallbackEnv(env: RuntimeEnv | undefined) {
  * Returns the env of the current scope. Outside a scope it falls back to the
  * env set by `setFallbackEnv`, then to `process.env` (Node scripts and tests).
  */
-export function getEnv<T extends RuntimeEnv = RuntimeEnv>(): T {
+export function getEnv<T extends object = RuntimeEnv>(): T {
   const scope = getActiveScope();
   if (scope) {
     return scope.env as T;
@@ -180,8 +187,8 @@ export function waitUntil(promise: Promise<unknown>): void {
   if (!scope) {
     return;
   }
-  scope.pending.add(observed);
-  void observed.finally(() => scope.pending.delete(observed));
+  scope.state.pending.add(observed);
+  void observed.finally(() => scope.state.pending.delete(observed));
   scope.ctx?.waitUntil(observed);
 }
 
@@ -195,18 +202,18 @@ export function getScopedResource<T>(
   create: () => T,
   dispose?: (value: T) => Promise<void> | void,
 ): T {
-  const scope = getActiveScope() ?? getFallbackScope();
-  if (scope.closed) {
+  const { state } = getActiveScope() ?? getFallbackScope();
+  if (state.closed) {
     throw new Error(
       `Runtime scope already closed; cannot create "${key}". Register late work with waitUntil().`,
     );
   }
-  const existing = scope.resources.get(key);
+  const existing = state.resources.get(key);
   if (existing) {
     return existing.value as T;
   }
   const value = create();
-  scope.resources.set(key, {
+  state.resources.set(key, {
     value,
     dispose: dispose ? () => dispose(value) : undefined,
   });
@@ -225,9 +232,7 @@ function getFallbackScope(): Scope {
     env: fallbackEnv ?? {},
     ctx: undefined,
     route: 'direct',
-    resources: new Map(),
-    pending: new Set(),
-    closed: false,
+    state: createState(),
   };
   return fallbackScope;
 }
@@ -237,6 +242,6 @@ export async function disposeFallbackScope() {
   const scope = fallbackScope;
   fallbackScope = undefined;
   if (scope) {
-    await closeScope(scope);
+    await closeState(scope.state);
   }
 }
