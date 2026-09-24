@@ -1,4 +1,4 @@
-import { PagesService, ch, getSettingsForProject } from '@openpanel/db';
+import { getSettingsForProject, pagesService } from '@openpanel/db';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { McpAuthContext } from '../../auth';
@@ -11,8 +11,6 @@ import {
   zDateRange,
   zLimit,
 } from '../shared';
-
-const pagesService = new PagesService(ch);
 
 const DEFAULT_PERFORMANCE_LIMIT = 25;
 const MAX_PERFORMANCE_LIMIT = 500;

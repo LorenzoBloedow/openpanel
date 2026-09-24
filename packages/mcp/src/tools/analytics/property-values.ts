@@ -1,4 +1,5 @@
-import { EVENT_COLUMNS, TABLE_NAMES, ch, clix } from '@openpanel/db';
+import { EVENT_COLUMNS, listEventPropertiesCore } from '@openpanel/db';
+import { recentPropertyValues } from '@openpanel/db/src/analytics/property-values';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { McpAuthContext } from '../../auth';
@@ -13,6 +14,17 @@ const DEFAULT_PROPERTY_LIMIT = 50;
 const MAX_PROPERTY_LIMIT = 500;
 const DEFAULT_VALUE_LIMIT = 50;
 const MAX_VALUE_LIMIT = 500;
+
+/**
+ * Property values are read from recent events (there is no values rollup):
+ * the newest events of the last 30 days that carry the key, at most this
+ * many of them, so the scan stays bounded on a busy project.
+ */
+const VALUE_LOOKBACK_DAYS = 30;
+const VALUE_SCAN_LIMIT = 100_000;
+/** Distinct values read before `limit` applies (reported as total_distinct). */
+const VALUE_READ_LIMIT = 2000;
+const DAY_MS = 86_400_000;
 
 /**
  * Collapse the raw property-key rows into a discovery list.
@@ -71,27 +83,11 @@ export function registerPropertyValueTools(
     async ({ projectId: inputProjectId, eventName, limit }) =>
       withErrorHandling(async () => {
         const projectId = await resolveProjectId(context, inputProjectId);
-        // GROUP BY rather than DISTINCT so the epv_keys projection can serve
-        // this (a multi-column DISTINCT cannot be matched against an
-        // aggregating projection); `name` tie-breaks the ORDER BY so the
-        // LIMIT window is deterministic. See listEventPropertiesCore.
-        const builder = clix(ch)
-          .select<{ property_key: string; event_name: string }>([
-            'property_key',
-            'name as event_name',
-          ])
-          .from(TABLE_NAMES.event_property_values_mv)
-          .where('project_id', '=', projectId)
-          .groupBy(['property_key', 'name'])
-          .orderBy('property_key', 'ASC')
-          .orderBy('name', 'ASC')
-          .limit(500);
-
-        if (eventName) {
-          builder.where('name', '=', eventName);
-        }
-
-        const rows = await builder.execute();
+        // The (key, event name) pairs, bytewise by key then name, at most 500.
+        const { properties: rows } = await listEventPropertiesCore({
+          projectId,
+          eventName,
+        });
         return {
           ...(eventName ? { event_name: eventName } : {}),
           columns: EVENT_COLUMNS,
@@ -117,26 +113,15 @@ export function registerPropertyValueTools(
       withErrorHandling(async () => {
         const projectId = await resolveProjectId(context, inputProjectId);
         const take = limit ?? DEFAULT_VALUE_LIMIT;
-        // The MV holds one row per (property, value, day), so the same value
-        // recurs across the window — dedupe before counting against the limit,
-        // otherwise a single stable value can fill the whole response.
-        const rows = await clix(ch)
-          .select<{ value: string }>(['property_value as value'])
-          .from(TABLE_NAMES.event_property_values_mv)
-          .where('project_id', '=', projectId)
-          .where('name', '=', eventName)
-          .where('property_key', '=', propertyKey)
-          .orderBy('created_at', 'DESC')
-          .limit(2000)
-          .execute();
-
-        const distinct: string[] = [];
-        const seen = new Set<string>();
-        for (const row of rows) {
-          if (seen.has(row.value)) continue;
-          seen.add(row.value);
-          distinct.push(row.value);
-        }
+        // Distinct values, most recently seen first.
+        const distinct = await recentPropertyValues({
+          projectId,
+          eventName,
+          key: propertyKey,
+          since: new Date(Date.now() - VALUE_LOOKBACK_DAYS * DAY_MS),
+          scanLimit: VALUE_SCAN_LIMIT,
+          limit: VALUE_READ_LIMIT,
+        });
 
         return {
           event: eventName,
