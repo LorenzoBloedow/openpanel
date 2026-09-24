@@ -10,10 +10,5 @@
     "strictNullChecks": true
   },
   "include": ["src", "test", "worker-configuration.d.ts"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    // BullMQ job handlers not ported to the op-jobs consumer yet.
-    "src/jobs"
-  ]
+  "exclude": ["node_modules", "dist"]
 }

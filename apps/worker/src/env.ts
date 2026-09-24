@@ -9,6 +9,9 @@ interface OpenPanelSecrets {
   SESSION_TIMEOUT_MS?: string;
   /** '0' disables the session reaper cron. */
   SESSION_REAPER?: string;
+  INSIGHTS_RETENTION_DAYS?: string;
+  /** Delete events older than this many days (off when unset). */
+  EVENTS_RETENTION_DAYS?: string;
 }
 
 // `wrangler types` declares both the global Env and Cloudflare.Env.

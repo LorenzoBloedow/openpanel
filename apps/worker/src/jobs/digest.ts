@@ -1,15 +1,17 @@
-import { generateWeeklyNarrative } from '@openpanel/ai';
 import { db, getAnalyticsOverviewCore } from '@openpanel/db';
 import { type EmailData, sendEmail } from '@openpanel/email';
-import { logger as baseLogger } from '@/utils/logger';
+import type { ILogger } from '@openpanel/logger';
 
-const logger = baseLogger.child({ job: 'weekly-digest' });
+/**
+ * The weekly digest (Mondays): week-over-week stats and the project's
+ * email-worthy insights, mailed to the organization's members. Self-hosted
+ * on Cloudflare: every project with enough events qualifies (no billing
+ * state), and there is no AI-written narrative.
+ */
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-// Keep this low: the digest is our main "value without logging in" touchpoint,
-// and the old 5000 gate excluded customers on smaller plans — exactly the ones
-// who benefit most from the reminder. Zero-visitor weeks are still skipped per
-// send, so quiet projects don't get empty emails.
+// The digest is the main "value without logging in" touchpoint; quiet
+// projects are still skipped per send (zero visitors).
 const MIN_EVENTS = 100;
 const MAX_INSIGHTS = 5;
 
@@ -63,6 +65,7 @@ function formatRange(startMs: number, endMs: number): string {
  */
 async function buildDigestData(
   project: ProjectRow,
+  dashboardBaseUrl: string,
   opts: { force?: boolean } = {}
 ): Promise<{ skipped?: string; data?: DigestData }> {
   const now = Date.now();
@@ -137,48 +140,13 @@ async function buildDigestData(
 
   const dateRange = formatRange(curStart, now);
 
-  let narrative = '';
-  try {
-    narrative = await generateWeeklyNarrative({
-      projectName: project.name,
-      dateRange,
-      stats: [
-        {
-          label: 'visitors',
-          current: c.unique_visitors,
-          previous: p.unique_visitors,
-        },
-        {
-          label: 'sessions',
-          current: c.total_sessions,
-          previous: p.total_sessions,
-        },
-        {
-          label: 'pageviews',
-          current: c.total_screen_views,
-          previous: p.total_screen_views,
-        },
-        {
-          label: 'bounce rate',
-          current: c.bounce_rate,
-          previous: p.bounce_rate,
-          unit: '%',
-        },
-      ],
-      insights,
-    });
-  } catch (err) {
-    logger.warn({ err, projectId: project.id }, 'Narrative generation failed');
-  }
-
-  const dashboardUrl = `${process.env.DASHBOARD_URL ?? 'https://dashboard.openpanel.dev'}/${project.organizationId}/${project.id}`;
+  const dashboardUrl = `${dashboardBaseUrl}/${project.organizationId}/${project.id}`;
 
   return {
     data: {
       projectName: project.name,
       dashboardUrl,
       dateRange,
-      narrative: narrative || undefined,
       stats,
       insights,
     },
@@ -190,98 +158,39 @@ async function recipientsForOrg(organizationId: string): Promise<string[]> {
     where: { organizationId },
     select: { email: true },
   });
-  return [...new Set(members.map((m) => m.email).filter(Boolean))];
+  return [...new Set(members.map((member) => member.email).filter(Boolean))];
 }
 
-/**
- * Weekly digest: per active project, week-over-week stats + the AI's
- * email-worthy insights + a generated narrative, mailed to org members.
- * `sendEmail` skips anyone unsubscribed from the `weekly_digest` category.
- */
-export async function weeklyDigestCronJob() {
-  // Prefilter on the raw status column (computed fields can't be used in
-  // `where`), then refine with the canonical subscription state below.
+/** Projects the Monday cron fans a digest job out to. */
+export async function listDigestProjects(): Promise<string[]> {
   const projects = await db.project.findMany({
-    where: {
-      deleteAt: null,
-      eventsCount: { gt: MIN_EVENTS },
-      organization: { subscriptionStatus: { in: ['active', 'trialing'] } },
-    },
-    select: {
-      id: true,
-      name: true,
-      organizationId: true,
-      organization: { select: { subscriptionState: true } },
-    },
+    where: { deleteAt: null, eventsCount: { gt: MIN_EVENTS } },
+    select: { id: true },
   });
-
-  let sent = 0;
-  for (const project of projects) {
-    try {
-      // Single source of truth (`getSubscriptionState`): mail paid orgs and
-      // live trials (the digest nudges trial→paid conversion), but skip
-      // `trial_expired` — a 30-day trial that lapsed weeks ago is an abandoned
-      // org we shouldn't keep emailing. `trialing` already implies the trial
-      // end date is still in the future.
-      const state = project.organization.subscriptionState;
-      if (state !== 'active' && state !== 'trialing') {
-        continue;
-      }
-
-      const { skipped, data } = await buildDigestData(project);
-      if (skipped || !data) {
-        continue;
-      }
-      const emails = await recipientsForOrg(project.organizationId);
-      if (emails.length === 0) {
-        continue;
-      }
-      for (const to of emails) {
-        await sendEmail('weekly-digest', { to, data });
-      }
-      sent++;
-    } catch (err) {
-      logger.error({ err, projectId: project.id }, 'Weekly digest failed');
-    }
-  }
-
-  logger.info({ projects: projects.length, sent }, 'Weekly digest complete');
+  return projects.map((project) => project.id);
 }
 
-/**
- * Debug/testing helper for a SINGLE project, bypassing eligibility.
- *   - opts.to    → send only to that address (safe for testing)
- *   - no opts.to → assemble and return the payload without sending (preview)
- *   - opts.force → build even if the project had 0 visitors this week
- */
-export async function previewWeeklyDigestForProject(
+/** One project's digest. `sendEmail` skips unsubscribed recipients. */
+export async function weeklyDigestProjectJob(
   projectId: string,
-  opts: { to?: string; force?: boolean } = {}
-): Promise<{
-  sent: boolean;
-  to?: string;
-  skipped?: string;
-  data?: DigestData;
-}> {
+  env: Env,
+  logger: ILogger,
+): Promise<void> {
   const project = await db.project.findUnique({
     where: { id: projectId },
     select: { id: true, name: true, organizationId: true },
   });
   if (!project) {
-    return { sent: false, skipped: 'project not found' };
+    return;
   }
-
-  const { skipped, data } = await buildDigestData(project, {
-    force: opts.force,
-  });
+  const { skipped, data } = await buildDigestData(project, env.DASHBOARD_URL);
   if (skipped || !data) {
-    return { sent: false, skipped, data };
+    logger.info({ projectId, skipped }, 'Weekly digest skipped');
+    return;
   }
-
-  if (opts.to) {
-    await sendEmail('weekly-digest', { to: opts.to, data });
-    return { sent: true, to: opts.to, data };
+  const emails = await recipientsForOrg(project.organizationId);
+  for (const to of emails) {
+    await sendEmail('weekly-digest', { to, data });
   }
-
-  return { sent: false, data };
+  logger.info({ projectId, recipients: emails.length }, 'Weekly digest sent');
 }

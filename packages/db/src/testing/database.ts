@@ -13,7 +13,7 @@ import { listAnalyticsMigrations, migrateAnalytics } from '../analytics/migrate'
  * `CREATE DATABASE … TEMPLATE`, which takes a fraction of a second.
  */
 
-const TEMPLATE_DATABASE = 'openpanel_test_template';
+const TEMPLATE_PREFIX = 'openpanel_test_tpl_';
 const DEFAULT_URL = 'postgresql://postgres:postgres@localhost:5432/postgres';
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -66,13 +66,27 @@ async function withAdminClient<T>(fn: (client: pg.Client) => Promise<T>) {
 
 const quoteIdent = (name: string) => `"${name.replaceAll('"', '""')}"`;
 
+let cachedTemplate: { name: string; hash: string } | undefined;
+
+/**
+ * The template's name carries the migrations hash, so worktrees (or
+ * branches) with different migrations never rebuild each other's template
+ * while tests are cloning it.
+ */
+function templateDatabase(): { name: string; hash: string } {
+  if (!cachedTemplate) {
+    const hash = migrationsHash(migrationFiles());
+    cachedTemplate = { name: `${TEMPLATE_PREFIX}${hash.slice(0, 16)}`, hash };
+  }
+  return cachedTemplate;
+}
+
 /**
  * Create (or reuse) the migrated template database. Safe to call from
  * several processes at once.
  */
 export async function ensureTemplateDatabase(): Promise<void> {
-  const files = migrationFiles();
-  const hash = migrationsHash(files);
+  const { name: TEMPLATE_DATABASE, hash } = templateDatabase();
 
   await withAdminClient(async (admin) => {
     // Session lock on the admin connection: local Postgres, no pooler.
@@ -139,15 +153,18 @@ export interface TestDatabase {
  * returns: Postgres only copies a template nobody is connected to.
  */
 export async function ensureDerivedTemplate(
-  name: string,
+  baseName: string,
   fingerprint: string,
   build: (url: string) => Promise<void>,
 ): Promise<string> {
   await ensureTemplateDatabase();
+  const { name: TEMPLATE_DATABASE, hash: migrations } = templateDatabase();
   const hash = createHash('sha256')
-    .update(migrationsHash(migrationFiles()))
+    .update(migrations)
     .update(fingerprint)
     .digest('hex');
+  // Derived templates are per migration set too.
+  const name = `${baseName}_${migrations.slice(0, 8)}`;
 
   await withAdminClient(async (admin) => {
     await admin.query('SELECT pg_advisory_lock(hashtext($1))', [name]);
@@ -183,7 +200,11 @@ export async function createTestDatabase(
   options: { template?: string } = {},
 ): Promise<TestDatabase> {
   const name = `op_test_${process.pid}_${randomBytes(4).toString('hex')}`;
-  const template = options.template ?? TEMPLATE_DATABASE;
+  if (!options.template) {
+    // Cheap when it exists (one catalog read); builds it on first use.
+    await ensureTemplateDatabase();
+  }
+  const template = options.template ?? templateDatabase().name;
   await withAdminClient(async (admin) => {
     await admin.query(
       `CREATE DATABASE ${quoteIdent(name)} TEMPLATE ${quoteIdent(template)}`,

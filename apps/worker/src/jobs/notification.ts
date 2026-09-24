@@ -1,106 +1,91 @@
-import type { Job } from 'bullmq';
-
-import { Prisma, db } from '@openpanel/db';
+import { db } from '@openpanel/db';
+import { getSessionEventPayloads } from '@openpanel/db/src/ingest/effects';
+import { deserializeEventPayload } from '@openpanel/db/src/ingest/envelope';
+import {
+  checkNotificationRulesForEvent,
+  checkNotificationRulesForSessionEnd,
+} from '@openpanel/db/src/services/notification.service';
+import type { IServiceEvent } from '@openpanel/db/src/services/event.service';
 import { sendEmail } from '@openpanel/email';
-import { getServerIntegration } from '@openpanel/integrations/src/registry';
 import type { NotificationQueuePayload } from '@openpanel/queue';
-import { publishEvent } from '@openpanel/redis';
+import { getLiveHub } from '@openpanel/queue/src/live';
+import { FeatureUnavailableError } from '@openpanel/runtime';
 
-function isValidJson<T>(
-  value: T | Prisma.NullableJsonNullValueInput | null | undefined,
-): value is T {
-  return (
-    value !== null &&
-    value !== undefined &&
-    value !== Prisma.JsonNull &&
-    value !== Prisma.DbNull
-  );
-}
+type Payload<T extends NotificationQueuePayload['type']> = Extract<
+  NotificationQueuePayload,
+  { type: T }
+>['payload'];
 
-export async function notificationJob(job: Job<NotificationQueuePayload>) {
-  switch (job.data.type) {
-    case 'sendNotification': {
-      const { notification } = job.data.payload;
+/**
+ * Deliver a notification: in-app (the project's LiveHub), or by email to
+ * the organization's members. Slack, Discord and webhook integrations are
+ * compiled out on Cloudflare.
+ */
+export async function sendNotificationJob(
+  { notification }: Payload<'sendNotification'>,
+  env: Env,
+): Promise<void> {
+  if (notification.sendToApp) {
+    await getLiveHub(env.LIVE_HUB, 'project', notification.projectId).publish({
+      type: 'notification',
+      notification: notification as unknown as Record<string, unknown>,
+    });
+    return;
+  }
 
-      // App + email are pseudo-integrations dispatched by flags, not real rows.
-      if (notification.sendToApp) {
-        publishEvent('notification', 'created', notification);
-        return;
-      }
-
-      if (notification.sendToEmail) {
-        const project = await db.project.findUniqueOrThrow({
-          where: { id: notification.projectId },
-          select: { name: true, organizationId: true },
-        });
-        const members = await db.member.findMany({
-          where: {
-            organizationId: project.organizationId,
-            user: { deletedAt: null },
-          },
-          include: { user: { select: { email: true } } },
-        });
-        const emails = new Set(
-          members.flatMap((member) =>
-            member.user?.email ? [member.user.email] : [],
-          ),
-        );
-        for (const to of emails) {
-          // Per-recipient unsubscribe (product_alerts category) is handled
-          // inside sendEmail.
-          await sendEmail('notification-rule', {
-            to,
-            data: {
-              title: notification.title,
-              message: notification.message,
-              projectName: project.name,
-              dashboardUrl: `${process.env.DASHBOARD_URL ?? 'https://dashboard.openpanel.dev'}/${project.organizationId}/${notification.projectId}`,
-            },
-          });
-        }
-        return;
-      }
-
-      if (!notification.integrationId) {
-        throw new Error('No integrationId provided');
-      }
-
-      const integration = await db.integration.findUniqueOrThrow({
-        where: {
-          id: notification.integrationId,
-        },
-      });
-
-      const payload = notification.payload;
-
-      if (!isValidJson(payload)) {
-        return new Error('Invalid payload');
-      }
-
-      // An integration whose config is still empty (e.g. a Slack integration
-      // before its OAuth callback fills the config) has no type yet — nothing
-      // to deliver to.
-      if (!integration.config?.type) {
-        return;
-      }
-
-      // Generic registry dispatch — no per-type switch. A new notification
-      // integration just registers a `notification.deliver` plugin.
-      const plugin = getServerIntegration(integration.config.type);
-      if (!plugin.notification) {
-        throw new Error(
-          `Integration ${integration.config.type} is not a notification sink`,
-        );
-      }
-
-      return plugin.notification.deliver({
-        config: integration.config,
-        notification: {
+  if (notification.sendToEmail) {
+    const project = await db.project.findUniqueOrThrow({
+      where: { id: notification.projectId },
+      select: { name: true, organizationId: true },
+    });
+    const members = await db.member.findMany({
+      where: {
+        organizationId: project.organizationId,
+        user: { deletedAt: null },
+      },
+      include: { user: { select: { email: true } } },
+    });
+    const emails = new Set(
+      members.flatMap((member) => (member.user?.email ? [member.user.email] : [])),
+    );
+    for (const to of emails) {
+      // Per-recipient unsubscribe (product_alerts) is handled by sendEmail.
+      await sendEmail('notification-rule', {
+        to,
+        data: {
           title: notification.title,
           message: notification.message,
+          projectName: project.name,
+          dashboardUrl: `${env.DASHBOARD_URL}/${project.organizationId}/${notification.projectId}`,
         },
-        payload,
       });
     }
+    return;
+  }
+
+  // Slack / Discord / webhook deliveries.
+  throw new FeatureUnavailableError('integrations');
+}
+
+/** Freshly ingested events against the project's event rules. */
+export async function checkEventRulesJob({
+  events,
+}: Payload<'checkEventRules'>): Promise<void> {
+  for (const event of events) {
+    const { id: _id, ...payload } = event;
+    await checkNotificationRulesForEvent(
+      deserializeEventPayload(payload as Parameters<typeof deserializeEventPayload>[0]),
+    );
+  }
+}
+
+/** Closed sessions against the project's funnel rules. */
+export async function checkFunnelRulesJob({
+  projectId,
+  sessionIds,
+}: Payload<'checkFunnelRules'>): Promise<void> {
+  const sessions = await getSessionEventPayloads(projectId, sessionIds);
+  for (const events of sessions.values()) {
+    await checkNotificationRulesForSessionEnd(events as unknown as IServiceEvent[]);
   }
 }

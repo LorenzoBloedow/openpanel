@@ -46,17 +46,41 @@
     ]
   },
 
+  // src/crons.ts maps each expression to its task. Every cron but the
+  // reaper claims its slot in cron_runs (a trigger can fire twice).
   "triggers": {
     "crons": [
-      // Session reaper.
-      "* * * * *"
+      "* * * * *", // session reaper
+      "0 0 * * *", // salt rotation
+      "0 * * * *", // counters, short-lived state, scheduled deletions
+      "*/30 * * * *", // cohort refresh
+      "0 2 * * *", // insights
+      "0 3 * * *", // Search Console sync, backup
+      "30 4 * * *", // retention sweeps
+      "0 8 * * 1" // weekly digest
     ]
   },
+
+  "workflows": [
+    { "binding": "BACKUP", "name": "openpanel-backup", "class_name": "BackupWorkflow" },
+    { "binding": "GSC_BACKFILL", "name": "openpanel-gsc-backfill", "class_name": "GscBackfillWorkflow" },
+    { "binding": "PROJECT_DELETE", "name": "openpanel-project-delete", "class_name": "ProjectDeleteWorkflow" }
+  ],
+
+  // Backups (gzipped JSONL + manifest per night). Lifecycle rules on the
+  // bucket are set by scripts/cloudflare/setup.ts.
+  "r2_buckets": [{ "binding": "BACKUPS", "bucket_name": "openpanel-backups" }],
+
+  // Cloudflare Email Service (digests, notification emails).
+  "send_email": [{ "name": "EMAIL" }],
 
   "vars": {
     "NODE_ENV": "production",
     "SELF_HOSTED": "true",
     "API_URL": "http://localhost:3333",
-    "DASHBOARD_URL": "http://localhost:3000"
+    "DASHBOARD_URL": "http://localhost:3000",
+    "EMAIL_SENDER": "hello@openpanel.dev",
+    "BACKUP_RETENTION_DAYS": "30",
+    "BACKUP_FULL_EVERY_DAYS": "7"
   }
 }

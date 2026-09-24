@@ -5,9 +5,13 @@ import { consumeJobs } from './consumers/jobs';
 import { runScheduled } from './crons';
 import { logger } from './utils/logger';
 
+export { BackupWorkflow } from './workflows/backup';
+export { GscBackfillWorkflow } from './workflows/gsc-backfill';
+export { ProjectDeleteWorkflow } from './workflows/project-delete';
+
 /**
- * openpanel-worker: queue consumers and crons. Nothing here has a user
- * waiting on it, so every invocation uses the direct database route.
+ * openpanel-worker: queue consumers, crons and Workflows. Nothing here has
+ * a user waiting on it, so every invocation uses the direct database route.
  */
 export default {
   async queue(batch, env, ctx) {
@@ -28,7 +32,7 @@ export default {
 
   async scheduled(controller, env, ctx) {
     await runWithScope({ env, ctx, route: 'direct' }, () =>
-      runScheduled(controller.cron, env, logger),
+      runScheduled(controller, env, logger),
     );
   },
 } satisfies ExportedHandler<Env>;
