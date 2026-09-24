@@ -487,6 +487,17 @@ describe('chart.service / getAggregateChartSql', () => {
     expect(values[1]).toBe(START);
     await explain(query);
   });
+
+  it('truncates a fractional limit and ignores one that is not positive', async () => {
+    const fractional = flat(
+      await getAggregateChartSql({ ...base, limit: 2.5, event: event(), breakdowns: [] }),
+    );
+    expect(fractional.values.at(-1)).toBe(2);
+    const negative = flat(
+      await getAggregateChartSql({ ...base, limit: -1, event: event(), breakdowns: [] }),
+    );
+    expect(negative.text).not.toContain('LIMIT');
+  });
 });
 
 describe('chart.service / profile-property narrowing', () => {

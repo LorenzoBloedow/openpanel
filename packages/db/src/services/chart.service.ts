@@ -804,7 +804,7 @@ export async function getAggregateChartSql(
     WHERE ${source.where}
     GROUP BY ${groupBy}
     ORDER BY ${join([raw('count DESC'), ...labels.names])}
-    ${limit ? sql`LIMIT ${limit}` : empty}`;
+    ${limit && limit > 0 ? sql`LIMIT ${Math.trunc(limit)}` : empty}`;
 }
 
 function isNumericColumn(columnName: string): boolean {
