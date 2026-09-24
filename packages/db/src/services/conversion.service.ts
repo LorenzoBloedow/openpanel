@@ -15,7 +15,7 @@ import {
 } from '../analytics/fields';
 import { eventFilterClauses, eventPropertyExpr } from '../analytics/filters';
 import { clix } from '../analytics/query-builder';
-import { type Sql, and, join, raw, sql } from '../analytics/sql';
+import { type Sql, and, join, or, raw, sql } from '../analytics/sql';
 import { type TimeCtx, startOf, toLocal } from '../analytics/time';
 import {
   millisecondsInterval,
@@ -140,24 +140,27 @@ export class ConversionService {
       ]);
     const ctx: TimeCtx = { timezone };
     const e = raw(EVENTS);
+    const conditionA = stepCondition(eventA);
+    const conditionB = stepCondition(eventB);
 
-    // One row per event of either step, as ClickHouse's inner query read
-    // them: the group key and the breakdown values are the funnel's GROUP
-    // BY keys, `at_second` is toDateTime(created_at), `bucket` feeds
-    // `any(toStartOf…(created_at))`.
+    // One row per event matching either step (the others can't change a
+    // funnel): the group key and the breakdown values are the funnel's
+    // GROUP BY keys, `at_second` is toDateTime(created_at), `bucket` the
+    // row's toStartOf<interval>(created_at).
     const rows = sql`SELECT ${join([
       sql`${e}.${raw(group)}`,
       ...breakdownColumns.map((b) => sql`${b.expression} AS ${b.column}`),
       sql`date_trunc('second', ${e}.created_at) AS at_second`,
       sql`${conversionBucket(interval, ctx)} AS bucket`,
-      sql`(${stepCondition(eventA)}) AS step_1`,
-      sql`(${stepCondition(eventB)}) AS step_2`,
+      sql`(${conditionA}) AS step_1`,
+      sql`(${conditionB}) AS step_2`,
     ])}
       FROM analytics.events AS ${e} ${joins}
       WHERE ${and([
         sql`${e}.project_id = ${projectId}`,
         sql`${e}.name = ANY(${[eventA.name, eventB.name]}::text[])`,
         dateRange(startDate, endDate, ctx),
+        or([conditionA, conditionB]),
       ])}`;
 
     const groupKey = [group, ...breakdownColumns.map((_, index) => `b_${index}`)];
@@ -175,13 +178,15 @@ export class ConversionService {
         ? raw(`_lv.${column} = _c.${column}`)
         : raw(`_lv.${column} IS NOT DISTINCT FROM _c.${column}`),
     );
-    // Groups that reached step 1 (ClickHouse's `WHERE steps > 0`). A group
-    // whose rows span two buckets gets the first; ClickHouse's any() was
-    // undefined there.
+    // Groups that reached step 1 (ClickHouse's `WHERE steps > 0`), in the
+    // bucket of their first step-1 row. ClickHouse took any() row's bucket:
+    // the same while a group's rows share a bucket, undefined otherwise.
     const keyColumns = join(groupKey.map((column) => raw(column)));
     const groups = sql`SELECT _c.*, _lv.level AS steps
       FROM (
-        SELECT ${keyColumns}, min(bucket) AS bucket FROM conversion_rows GROUP BY ${keyColumns}
+        SELECT ${keyColumns}, min(bucket) FILTER (WHERE step_1) AS bucket
+        FROM conversion_rows
+        GROUP BY ${keyColumns}
       ) AS _c
       JOIN ${raw(funnel.levels)} AS _lv ON ${join(sameGroup, ' AND ')}`;
 

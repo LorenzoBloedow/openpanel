@@ -61,28 +61,23 @@ export function fromLocal(wallClock: string | Sql, ctx: TimeCtx): Sql {
  * day (repeated) are both 00:30 UTC here and 01:30 UTC with fromLocal.
  * Every other time is the same instant as fromLocal.
  *
- * `later` is Postgres' reading; `shift` is how far the earlier candidate
- * lies before it: in a gap, how far `later` overshoots the wall clock; in an
- * overlap, how much the offset dropped since the day before (only taken when
- * that instant shows the same wall clock).
+ * The candidates are the wall clock read with the offset of the day before,
+ * its own day (Postgres' reading) and the day after. The result is the
+ * earliest one that shows the wall clock again in the zone; in a gap none
+ * does, and the earlier of the offsets around it wins. A plain expression,
+ * not a subquery, so the planner still sees the bound's value.
  */
 export function fromLocalEarliest(wallClock: string | Sql, ctx: TimeCtx): Sql {
-  return sql`(SELECT CASE
-      WHEN _c.later AT TIME ZONE _c.zone <> _c.w OR (_c.later - _c.shift) AT TIME ZONE _c.zone = _c.w
-        THEN _c.later - _c.shift
-      ELSE _c.later
-    END
-    FROM (
-      SELECT _l.w, _l.zone, _l.later, greatest(
-        _l.later AT TIME ZONE _l.zone - _l.w,
-        ((_l.later - interval '1 day') AT TIME ZONE _l.zone - (_l.later - interval '1 day') AT TIME ZONE 'UTC')
-          - (_l.later AT TIME ZONE _l.zone - _l.later AT TIME ZONE 'UTC')
-      ) AS shift
-      FROM (
-        SELECT _v.w, _v.zone, _v.w AT TIME ZONE _v.zone AS later
-        FROM (SELECT (${wallClock})::timestamp AS w, ${ctx.timezone}::text AS zone) AS _v
-      ) AS _l
-    ) AS _c)`;
+  const local = sql`(${wallClock})::timestamp`;
+  const zone = sql`${ctx.timezone}::text`;
+  const withDayBefore = sql`(((${local} - interval '1 day') AT TIME ZONE ${zone}) + interval '1 day')`;
+  const withOwnDay = sql`(${local} AT TIME ZONE ${zone})`;
+  const withDayAfter = sql`(((${local} + interval '1 day') AT TIME ZONE ${zone}) - interval '1 day')`;
+  const ifShowsWallClock = (instant: Sql) =>
+    sql`CASE WHEN (${instant} AT TIME ZONE ${zone}) = ${local} THEN ${instant} END`;
+  return sql`COALESCE(
+    LEAST(${ifShowsWallClock(withDayBefore)}, ${ifShowsWallClock(withOwnDay)}),
+    LEAST(${withDayBefore}, ${withDayAfter}))`;
 }
 
 /**

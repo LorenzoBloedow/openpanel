@@ -102,14 +102,17 @@ export class SankeyService {
     return null;
   }
 
-  /** Sessions with at least one `event` (its filters applied) in range. */
+  /**
+   * Sessions with at least one `event` (its filters applied) in range; only
+   * read through `session_id IN (…)`, so duplicates don't matter.
+   */
   private buildSessionEventCTE(
     event: z.infer<typeof zChartEvent>,
     projectId: string,
     range: Sql,
     timezone: string,
   ): Sql {
-    return sql`SELECT DISTINCT ${raw(EVENTS)}.session_id
+    return sql`SELECT ${raw(EVENTS)}.session_id
       FROM analytics.events AS ${raw(EVENTS)}
       WHERE ${raw(EVENTS)}.project_id = ${projectId}
         AND ${raw(EVENTS)}.name = ${event.name}::text
@@ -279,7 +282,9 @@ export class SankeyService {
 
     // 5. The session paths: events ordered by time with consecutive
     // duplicates removed (ClickHouse's arrayFilter over groupArray), sliced
-    // per mode, at least two events long.
+    // per mode, at least two events long. The sliced and the cut paths are
+    // MATERIALIZED: inlined, their expressions (the repeat search included)
+    // would be copied into every place that reads them.
     const ctes: Sql[] = [];
     if (startEventCTE) {
       ctes.push(sql`start_event_sessions AS (${startEventCTE})`);
@@ -300,15 +305,18 @@ export class SankeyService {
         WHERE previous_name IS NULL OR previous_name <> event_name
         GROUP BY session_id
       )`,
-      sql`events_sliced_cte AS (
+      sql`events_sliced_cte AS MATERIALIZED (
         SELECT session_id, ${eventsSliceExpr} AS events_sliced
         FROM events_deduped_cte
         ${needsStartIndex && startEvent ? sql`CROSS JOIN LATERAL (SELECT COALESCE(array_position(${DEDUPED}, ${startEvent.name}::text), 0) AS start_index) AS _first` : raw('')}
         WHERE ${sessionFilter}
       )`,
+      sql`session_events AS MATERIALIZED (
+        SELECT session_id, ${eventsExpr} AS events FROM events_sliced_cte
+      )`,
       sql`session_paths AS (
         SELECT session_id, events, events[1] AS entry_event
-        FROM (SELECT session_id, ${eventsExpr} AS events FROM events_sliced_cte) AS _paths
+        FROM session_events
         WHERE cardinality(events) >= 2
       )`,
     );
