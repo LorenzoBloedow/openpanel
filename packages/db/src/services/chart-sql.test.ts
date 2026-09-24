@@ -188,6 +188,10 @@ describe('chart.service / getChartSql', () => {
   it('fills every bucket of a valid range, rows or not', async () => {
     const query = await getChartSql({ ...base, event: event(), breakdowns: [] });
     expect(text(query)).toContain('generate_series');
+    // An anti-join: `NOT IN` would rescan the rows for every bucket.
+    expect(flat(query).text).toContain(
+      'WHERE NOT EXISTS (SELECT 1 FROM _rows WHERE _rows.date = _fill.date)',
+    );
     await explain(query);
 
     // ClickHouse's WITH FILL returned the fill rows for an empty result too.
@@ -406,9 +410,11 @@ describe('chart.service / getChartSql', () => {
       timezone: 'America/New_York',
     });
     const { text: sqlText, values } = flat(query);
+    // Grouped by the wall-clock bucket, rendered like ClickHouse's DateTime.
     expect(sqlText).toContain(
-      "to_char(date_trunc('hour', (e.created_at AT TIME ZONE $2::text)), 'YYYY-MM-DD HH24:MI:SS') AS date",
+      "date_trunc('hour', (e.created_at AT TIME ZONE $2::text)) AS date",
     );
+    expect(sqlText).toContain("to_char(_chart.date, 'YYYY-MM-DD HH24:MI:SS') AS date");
     expect(sqlText).toContain('e.created_at >= ($5::timestamp AT TIME ZONE $6::text)');
     expect(values.slice(1, 6)).toEqual([
       'America/New_York',

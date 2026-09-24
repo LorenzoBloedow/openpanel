@@ -644,9 +644,10 @@ function latestEventPerProfile(source: ChartSource, select: Sql[]): Sql {
 /**
  * The buckets of ClickHouse's `ORDER BY date WITH FILL FROM <bucket of the
  * start> TO <bucket of the end> STEP 1 <unit>`: every bucket from the one
- * holding the start up to, not including, the one holding the end, rendered
- * like the rows' `date`. Minutes and hours step in absolute time, so a DST
- * gap has no bucket; days, weeks and months step on the calendar.
+ * holding the start up to, not including, the one holding the end, as
+ * project wall-clock `timestamp`s like the rows' buckets. Minutes and hours
+ * step in absolute time, so a DST gap has no bucket; days, weeks and months
+ * step on the calendar.
  */
 function fillBuckets(
   interval: IInterval,
@@ -661,11 +662,11 @@ function fillBuckets(
   if (interval === 'minute' || interval === 'hour') {
     const from = fromLocal(first, ctx);
     const to = fromLocal(last, ctx);
-    return sql`SELECT ${clix.formatBucket(toLocal(bucket, ctx), interval)} AS date
+    return sql`SELECT ${toLocal(bucket, ctx)} AS date
       FROM generate_series(${from}, ${to}, ${step}) AS ${bucket}
       WHERE ${bucket} < ${to}`;
   }
-  return sql`SELECT ${clix.formatBucket(bucket, interval)} AS date
+  return sql`SELECT ${bucket} AS date
     FROM generate_series(${first}, ${last}, ${step}) AS ${bucket}
     WHERE ${bucket} < ${last}`;
 }
@@ -676,7 +677,9 @@ function fillBuckets(
  * of the range that has none (WITH FILL; groupByLabels only takes its date).
  * `total_count` is the number of distinct profiles over the whole range for
  * the row's labels (ClickHouse merged uniq states over a window); the
- * grouping sets compute both in one pass over the events.
+ * grouping sets compute both in one pass over the events. Buckets stay
+ * `timestamp`s (cheaper to sort and join than text) until the output
+ * renders them like ClickHouse did.
  */
 export async function getChartSql(
   input: IGetChartDataInput & { timezone: string },
@@ -689,10 +692,7 @@ export async function getChartSql(
     await resolveBreakdowns(input.breakdowns, input.projectId),
   );
   const labels = labelColumns(source.labels);
-  const bucket = clix.formatBucket(
-    clix.toStartOf(raw('e.created_at'), interval, ctx),
-    interval,
-  );
+  const bucket = clix.toStartOf(raw('e.created_at'), interval, ctx);
   const label0 = sql`${event.name}::text AS label_0`;
   const date = raw('date');
   const withTotal = event.segment !== 'one_event_per_user';
@@ -729,12 +729,23 @@ export async function getChartSql(
       GROUP BY ${join([date, ...labels.names])}`;
   }
 
-  const orderBy = join([date, ...labels.names]);
+  const output = join([
+    raw('label_0'),
+    sql`${clix.formatBucket(raw('_chart.date'), interval)} AS date`,
+    ...labels.names,
+    raw('count'),
+    ...(withTotal ? [raw('total_count')] : []),
+  ]);
+  // Qualified, so the rows sort by the bucket rather than its text.
+  const orderBy = join([
+    raw('_chart.date'),
+    ...labels.names.map((_, index) => raw(`_chart.label_${index + 1}`)),
+  ]);
   // No fill for an inverted range, as ClickHouse rejected TO < FROM.
   const hasValidFillRange =
     !!startDate && !!endDate && new Date(endDate) >= new Date(startDate);
   if (!hasValidFillRange) {
-    return sql`${rows} ORDER BY ${orderBy}`;
+    return sql`SELECT ${output} FROM (${rows}) AS _chart ORDER BY ${orderBy}`;
   }
   const fillRow = join([
     raw('NULL'),
@@ -749,11 +760,14 @@ export async function getChartSql(
     formatClickhouseDate(endDate),
     ctx,
   );
+  // NOT EXISTS plans as an anti-join; NOT IN would rescan _rows per bucket.
   return sql`WITH _rows AS (${rows})
-    SELECT * FROM _rows
-    UNION ALL
-    SELECT ${fillRow} FROM (${fill}) AS _fill
-    WHERE _fill.date NOT IN (SELECT date FROM _rows)
+    SELECT ${output} FROM (
+      SELECT * FROM _rows
+      UNION ALL
+      SELECT ${fillRow} FROM (${fill}) AS _fill
+      WHERE NOT EXISTS (SELECT 1 FROM _rows WHERE _rows.date = _fill.date)
+    ) AS _chart
     ORDER BY ${orderBy}`;
 }
 
