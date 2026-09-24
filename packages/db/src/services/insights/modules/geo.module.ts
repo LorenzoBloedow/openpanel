@@ -1,5 +1,12 @@
 import { getCountry } from '@openpanel/constants';
-import { TABLE_NAMES, formatClickhouseDate } from '../../../clickhouse/client';
+import { sql } from '../../../analytics/sql';
+import {
+  CREATED_UTC_DAY,
+  SESSIONS_TABLE,
+  countCreatedBetween,
+  createdBetween,
+  forProject,
+} from '../queries';
 import type {
   ComputeContext,
   ComputeResult,
@@ -16,6 +23,18 @@ import {
   selectTopDimensions,
 } from '../utils';
 
+/**
+ * A session country's map key. ClickHouse stored `country` as
+ * FixedString(2), so an unknown country read back as two NUL bytes: truthy,
+ * so it never became 'unknown'. The engine strips NULs from dimension keys,
+ * so that dimension ('country:') never finds its rows and computes 0 vs 0:
+ * no insight for unknown countries, which getCountry has no name for. Kept
+ * by padding like FixedString did.
+ */
+function countryKey(country: string): string {
+  return country.padEnd(2, '\u0000');
+}
+
 async function fetchGeoAggregates(ctx: ComputeContext): Promise<{
   currentMap: Map<string, number>;
   baselineMap: Map<string, number>;
@@ -30,58 +49,57 @@ async function fetchGeoAggregates(ctx: ComputeContext): Promise<{
           'country',
           'count(*) as cnt',
         ])
-        .from(TABLE_NAMES.sessions)
-        .where('project_id', '=', ctx.projectId)
-        .where('sign', '=', 1)
-        .where('created_at', 'BETWEEN', [
-          ctx.window.start,
-          getEndOfDay(ctx.window.end),
-        ])
+        .from(SESSIONS_TABLE)
+        .rawWhere(forProject(ctx.projectId))
+        .rawWhere(
+          createdBetween(ctx.window.start, getEndOfDay(ctx.window.end)),
+        )
         .groupBy(['country'])
         .execute(),
       ctx
         .clix()
         .select<{ date: string; country: string; cnt: number }>([
-          'toDate(created_at) as date',
+          sql`${CREATED_UTC_DAY} as date`,
           'country',
           'count(*) as cnt',
         ])
-        .from(TABLE_NAMES.sessions)
-        .where('project_id', '=', ctx.projectId)
-        .where('sign', '=', 1)
-        .where('created_at', 'BETWEEN', [
-          ctx.window.baselineStart,
-          getEndOfDay(ctx.window.baselineEnd),
-        ])
-        .groupBy(['date', 'country'])
+        .from(SESSIONS_TABLE)
+        .rawWhere(forProject(ctx.projectId))
+        .rawWhere(
+          createdBetween(
+            ctx.window.baselineStart,
+            getEndOfDay(ctx.window.baselineEnd),
+          ),
+        )
+        .groupBy([CREATED_UTC_DAY, 'country'])
         .execute(),
       ctx
         .clix()
         .select<{ cur_total: number }>([
-          ctx.clix.exp(
-            `countIf(created_at BETWEEN '${formatClickhouseDate(ctx.window.start)}' AND '${formatClickhouseDate(getEndOfDay(ctx.window.end))}') as cur_total`,
+          countCreatedBetween(
+            ctx.window.start,
+            getEndOfDay(ctx.window.end),
+            'cur_total',
           ),
         ])
-        .from(TABLE_NAMES.sessions)
-        .where('project_id', '=', ctx.projectId)
-        .where('sign', '=', 1)
-        .where('created_at', 'BETWEEN', [
-          ctx.window.baselineStart,
-          getEndOfDay(ctx.window.end),
-        ])
+        .from(SESSIONS_TABLE)
+        .rawWhere(forProject(ctx.projectId))
+        .rawWhere(
+          createdBetween(ctx.window.baselineStart, getEndOfDay(ctx.window.end)),
+        )
         .execute(),
     ]);
 
     const currentMap = buildLookupMap(
       currentResults,
-      (r) => r.country || 'unknown',
+      (r) => countryKey(r.country),
     );
 
     const targetWeekday = getWeekday(ctx.window.start);
     const baselineMap = computeWeekdayMedians(
       baselineResults,
       targetWeekday,
-      (r) => r.country || 'unknown',
+      (r) => countryKey(r.country),
     );
 
     const totalCurrent = totals[0]?.cur_total ?? 0;
@@ -93,61 +111,45 @@ async function fetchGeoAggregates(ctx: ComputeContext): Promise<{
     return { currentMap, baselineMap, totalCurrent, totalBaseline };
   }
 
-  const curStart = formatClickhouseDate(ctx.window.start);
-  const curEnd = formatClickhouseDate(getEndOfDay(ctx.window.end));
-  const baseStart = formatClickhouseDate(ctx.window.baselineStart);
-  const baseEnd = formatClickhouseDate(getEndOfDay(ctx.window.baselineEnd));
+  const curStart = ctx.window.start;
+  const curEnd = getEndOfDay(ctx.window.end);
+  const baseStart = ctx.window.baselineStart;
+  const baseEnd = getEndOfDay(ctx.window.baselineEnd);
 
   const [results, totals] = await Promise.all([
     ctx
       .clix()
       .select<{ country: string; cur: number; base: number }>([
         'country',
-        ctx.clix.exp(
-          `countIf(created_at BETWEEN '${curStart}' AND '${curEnd}') as cur`,
-        ),
-        ctx.clix.exp(
-          `countIf(created_at BETWEEN '${baseStart}' AND '${baseEnd}') as base`,
-        ),
+        countCreatedBetween(curStart, curEnd, 'cur'),
+        countCreatedBetween(baseStart, baseEnd, 'base'),
       ])
-      .from(TABLE_NAMES.sessions)
-      .where('project_id', '=', ctx.projectId)
-      .where('sign', '=', 1)
-      .where('created_at', 'BETWEEN', [
-        ctx.window.baselineStart,
-        getEndOfDay(ctx.window.end),
-      ])
+      .from(SESSIONS_TABLE)
+      .rawWhere(forProject(ctx.projectId))
+      .rawWhere(createdBetween(baseStart, curEnd))
       .groupBy(['country'])
       .execute(),
     ctx
       .clix()
       .select<{ cur_total: number; base_total: number }>([
-        ctx.clix.exp(
-          `countIf(created_at BETWEEN '${curStart}' AND '${curEnd}') as cur_total`,
-        ),
-        ctx.clix.exp(
-          `countIf(created_at BETWEEN '${baseStart}' AND '${baseEnd}') as base_total`,
-        ),
+        countCreatedBetween(curStart, curEnd, 'cur_total'),
+        countCreatedBetween(baseStart, baseEnd, 'base_total'),
       ])
-      .from(TABLE_NAMES.sessions)
-      .where('project_id', '=', ctx.projectId)
-      .where('sign', '=', 1)
-      .where('created_at', 'BETWEEN', [
-        ctx.window.baselineStart,
-        getEndOfDay(ctx.window.end),
-      ])
+      .from(SESSIONS_TABLE)
+      .rawWhere(forProject(ctx.projectId))
+      .rawWhere(createdBetween(baseStart, curEnd))
       .execute(),
   ]);
 
   const currentMap = buildLookupMap(
     results,
-    (r) => r.country || 'unknown',
+    (r) => countryKey(r.country),
     (r) => Number(r.cur ?? 0),
   );
 
   const baselineMap = buildLookupMap(
     results,
-    (r) => r.country || 'unknown',
+    (r) => countryKey(r.country),
     (r) => Number(r.base ?? 0),
   );
 
