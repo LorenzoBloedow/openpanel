@@ -12,7 +12,9 @@ pnpm preview      # serve the built Worker locally
 pnpm run deploy   # build, then `wrangler deploy` the generated dist/server/wrangler.json
 ```
 
-Worker settings live in `wrangler.jsonc`.
+Worker settings live in `wrangler.jsonc`. The API reference pages load the
+OpenAPI document from `${API_URL}/documentation/json`; set `API_URL` in a
+`.dev.vars` file to point local work at another API.
 
 ## Explore
 

@@ -8,15 +8,23 @@ import { apiRefCollection } from 'collections/server';
 import { toFumadocsSource } from 'fumadocs-mdx/runtime/server';
 import { cache } from 'react';
 
-const API_URL =
+/** Used when the Worker has no `API_URL` var (see wrangler.jsonc). */
+const DEFAULT_API_URL =
   process.env.NODE_ENV === 'production'
     ? 'https://api.openpanel.dev'
     : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333');
 
+/** Key of the OpenAPI document, independent of the API_URL it is loaded from. */
+const OPENAPI_DOCUMENT = 'openpanel-api';
+
 const FILE_EXTENSION = /\.[^./]+$/;
 
 export const openapi = createOpenAPI({
-  input: [`${API_URL}/documentation/json`],
+  // A function, so API_URL is read when the document is first needed rather
+  // than at import time. Worker vars reach process.env through nodejs_compat.
+  input: () => ({
+    [OPENAPI_DOCUMENT]: `${process.env.API_URL || DEFAULT_API_URL}/documentation/json`,
+  }),
 });
 
 export const API_REFERENCE_BASE_URL = '/docs/api-reference';

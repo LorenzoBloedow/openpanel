@@ -15,5 +15,10 @@
   },
   "observability": {
     "enabled": true
+  },
+  "vars": {
+    // Where the API reference pages fetch the OpenAPI document from
+    // (`${API_URL}/documentation/json`). Override in .dev.vars for local work.
+    "API_URL": "https://api.openpanel.dev"
   }
 }
